@@ -12,6 +12,7 @@ impl SimulationConfig {
     }
 }
 
+#[derive(Default)]
 pub struct Particle {
     pub position: Vec2,
     pub velocity: Vec2,

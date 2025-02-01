@@ -6,7 +6,7 @@ use simulation::{Particle, SimulationConfig};
 use vec2_extension::*;
 
 const SIM_CONF: SimulationConfig = SimulationConfig::default();
-const RADIUS: f32 = 10.0;
+const RADIUS: f32 = 5.0;
 
 /// Creates the window configruation for Macroquad
 fn window_conf() -> Conf {
@@ -22,6 +22,20 @@ fn window_conf() -> Conf {
 /// Gets the difference in time from last frame.
 fn delta_time() -> f32 {
     get_frame_time()
+}
+
+fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Particle> {
+    let mut particles = Vec::with_capacity(count);
+    let root = (count as f32).sqrt() as usize;
+    for x in 0..root {
+        let x = top_left.x + x as f32 * spacing;
+        for y in 0..root {
+            let y = top_left.y + y as f32 * spacing;
+            particles.push(Particle::new(Vec2::new(x, y)));
+        }
+    }
+
+    particles
 }
 
 /// Checks boundaries and adjusts the particles velocitiy accordingly.
@@ -61,20 +75,22 @@ fn move_by_velocity(particle: &mut Particle) {
 ///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut particle = Particle::new(Vec2::new(250.0, 250.0));
+    let mut particles = make_grid_of_particles(100, Vec2::new(100.0, 100.0), 2.0 * RADIUS + 10.0);
 
     loop {
         clear_background(GRAY);
 
         // CORE
         // Simulate
-        apply_gravity(&mut particle);
-        resolve_boundaries(&mut particle);
-        move_by_velocity(&mut particle);
+        particles.iter_mut().for_each(|p| {
+            apply_gravity(p);
+            resolve_boundaries(p);
+            move_by_velocity(p);
+            // Draw
+            draw_circle(p.position.x, p.position.y, RADIUS, BLUE);
+        });
 
-        // Draw
-        draw_circle(particle.position.x, particle.position.y, RADIUS, BLUE);
-
+        println!("FPS: {}", get_fps());
         next_frame().await
     }
 }

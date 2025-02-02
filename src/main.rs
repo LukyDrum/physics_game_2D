@@ -6,7 +6,7 @@ use simulation::{Particle, SimulationConfig};
 use vec2_extension::*;
 
 const SIM_CONF: SimulationConfig = SimulationConfig::default();
-const RADIUS: f32 = 5.0;
+const RADIUS: f32 = 4.0;
 
 /// Creates the window configruation for Macroquad
 fn window_conf() -> Conf {
@@ -65,6 +65,14 @@ fn move_by_velocity(particle: &mut Particle) {
     particle.position += particle.velocity * delta_time();
 }
 
+fn simulate(particles: &mut Vec<Particle>) {
+    particles.iter_mut().for_each(|p| {
+        apply_gravity(p);
+        resolve_boundaries(p);
+        move_by_velocity(p);
+    });
+}
+
 /// The coordinate system goes from (0, 0) = top-left to (WIDTH, HEIGHT) = bottom-right.
 ///
 ///    (0, 0) --------- (WIDTH, 0)
@@ -75,20 +83,18 @@ fn move_by_velocity(particle: &mut Particle) {
 ///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut particles = make_grid_of_particles(100, Vec2::new(100.0, 100.0), 2.0 * RADIUS + 10.0);
+    let mut particles = make_grid_of_particles(1024, Vec2::new(42.0, 42.0), 2.0 * RADIUS + 5.0);
 
     loop {
         clear_background(GRAY);
 
         // CORE
         // Simulate
-        particles.iter_mut().for_each(|p| {
-            apply_gravity(p);
-            resolve_boundaries(p);
-            move_by_velocity(p);
-            // Draw
+        simulate(&mut particles);
+        // Draw
+        for p in &mut particles {
             draw_circle(p.position.x, p.position.y, RADIUS, BLUE);
-        });
+        }
 
         println!("FPS: {}", get_fps());
         next_frame().await

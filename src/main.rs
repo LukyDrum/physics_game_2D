@@ -38,6 +38,14 @@ fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Par
     particles
 }
 
+fn kernel(dist: f32) -> f32 {
+    if dist > SIM_CONF.smoothing_radius {
+        return 0.0;
+    }
+
+    (1.0 - dist / SIM_CONF.smoothing_radius).powi(2)
+}
+
 /// Checks boundaries and adjusts the particles velocitiy accordingly.
 fn resolve_boundaries(particle: &mut Particle) {
     let x = particle.position.x;
@@ -65,11 +73,26 @@ fn move_by_velocity(particle: &mut Particle) {
     particle.position += particle.velocity * delta_time();
 }
 
+fn calculate_densities(particles: &mut Vec<Particle>) {
+    // TODO: Fix this later
+    // Lets presume that mass is 1 for all particles
+    let mass = 1.0;
+    for i in 0..particles.len() {
+        let pos = particles[i].position;
+        particles[i].density = particles
+            .iter()
+            .map(|p| mass * kernel((pos - p.position).length()))
+            .sum();
+    }
+}
+
 fn simulate(particles: &mut Vec<Particle>) {
+    calculate_densities(particles);
     particles.iter_mut().for_each(|p| {
         apply_gravity(p);
-        resolve_boundaries(p);
+
         move_by_velocity(p);
+        resolve_boundaries(p);
     });
 }
 

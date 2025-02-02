@@ -43,7 +43,19 @@ fn kernel(dist: f32) -> f32 {
         return 0.0;
     }
 
-    (1.0 - dist / SIM_CONF.smoothing_radius).powi(2)
+    (1.0 - dist / SIM_CONF.smoothing_radius).max(0.0).powi(2)
+}
+
+fn kernel_derivative(dist: f32) -> f32 {
+    if dist > SIM_CONF.smoothing_radius {
+        return 0.0;
+    }
+
+    (2.0 * (dist - SIM_CONF.smoothing_radius)) / (SIM_CONF.smoothing_radius.powi(2))
+}
+
+fn density_to_pressure(density: f32) -> f32 {
+    SIM_CONF.pressure_multiplier * (density - SIM_CONF.target_density)
 }
 
 /// Checks boundaries and adjusts the particles velocitiy accordingly.
@@ -73,24 +85,52 @@ fn move_by_velocity(particle: &mut Particle) {
     particle.position += particle.velocity * delta_time();
 }
 
+fn predict_position(particle: &mut Particle) {
+    particle.predicted_position = particle.position + particle.velocity * delta_time();
+}
+
 fn calculate_densities(particles: &mut Vec<Particle>) {
     // TODO: Fix this later
     // Lets presume that mass is 1 for all particles
     let mass = 1.0;
     for i in 0..particles.len() {
-        let pos = particles[i].position;
+        let pos = particles[i].predicted_position;
         particles[i].density = particles
             .iter()
-            .map(|p| mass * kernel((pos - p.position).length()))
+            .map(|p| mass * kernel((pos - p.predicted_position).length()))
             .sum();
     }
 }
 
+fn apply_pressures(particles: &mut Vec<Particle>) {
+    for i in 0..particles.len() {
+        let pos = particles[i].predicted_position;
+        let pressure = density_to_pressure(particles[i].density);
+        let pressure_force: Vec2 = particles
+            .iter()
+            .map(|p| {
+                let pos_diff = p.predicted_position - pos;
+                let dir = pos_diff.normalize();
+                let other_pressure = density_to_pressure(p.density);
+                if dir.is_nan() {
+                    Vec2::ZERO
+                } else {
+                    let shared_pressure = (pressure + other_pressure) / (2.0 * p.density);
+                    shared_pressure * kernel_derivative(pos_diff.length()) * dir
+                }
+            })
+            .sum();
+        particles[i].velocity += pressure_force * delta_time();
+    }
+}
+
 fn simulate(particles: &mut Vec<Particle>) {
+    // Predict positions
+    particles.iter_mut().for_each(|p| predict_position(p));
     calculate_densities(particles);
+    apply_pressures(particles);
     particles.iter_mut().for_each(|p| {
         apply_gravity(p);
-
         move_by_velocity(p);
         resolve_boundaries(p);
     });

@@ -6,7 +6,10 @@ use simulation::{Particle, SimulationConfig};
 use vec2_extension::*;
 
 const SIM_CONF: SimulationConfig = SimulationConfig::default();
-const RADIUS: f32 = 4.0;
+const RADIUS: f32 = 4.5;
+
+const OBSTACLE_TL: Vec2 = Vec2::new(350.0, 200.0);
+const OBSTACLE_BR: Vec2 = Vec2::new(450.0, 450.0);
 
 /// Creates the window configruation for Macroquad
 fn window_conf() -> Conf {
@@ -63,12 +66,35 @@ fn resolve_boundaries(particle: &mut Particle) {
     let x = particle.position.x;
     let y = particle.position.y;
 
+    let mut flip_x = false;
+    let mut flip_y = false;
+
     if x < RADIUS || x > screen_width() - RADIUS {
+        flip_x = true;
+    }
+    if y < RADIUS || y > screen_height() - RADIUS {
+        flip_y = true;
+    }
+
+    // Hacky check for the obstacle
+    if x + RADIUS > OBSTACLE_TL.x
+        && x - RADIUS < OBSTACLE_BR.x
+        && y + RADIUS > OBSTACLE_TL.y
+        && y - RADIUS < OBSTACLE_BR.y
+    {
+        if x + RADIUS > OBSTACLE_TL.x && x - RADIUS < OBSTACLE_BR.x {
+            flip_x = true;
+        }
+        if y + RADIUS > OBSTACLE_TL.y && y - RADIUS < OBSTACLE_BR.y {
+            flip_y = true;
+        }
+    }
+    if flip_x {
         particle.velocity.flip_x();
         particle.position.x += particle.velocity.x * delta_time();
         particle.velocity.x *= SIM_CONF.collision_damping;
     }
-    if y < RADIUS || y > screen_height() - RADIUS {
+    if flip_y {
         particle.velocity.flip_y();
         particle.position.y += particle.velocity.y * delta_time();
         particle.velocity.y *= SIM_CONF.collision_damping;
@@ -146,7 +172,7 @@ fn simulate(particles: &mut Vec<Particle>) {
 ///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut particles = make_grid_of_particles(1024, Vec2::new(42.0, 42.0), 2.0 * RADIUS + 5.0);
+    let mut particles = make_grid_of_particles(2000, Vec2::new(5.0, 42.0), 4.0);
 
     loop {
         clear_background(GRAY);
@@ -158,6 +184,11 @@ async fn main() {
         for p in &mut particles {
             draw_circle(p.position.x, p.position.y, RADIUS, BLUE);
         }
+
+        // Draw obstacle
+        let w = OBSTACLE_BR.x - OBSTACLE_TL.x;
+        let h = OBSTACLE_BR.y - OBSTACLE_TL.y;
+        draw_rectangle(OBSTACLE_TL.x, OBSTACLE_TL.y, w, h, YELLOW);
 
         println!("FPS: {}", get_fps());
         next_frame().await

@@ -3,7 +3,7 @@ use std::collections::LinkedList;
 use macroquad::math::Vec2;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::simulation::Particle;
+use crate::{linked_linked_list::LinkedLinkedList, simulation::Particle};
 
 #[derive(Clone)]
 pub struct Cell(pub LinkedList<usize>);
@@ -67,19 +67,19 @@ impl LookUp {
         self.cells[row][col].insert(index);
     }
 
-    pub fn get_neighbors(&self, position: Vec2) -> LinkedList<usize> {
+    pub fn get_neighbors(&self, position: Vec2) -> LinkedLinkedList<usize> {
         if position.x < 0.0
             || position.x > self.width
             || position.y < 0.0
             || position.y > self.height
         {
-            return LinkedList::new();
+            return LinkedLinkedList::new();
         }
 
         let mid_col = (position.x / self.cell_size) as i32;
         let mid_row = (position.y / self.cell_size) as i32;
 
-        let mut neighbors = LinkedList::new();
+        let mut neighbors = LinkedLinkedList::new();
         for row in (mid_row - 1)..=(mid_row + 1) {
             for col in (mid_col - 1)..=(mid_col + 1) {
                 // When doing `mid - 1` the result can be negative (-1), casting that to usize will
@@ -92,7 +92,7 @@ impl LookUp {
                     .map(|r| r.get(col as usize))
                     .flatten()
                 {
-                    neighbors.extend(indexes.iter());
+                    neighbors.push_back(indexes);
                 }
             }
         }

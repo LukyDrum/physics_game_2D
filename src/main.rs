@@ -191,7 +191,7 @@ fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
 ///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut particles = make_grid_of_particles(1750, Vec2::new(5.0, 42.0), 6.0);
+    let mut particles = make_grid_of_particles(2000, Vec2::new(5.0, 42.0), 6.0);
 
     let mut lookup = LookUp::new(WIDTH, HEIGHT, SIM_CONF.smoothing_radius);
 

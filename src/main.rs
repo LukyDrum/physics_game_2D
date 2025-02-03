@@ -1,9 +1,15 @@
+mod lookup;
 mod simulation;
 mod vec2_extension;
+mod linked_linked_list;
 
+use lookup::LookUp;
 use macroquad::prelude::*;
 use simulation::{Particle, SimulationConfig};
 use vec2_extension::*;
+
+const WIDTH: f32 = 500.0;
+const HEIGHT: f32 = 500.0;
 
 const SIM_CONF: SimulationConfig = SimulationConfig::default();
 const RADIUS: f32 = 4.5;
@@ -15,8 +21,8 @@ const OBSTACLE_BR: Vec2 = Vec2::new(450.0, 450.0);
 fn window_conf() -> Conf {
     Conf {
         window_title: "SPH".to_owned(),
-        window_width: 500,
-        window_height: 500,
+        window_width: WIDTH as i32,
+        window_height: HEIGHT as i32,
         window_resizable: false,
         ..Default::default()
     }
@@ -24,7 +30,8 @@ fn window_conf() -> Conf {
 
 /// Gets the difference in time from last frame.
 fn delta_time() -> f32 {
-    get_frame_time()
+    // get_frame_time()
+    1.0 / 24.0
 }
 
 fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Particle> {
@@ -115,26 +122,31 @@ fn predict_position(particle: &mut Particle) {
     particle.predicted_position = particle.position + particle.velocity * delta_time();
 }
 
-fn calculate_densities(particles: &mut Vec<Particle>) {
+fn calculate_densities(particles: &mut Vec<Particle>, lookup: &LookUp) {
     // TODO: Fix this later
     // Lets presume that mass is 1 for all particles
     let mass = 1.0;
     for i in 0..particles.len() {
         let pos = particles[i].predicted_position;
-        particles[i].density = particles
+        
+        let neighbors = lookup.get_neighbors(pos);
+        particles[i].density = neighbors
             .iter()
-            .map(|p| mass * kernel((pos - p.predicted_position).length()))
+            .map(|index| mass * kernel((pos - particles[*index].predicted_position).length()))
             .sum();
     }
 }
 
-fn apply_pressures(particles: &mut Vec<Particle>) {
+fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
     for i in 0..particles.len() {
         let pos = particles[i].predicted_position;
         let pressure = density_to_pressure(particles[i].density);
-        let pressure_force: Vec2 = particles
+
+        let neighbors = lookup.get_neighbors(pos);
+        let pressure_force: Vec2 = neighbors
             .iter()
-            .map(|p| {
+            .map(|index| {
+                let p = particles[*index];
                 let pos_diff = p.predicted_position - pos;
                 let dir = pos_diff.normalize();
                 let other_pressure = density_to_pressure(p.density);
@@ -150,11 +162,18 @@ fn apply_pressures(particles: &mut Vec<Particle>) {
     }
 }
 
-fn simulate(particles: &mut Vec<Particle>) {
+fn setup_lookup(lookup: &mut LookUp, particles: &Vec<Particle>) {
+    lookup.clear();
+    for index in 0..particles.len() {
+        lookup.insert(&particles[index], index);
+    }
+}
+
+fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
     // Predict positions
     particles.iter_mut().for_each(|p| predict_position(p));
-    calculate_densities(particles);
-    apply_pressures(particles);
+    calculate_densities(particles, lookup);
+    apply_pressures(particles, lookup);
     particles.iter_mut().for_each(|p| {
         apply_gravity(p);
         move_by_velocity(p);
@@ -172,16 +191,20 @@ fn simulate(particles: &mut Vec<Particle>) {
 ///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut particles = make_grid_of_particles(2000, Vec2::new(5.0, 42.0), 4.0);
+    let mut particles = make_grid_of_particles(1750, Vec2::new(5.0, 42.0), 6.0);
+
+    let mut lookup = LookUp::new(WIDTH, HEIGHT, SIM_CONF.smoothing_radius);
 
     loop {
         clear_background(GRAY);
 
         // CORE
+
+        setup_lookup(&mut lookup, &particles);
         // Simulate
-        simulate(&mut particles);
+        simulate(&mut particles, &lookup);
         // Draw
-        for p in &mut particles {
+        for p in &particles {
             draw_circle(p.position.x, p.position.y, RADIUS, BLUE);
         }
 

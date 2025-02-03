@@ -14,14 +14,14 @@ impl SimulationConfig {
         SimulationConfig {
             gravity: Vec2::new(0.0, 9.81),
             collision_damping: 0.5,
-            smoothing_radius: 50.0,
-            target_density: 8.0,
-            pressure_multiplier: 100.0,
+            smoothing_radius: 15.0,
+            target_density: 2.0,
+            pressure_multiplier: 300.0,
         }
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Copy, Clone)]
 pub struct Particle {
     pub position: Vec2,
     pub predicted_position: Vec2,

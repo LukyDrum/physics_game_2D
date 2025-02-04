@@ -68,7 +68,7 @@ impl LookUp {
     }
 
     pub fn get_immediate_neighbors(&self, position: Vec2) -> LinkedLinkedList<usize> {
-        self.get_neighbors_in_radius(position, self.cell_size) 
+        self.get_neighbors_in_radius(position, self.cell_size)
     }
 
     pub fn get_neighbors_in_radius(&self, position: Vec2, radius: f32) -> LinkedLinkedList<usize> {

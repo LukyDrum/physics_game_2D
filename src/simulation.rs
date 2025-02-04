@@ -13,10 +13,10 @@ impl SimulationConfig {
     pub const fn default() -> Self {
         SimulationConfig {
             gravity: Vec2::new(0.0, 9.81),
-            collision_damping: 0.5,
-            smoothing_radius: 15.0,
-            target_density: 1.0,
-            pressure_multiplier: 300.0,
+            collision_damping: 0.3,
+            smoothing_radius: 12.0,
+            target_density: 0.7,
+            pressure_multiplier: 250.0,
         }
     }
 }

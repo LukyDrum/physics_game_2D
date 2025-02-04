@@ -67,7 +67,11 @@ impl LookUp {
         self.cells[row][col].insert(index);
     }
 
-    pub fn get_neighbors(&self, position: Vec2) -> LinkedLinkedList<usize> {
+    pub fn get_immediate_neighbors(&self, position: Vec2) -> LinkedLinkedList<usize> {
+        self.get_neighbors_in_radius(position, self.cell_size) 
+    }
+
+    pub fn get_neighbors_in_radius(&self, position: Vec2, radius: f32) -> LinkedLinkedList<usize> {
         if position.x < 0.0
             || position.x > self.width
             || position.y < 0.0
@@ -76,12 +80,14 @@ impl LookUp {
             return LinkedLinkedList::new();
         }
 
+        let off = (radius / self.cell_size) as i32;
+
         let mid_col = (position.x / self.cell_size) as i32;
         let mid_row = (position.y / self.cell_size) as i32;
 
         let mut neighbors = LinkedLinkedList::new();
-        for row in (mid_row - 1)..=(mid_row + 1) {
-            for col in (mid_col - 1)..=(mid_col + 1) {
+        for row in (mid_row - off)..=(mid_row + off) {
+            for col in (mid_col - off)..=(mid_col + off) {
                 // When doing `mid - 1` the result can be negative (-1), casting that to usize will
                 // result in the `usize::MAX`, that should practicly always be out of the range of
                 // the Vec.

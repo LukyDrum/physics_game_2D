@@ -173,6 +173,29 @@ fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
     });
 }
 
+fn push_particles_in_radius(particles: &mut Vec<Particle>, lookup: &LookUp, position: Vec2, radius: f32) {
+    let neighbors = lookup.get_neighbors_in_radius(position, radius);
+    for index in neighbors.iter() {
+        let p = &mut particles[*index];
+        let diff = p.position - position;
+        let scale = diff.length_squared() / (radius * radius);
+        let dir = diff.normalize_or_zero();
+        particles[*index].set_force(dir * scale * 100.0);
+    }
+}
+
+fn pull_particles_in_radius(particles: &mut Vec<Particle>, lookup: &LookUp, position: Vec2, radius: f32) {
+    let neighbors = lookup.get_neighbors_in_radius(position, radius);
+    for index in neighbors.iter() {
+        let p = &mut particles[*index];
+        let diff = position - p.position;
+        let scale = diff.length_squared() / (radius * radius);
+        let dir = diff.normalize_or_zero();
+        particles[*index].set_force(dir * scale * 100.0);
+    }
+}
+
+
 /// The coordinate system goes from (0, 0) = top-left to (WIDTH, HEIGHT) = bottom-right.
 ///
 ///    (0, 0) --------- (WIDTH, 0)
@@ -183,15 +206,21 @@ fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
 ///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut particles = make_grid_of_particles(2000, Vec2::new(5.0, 42.0), 6.0);
+    let mut particles = make_grid_of_particles(1000, Vec2::new(5.0, 42.0), 6.0);
 
     let mut lookup = LookUp::new(WIDTH, HEIGHT, SIM_CONF.smoothing_radius);
 
     loop {
         clear_background(GRAY);
 
-        // CORE
+        // INPUT
+        if is_mouse_button_down(MouseButton::Left) {
+            push_particles_in_radius(&mut particles, &lookup, mouse_position().into(), 50.0);
+        } else if is_mouse_button_down(MouseButton::Right) {
+            pull_particles_in_radius(&mut particles, &lookup, mouse_position().into(), 50.0);
+        }
 
+        // CORE
         setup_lookup(&mut lookup, &particles);
         // Simulate
         simulate(&mut particles, &lookup);

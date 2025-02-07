@@ -49,6 +49,13 @@ impl Particle {
         }
     }
 
+    /// Sets the accumulated force to a new value.
+    /// Should not be use for simulations.
+    pub fn set_force(&mut self, force: Vec2) {
+        self.accumulated_force = force;
+    }
+
+    /// Adds `force` to the accumulated force.
     pub fn add_force(&mut self, force: Vec2) {
         self.accumulated_force += force;
     }

@@ -16,9 +16,9 @@ impl SimulationConfig {
         SimulationConfig {
             gravity: Vec2::new(0.0, 9.81),
             collision_damping: 0.2,
-            smoothing_radius: 12.0,
-            target_density: 0.7,
-            pressure_multiplier: 250.0,
+            smoothing_radius: 14.0,
+            target_density: 0.5,
+            pressure_multiplier: 200.0,
         }
     }
 }

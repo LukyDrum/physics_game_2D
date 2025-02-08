@@ -4,9 +4,11 @@ mod lookup;
 mod simulation;
 mod vec2_extension;
 
+use macroquad::prelude::*;
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+
 use helper::*;
 use lookup::LookUp;
-use macroquad::prelude::*;
 use simulation::{Particle, SimulationConfig};
 use vec2_extension::*;
 
@@ -36,6 +38,8 @@ fn delta_time() -> f32 {
     1.0 / 15.0
 }
 
+/// Creates a square of particles where each particle is `spacing` from it's neighbors where the
+/// side of the square is sqrt(count).
 fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Particle> {
     let mut particles = Vec::with_capacity(count);
     let root = (count as f32).sqrt() as usize;
@@ -72,16 +76,17 @@ fn density_to_pressure(density: f32) -> f32 {
 
 /// Checks boundaries and adjusts the particles velocitiy accordingly.
 fn resolve_boundaries(particle: &mut Particle) {
+    // TODO: Rewrite boundary checks - this is horrible
     let x = particle.position.x;
     let y = particle.position.y;
 
     let mut flip_x = false;
     let mut flip_y = false;
 
-    if x < RADIUS || x > screen_width() - RADIUS {
+    if x < RADIUS || x > WIDTH - RADIUS {
         flip_x = true;
     }
-    if y < RADIUS || y > screen_height() - RADIUS {
+    if y < RADIUS || y > HEIGHT - RADIUS {
         flip_y = true;
     }
 
@@ -98,6 +103,7 @@ fn resolve_boundaries(particle: &mut Particle) {
             flip_y = true;
         }
     }
+    
     if flip_x {
         particle.velocity.flip_x();
         particle.position.x = runge_kutta(particle.position.x, delta_time(), particle.velocity.x);
@@ -108,6 +114,7 @@ fn resolve_boundaries(particle: &mut Particle) {
         particle.position.y = runge_kutta(particle.position.y, delta_time(), particle.velocity.y);
         particle.velocity.y *= SIM_CONF.collision_damping;
     }
+
 }
 
 fn calculate_densities(particles: &mut Vec<Particle>, lookup: &LookUp) {
@@ -161,10 +168,10 @@ fn setup_lookup(lookup: &mut LookUp, particles: &Vec<Particle>) {
 fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
     let dt = delta_time();
 
-    particles.iter_mut().for_each(|p| p.predict_position(dt));
+    particles.par_iter_mut().for_each(|p| p.predict_position(dt));
     calculate_densities(particles, lookup);
     apply_pressures(particles, lookup);
-    particles.iter_mut().for_each(|p| {
+    particles.par_iter_mut().for_each(|p| {
         p.add_force(p.mass * SIM_CONF.gravity);
         p.apply_accumulated_force(dt);
         p.move_by_velocity(dt);
@@ -203,7 +210,7 @@ fn pull_particles_in_radius(particles: &mut Vec<Particle>, lookup: &LookUp, posi
 ///      |                  |
 ///      |                  |
 ///      |                  |
-///  (HEIGHT, 0) --- (WIDTH, HEIGHT)
+///  (0, HEIGHT) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut particles = make_grid_of_particles(1000, Vec2::new(5.0, 42.0), 6.0);

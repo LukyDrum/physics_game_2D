@@ -46,8 +46,20 @@ fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Par
     for x in 0..root {
         let x = top_left.x + x as f32 * spacing;
         for y in 0..root {
-            let y = top_left.y + y as f32 * spacing;
-            particles.push(Particle::new(Vec2::new(x, y)));
+            let flag = y as f32 > root as f32 / 2.0;
+            let mut y = top_left.y + y as f32 * spacing;
+            if flag {
+                y += 30.0;
+            }
+            let mut p = Particle::new(Vec2::new(x, y));
+
+            if flag {
+                p.mass = 997.0;
+            } else {
+                p.mass = 1442.0;
+            }
+
+            particles.push(p);
         }
     }
 
@@ -62,6 +74,14 @@ fn kernel(dist: f32) -> f32 {
     (1.0 - dist / SIM_CONF.smoothing_radius).max(0.0).powi(2)
 }
 
+fn near_kernel(dist: f32) -> f32 {
+     if dist > SIM_CONF.smoothing_radius {
+        return 0.0;
+    }
+
+    (1.0 - dist / SIM_CONF.smoothing_radius).max(0.0).powi(3)
+}
+
 fn kernel_derivative(dist: f32) -> f32 {
     if dist > SIM_CONF.smoothing_radius {
         return 0.0;
@@ -70,8 +90,20 @@ fn kernel_derivative(dist: f32) -> f32 {
     (2.0 * (dist - SIM_CONF.smoothing_radius)) / (SIM_CONF.smoothing_radius.powi(2))
 }
 
+fn near_kernel_derivative(dist: f32) -> f32 {
+    if dist > SIM_CONF.smoothing_radius {
+        return 0.0;
+    }
+
+    (3.0 * (dist - SIM_CONF.smoothing_radius)) / (SIM_CONF.smoothing_radius.powi(3))
+}
+
 fn density_to_pressure(density: f32) -> f32 {
     SIM_CONF.pressure_multiplier * (density - SIM_CONF.target_density)
+}
+
+fn near_density_to_near_pressure(near_density: f32) -> f32 {
+    near_density * 100.0
 }
 
 /// Checks boundaries and adjusts the particles velocitiy accordingly.
@@ -103,7 +135,7 @@ fn resolve_boundaries(particle: &mut Particle) {
             flip_y = true;
         }
     }
-    
+
     if flip_x {
         particle.velocity.flip_x();
         particle.position.x = runge_kutta(particle.position.x, delta_time(), particle.velocity.x);
@@ -114,7 +146,6 @@ fn resolve_boundaries(particle: &mut Particle) {
         particle.position.y = runge_kutta(particle.position.y, delta_time(), particle.velocity.y);
         particle.velocity.y *= SIM_CONF.collision_damping;
     }
-
 }
 
 fn calculate_densities(particles: &mut Vec<Particle>, lookup: &LookUp) {
@@ -122,20 +153,24 @@ fn calculate_densities(particles: &mut Vec<Particle>, lookup: &LookUp) {
         let pos = particles[i].predicted_position;
 
         let neighbors = lookup.get_immediate_neighbors(pos);
-        particles[i].density = neighbors
+        (particles[i].sph_density, particles[i].sph_near_density) = neighbors
             .iter()
             .map(|index| {
                 let p = &particles[*index];
-                p.mass * kernel((pos - p.predicted_position).length())
+                let dist = (pos - p.predicted_position).length();
+                let density = p.mass * kernel(dist);
+                let near_density = p.mass * near_kernel(dist);
+                (density, near_density)
             })
-            .sum();
+            .fold((0.0, 0.0), |acc, e| (acc.0 + e.0, acc.1 + e.1));
     }
 }
 
 fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
     for i in 0..particles.len() {
         let pos = particles[i].predicted_position;
-        let pressure = density_to_pressure(particles[i].density);
+        let pressure = density_to_pressure(particles[i].sph_density);
+        let near_pressure = near_density_to_near_pressure(particles[i].sph_near_density);
 
         let neighbors = lookup.get_immediate_neighbors(pos);
         let pressure_force: Vec2 = neighbors
@@ -144,12 +179,16 @@ fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
                 let p = particles[*index];
                 let pos_diff = p.predicted_position - pos;
                 let dir = pos_diff.normalize();
-                let other_pressure = density_to_pressure(p.density);
-                if dir.is_nan() || p.density == 0.0 {
+                let other_pressure = density_to_pressure(p.sph_density);
+                let other_near_pressure = near_density_to_near_pressure(p.sph_near_density);
+
+                if dir.is_nan() || p.sph_density == 0.0 {
                     Vec2::ZERO
                 } else {
-                    let shared_pressure = (pressure + other_pressure) / (2.0 * p.density);
-                    shared_pressure * kernel_derivative(pos_diff.length()) * dir
+                    let dist = pos_diff.length();
+                    let shared_pressure = (pressure + other_pressure) / (2.0 * p.sph_density) * kernel_derivative(dist);
+                    let shared_near_pressure = (near_pressure + other_near_pressure) / (2.0 * p.sph_near_density) * near_kernel_derivative(dist);
+                    p.mass * (shared_pressure + shared_near_pressure) * dir
                 }
             })
             .sum();
@@ -168,7 +207,9 @@ fn setup_lookup(lookup: &mut LookUp, particles: &Vec<Particle>) {
 fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
     let dt = delta_time();
 
-    particles.par_iter_mut().for_each(|p| p.predict_position(dt));
+    particles
+        .par_iter_mut()
+        .for_each(|p| p.predict_position(dt));
     calculate_densities(particles, lookup);
     apply_pressures(particles, lookup);
     particles.par_iter_mut().for_each(|p| {
@@ -180,28 +221,39 @@ fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
     });
 }
 
-fn push_particles_in_radius(particles: &mut Vec<Particle>, lookup: &LookUp, position: Vec2, radius: f32) {
+fn push_particles_in_radius(
+    particles: &mut Vec<Particle>,
+    lookup: &LookUp,
+    position: Vec2,
+    radius: f32,
+) {
     let neighbors = lookup.get_neighbors_in_radius(position, radius);
     for index in neighbors.iter() {
         let p = &mut particles[*index];
         let diff = p.position - position;
         let scale = diff.length_squared() / (radius * radius);
         let dir = diff.normalize_or_zero();
-        particles[*index].set_force(dir * scale * 100.0);
+        let mass = p.mass;
+        particles[*index].set_force(dir * scale * mass * 100.0);
     }
 }
 
-fn pull_particles_in_radius(particles: &mut Vec<Particle>, lookup: &LookUp, position: Vec2, radius: f32) {
+fn pull_particles_in_radius(
+    particles: &mut Vec<Particle>,
+    lookup: &LookUp,
+    position: Vec2,
+    radius: f32,
+) {
     let neighbors = lookup.get_neighbors_in_radius(position, radius);
     for index in neighbors.iter() {
         let p = &mut particles[*index];
         let diff = position - p.position;
         let scale = diff.length_squared() / (radius * radius);
         let dir = diff.normalize_or_zero();
-        particles[*index].set_force(dir * scale * 100.0);
+        let mass = p.mass;
+        particles[*index].set_force(dir * scale * mass * 100.0);
     }
 }
-
 
 /// The coordinate system goes from (0, 0) = top-left to (WIDTH, HEIGHT) = bottom-right.
 ///
@@ -214,6 +266,11 @@ fn pull_particles_in_radius(particles: &mut Vec<Particle>, lookup: &LookUp, posi
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut particles = make_grid_of_particles(1000, Vec2::new(5.0, 42.0), 6.0);
+    particles.push({
+        let mut p = Particle::new(Vec2::new(20.0, 20.0));
+        p.mass = 1000.0;
+        p
+    });
 
     let mut lookup = LookUp::new(WIDTH, HEIGHT, SIM_CONF.smoothing_radius);
 
@@ -233,7 +290,13 @@ async fn main() {
         simulate(&mut particles, &lookup);
         // Draw
         for p in &particles {
-            draw_circle(p.position.x, p.position.y, RADIUS, BLUE);
+            let color = match p.mass as i32 {
+                0..100 => WHITE,
+                100..1000 => BLUE,
+                _ => GREEN,
+            };
+
+            draw_circle(p.position.x, p.position.y, RADIUS, color);
         }
 
         // Draw obstacle

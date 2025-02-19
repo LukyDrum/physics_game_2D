@@ -18,7 +18,7 @@ impl SimulationConfig {
             collision_damping: 0.2,
             smoothing_radius: 14.0,
             target_density: 0.5,
-            pressure_multiplier: 200.0,
+            pressure_multiplier: 300.0,
         }
     }
 }
@@ -28,7 +28,8 @@ pub struct Particle {
     pub position: Vec2,
     pub predicted_position: Vec2,
     pub velocity: Vec2,
-    pub density: f32,
+    pub sph_density: f32,
+    pub sph_near_density: f32,
     pub mass: f32,
     accumulated_force: Vec2,
 }
@@ -43,7 +44,8 @@ impl Particle {
             position,
             predicted_position: position,
             velocity,
-            density: 1.0,
+            sph_density: 1.0,
+            sph_near_density: 1.0,
             mass: 1.0,
             accumulated_force: Vec2::ZERO,
         }

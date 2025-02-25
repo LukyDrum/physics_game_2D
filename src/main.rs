@@ -54,9 +54,9 @@ fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Par
             let mut p = Particle::new(Vec2::new(x, y));
 
             if flag {
-                p.mass = 997.0;
+                p.mass = 0.998; // Water
             } else {
-                p.mass = 1442.0;
+                p.mass = 1.6; // Blood
             }
 
             particles.push(p);
@@ -75,7 +75,7 @@ fn kernel(dist: f32) -> f32 {
 }
 
 fn near_kernel(dist: f32) -> f32 {
-     if dist > SIM_CONF.smoothing_radius {
+    if dist > SIM_CONF.smoothing_radius {
         return 0.0;
     }
 
@@ -99,11 +99,11 @@ fn near_kernel_derivative(dist: f32) -> f32 {
 }
 
 fn density_to_pressure(density: f32) -> f32 {
-    SIM_CONF.pressure_multiplier * (density - SIM_CONF.target_density)
+    SIM_CONF.pressure_multiplier * (density - 0.5) // TODO: FIX
 }
 
 fn near_density_to_near_pressure(near_density: f32) -> f32 {
-    near_density * 100.0
+    near_density * 10.0
 }
 
 /// Checks boundaries and adjusts the particles velocitiy accordingly.
@@ -186,8 +186,11 @@ fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
                     Vec2::ZERO
                 } else {
                     let dist = pos_diff.length();
-                    let shared_pressure = (pressure + other_pressure) / (2.0 * p.sph_density) * kernel_derivative(dist);
-                    let shared_near_pressure = (near_pressure + other_near_pressure) / (2.0 * p.sph_near_density) * near_kernel_derivative(dist);
+                    let shared_pressure = (pressure + other_pressure) / (2.0 * p.sph_density)
+                        * kernel_derivative(dist);
+                    let shared_near_pressure = (near_pressure + other_near_pressure)
+                        / (2.0 * p.sph_near_density)
+                        * near_kernel_derivative(dist);
                     p.mass * (shared_pressure + shared_near_pressure) * dir
                 }
             })
@@ -266,11 +269,6 @@ fn pull_particles_in_radius(
 #[macroquad::main(window_conf)]
 async fn main() {
     let mut particles = make_grid_of_particles(1000, Vec2::new(5.0, 42.0), 6.0);
-    particles.push({
-        let mut p = Particle::new(Vec2::new(20.0, 20.0));
-        p.mass = 1000.0;
-        p
-    });
 
     let mut lookup = LookUp::new(WIDTH, HEIGHT, SIM_CONF.smoothing_radius);
 
@@ -290,12 +288,7 @@ async fn main() {
         simulate(&mut particles, &lookup);
         // Draw
         for p in &particles {
-            let color = match p.mass as i32 {
-                0..100 => WHITE,
-                100..1000 => BLUE,
-                _ => GREEN,
-            };
-
+            let color = if p.mass < 1.0 { BLUE } else { RED };
             draw_circle(p.position.x, p.position.y, RADIUS, color);
         }
 

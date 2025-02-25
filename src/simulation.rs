@@ -6,7 +6,6 @@ pub struct SimulationConfig {
     pub gravity: Vec2,
     pub collision_damping: f32,
     pub smoothing_radius: f32,
-    pub target_density: f32,
     pub pressure_multiplier: f32,
 }
 
@@ -14,10 +13,9 @@ impl SimulationConfig {
     /// NOT implementation of Default trait, but a custom `const` function simulating default
     pub const fn default() -> Self {
         SimulationConfig {
-            gravity: Vec2::new(0.0, 9.81),
+            gravity: Vec2::new(0.0, 9.8),
             collision_damping: 0.2,
             smoothing_radius: 14.0,
-            target_density: 0.5,
             pressure_multiplier: 300.0,
         }
     }

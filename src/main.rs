@@ -54,9 +54,9 @@ fn make_grid_of_particles(count: usize, top_left: Vec2, spacing: f32) -> Vec<Par
             let mut p = Particle::new(Vec2::new(x, y));
 
             if flag {
-                p.mass = 0.998; // Water
+                p.set_mass(0.998); // Water
             } else {
-                p.mass = 1.6; // Blood
+                p.set_mass(1.6); // Blood
             }
 
             particles.push(p);
@@ -98,8 +98,8 @@ fn near_kernel_derivative(dist: f32) -> f32 {
     (3.0 * (dist - SIM_CONF.smoothing_radius)) / (SIM_CONF.smoothing_radius.powi(3))
 }
 
-fn density_to_pressure(density: f32) -> f32 {
-    SIM_CONF.pressure_multiplier * (density - 0.5) // TODO: FIX
+fn density_to_pressure(density: f32, target_density: f32, pressure_multiplier: f32) -> f32 {
+    pressure_multiplier * (density - target_density)
 }
 
 fn near_density_to_near_pressure(near_density: f32) -> f32 {
@@ -158,8 +158,8 @@ fn calculate_densities(particles: &mut Vec<Particle>, lookup: &LookUp) {
             .map(|index| {
                 let p = &particles[*index];
                 let dist = (pos - p.predicted_position).length();
-                let density = p.mass * kernel(dist);
-                let near_density = p.mass * near_kernel(dist);
+                let density = p.mass() * kernel(dist);
+                let near_density = p.mass() * near_kernel(dist);
                 (density, near_density)
             })
             .fold((0.0, 0.0), |acc, e| (acc.0 + e.0, acc.1 + e.1));
@@ -168,8 +168,9 @@ fn calculate_densities(particles: &mut Vec<Particle>, lookup: &LookUp) {
 
 fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
     for i in 0..particles.len() {
+
         let pos = particles[i].predicted_position;
-        let pressure = density_to_pressure(particles[i].sph_density);
+        let pressure = density_to_pressure(particles[i].sph_density, particles[i].target_density(), particles[i].pressure_multiplier());
         let near_pressure = near_density_to_near_pressure(particles[i].sph_near_density);
 
         let neighbors = lookup.get_immediate_neighbors(pos);
@@ -179,7 +180,7 @@ fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
                 let p = particles[*index];
                 let pos_diff = p.predicted_position - pos;
                 let dir = pos_diff.normalize();
-                let other_pressure = density_to_pressure(p.sph_density);
+                let other_pressure = density_to_pressure(p.sph_density, p.target_density(), p.pressure_multiplier());
                 let other_near_pressure = near_density_to_near_pressure(p.sph_near_density);
 
                 if dir.is_nan() || p.sph_density == 0.0 {
@@ -191,7 +192,7 @@ fn apply_pressures(particles: &mut Vec<Particle>, lookup: &LookUp) {
                     let shared_near_pressure = (near_pressure + other_near_pressure)
                         / (2.0 * p.sph_near_density)
                         * near_kernel_derivative(dist);
-                    p.mass * (shared_pressure + shared_near_pressure) * dir
+                    p.mass() * (shared_pressure + shared_near_pressure) * dir
                 }
             })
             .sum();
@@ -216,7 +217,7 @@ fn simulate(particles: &mut Vec<Particle>, lookup: &LookUp) {
     calculate_densities(particles, lookup);
     apply_pressures(particles, lookup);
     particles.par_iter_mut().for_each(|p| {
-        p.add_force(p.mass * SIM_CONF.gravity);
+        p.add_force(p.mass() * SIM_CONF.gravity);
         p.apply_accumulated_force(dt);
         p.move_by_velocity(dt);
 
@@ -236,7 +237,7 @@ fn push_particles_in_radius(
         let diff = p.position - position;
         let scale = diff.length_squared() / (radius * radius);
         let dir = diff.normalize_or_zero();
-        let mass = p.mass;
+        let mass = p.mass();
         particles[*index].set_force(dir * scale * mass * 100.0);
     }
 }
@@ -253,7 +254,7 @@ fn pull_particles_in_radius(
         let diff = position - p.position;
         let scale = diff.length_squared() / (radius * radius);
         let dir = diff.normalize_or_zero();
-        let mass = p.mass;
+        let mass = p.mass();
         particles[*index].set_force(dir * scale * mass * 100.0);
     }
 }
@@ -288,7 +289,7 @@ async fn main() {
         simulate(&mut particles, &lookup);
         // Draw
         for p in &particles {
-            let color = if p.mass < 1.0 { BLUE } else { RED };
+            let color = if p.mass() < 0.2 { WHITE } else if p.mass() < 1.0 { BLUE } else { RED };
             draw_circle(p.position.x, p.position.y, RADIUS, color);
         }
 

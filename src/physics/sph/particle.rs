@@ -1,23 +1,5 @@
 use macroquad::math::Vec2;
-
-use crate::runge_kutta;
-
-pub struct SimulationConfig {
-    pub gravity: Vec2,
-    pub collision_damping: f32,
-    pub smoothing_radius: f32,
-}
-
-impl SimulationConfig {
-    /// NOT implementation of Default trait, but a custom `const` function simulating default
-    pub const fn default() -> Self {
-        SimulationConfig {
-            gravity: Vec2::new(0.0, 9.8),
-            collision_damping: 0.2,
-            smoothing_radius: 14.0,
-        }
-    }
-}
+use crate::utility::runge_kutta;
 
 const PRESSURE_BASE: f32 = 300.0;
 
@@ -48,21 +30,13 @@ impl Particle {
             sph_near_density: 1.0,
             mass: 1.0,
             target_density: 1.0,
-            pressure_multiplier: PRESSURE_BASE, 
+            pressure_multiplier: PRESSURE_BASE,
             accumulated_force: Vec2::ZERO,
         }
     }
 
     pub fn mass(&self) -> f32 {
         self.mass
-    }
-
-    pub fn target_density(&self) -> f32 {
-        self.target_density
-    }
-
-    pub fn pressure_multiplier(&self) -> f32 {
-        self.pressure_multiplier
     }
 
     pub fn set_mass(&mut self, new_mass: f32) {
@@ -88,7 +62,7 @@ impl Particle {
         }
 
         let acceleration = self.accumulated_force / self.mass;
-        
+
         self.velocity = runge_kutta(self.velocity, delta_time, acceleration);
         // Reset the accumulated force
         self.accumulated_force = Vec2::ZERO;
@@ -97,9 +71,16 @@ impl Particle {
     pub fn move_by_velocity(&mut self, delta_time: f32) {
         self.position = runge_kutta(self.position, delta_time, self.velocity);
     }
-    
+
     pub fn predict_position(&mut self, delta_time: f32) {
         self.predicted_position = runge_kutta(self.position, delta_time, self.velocity);
     }
 
+    pub fn pressure(&self) -> f32 {
+        self.pressure_multiplier * (self.sph_density - self.target_density)
+    }
+
+    pub fn near_pressure(&self) -> f32 {
+        10.0 * self.sph_near_density
+    }
 }

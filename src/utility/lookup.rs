@@ -3,7 +3,7 @@ use std::collections::LinkedList;
 use macroquad::math::Vec2;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{linked_linked_list::LinkedLinkedList, simulation::Particle};
+use crate::{utility::LinkedLinkedList, physics::sph::Particle};
 
 #[derive(Clone)]
 pub struct Cell(pub LinkedList<usize>);
@@ -95,8 +95,7 @@ impl LookUp {
                 if let Some(Cell(indexes)) = self
                     .cells
                     .get(row as usize)
-                    .map(|r| r.get(col as usize))
-                    .flatten()
+                    .and_then(|r| r.get(col as usize))
                 {
                     neighbors.push_back(indexes);
                 }

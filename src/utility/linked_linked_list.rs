@@ -39,6 +39,6 @@ impl<'a, T> Iterator for LLIterator<'a, T> {
             return self.next();
         }
 
-        return None;
+        None
     }
 }

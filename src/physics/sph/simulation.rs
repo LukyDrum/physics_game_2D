@@ -54,7 +54,7 @@ fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
 
 pub struct Sph {
     pub particles: Vec<Particle>,
-    pub lookup: LookUp,
+    pub lookup: LookUp<usize>,
     pub gravity: Vector2<f32>,
     pub smoothing_radius: f32,
 }
@@ -73,7 +73,7 @@ impl Sph {
         for i in 0..self.particles.len() {
             let pos = self.particles[i].predicted_position;
 
-            let neighbors = self.lookup.get_immediate_neighbors(pos);
+            let neighbors = self.lookup.get_immediate_neighbors(&pos);
             (self.particles[i].sph_density, self.particles[i].sph_near_density) = neighbors
                 .iter()
                 .map(|index| {
@@ -93,7 +93,7 @@ impl Sph {
             let pressure = self.particles[i].pressure();
             let near_pressure = self.particles[i].near_pressure();
 
-            let neighbors = self.lookup.get_immediate_neighbors(pos);
+            let neighbors = self.lookup.get_immediate_neighbors(&pos);
             let pressure_force: Vector2<f32> = neighbors
                 .iter()
                 .map(|index| {
@@ -124,7 +124,7 @@ impl Sph {
     fn setup_lookup(&mut self) {
         self.lookup.clear();
         for index in 0..self.particles.len() {
-            self.lookup.insert(&self.particles[index], index);
+            self.lookup.insert(&self.particles[index].predicted_position, index);
         }
     }
 

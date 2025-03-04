@@ -2,13 +2,13 @@ use std::collections::LinkedList;
 
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{utility::LinkedLinkedList, physics::sph::Particle};
+use crate::utility::LinkedLinkedList;
 use crate::math::Vector2;
 
 #[derive(Clone)]
-pub struct Cell(pub LinkedList<usize>);
+struct Cell<T>(pub LinkedList<T>) where T: Clone + Copy + Send;
 
-impl Cell {
+impl<T> Cell<T> where T: Clone + Copy + Send {
     pub fn empty() -> Self {
         Cell(LinkedList::new())
     }
@@ -17,19 +17,19 @@ impl Cell {
         self.0 = LinkedList::new();
     }
 
-    pub fn insert(&mut self, index: usize) {
-        self.0.push_back(index);
+    pub fn insert(&mut self, item: T) {
+        self.0.push_back(item);
     }
 }
 
-pub struct LookUp {
-    pub cells: Vec<Vec<Cell>>,
+pub struct LookUp<T> where T: Clone + Copy + Send {
+    cells: Vec<Vec<Cell<T>>>,
     pub width: f32,
     pub height: f32,
     pub cell_size: f32,
 }
 
-impl LookUp {
+impl<T> LookUp<T> where T: Clone + Copy + Send {
     /// Cell size should be equal to smoothing radius
     pub fn new(width: f32, height: f32, cell_size: f32) -> Self {
         let mut cols_count = (width / cell_size) as usize;
@@ -55,8 +55,8 @@ impl LookUp {
             .for_each(|row| row.par_iter_mut().for_each(|cell| cell.clear()));
     }
 
-    pub fn insert(&mut self, particle: &Particle, index: usize) {
-        let pos = particle.predicted_position;
+    pub fn insert(&mut self, position: &Vector2<f32>, item: T) {
+        let pos = position;
         if pos.x < 0.0 || pos.x > self.width || pos.y < 0.0 || pos.y > self.height {
             return;
         }
@@ -64,14 +64,14 @@ impl LookUp {
         let col = (pos.x / self.cell_size) as usize;
         let row = (pos.y / self.cell_size) as usize;
 
-        self.cells[row][col].insert(index);
+        self.cells[row][col].insert(item);
     }
 
-    pub fn get_immediate_neighbors(&self, position: Vector2<f32>) -> LinkedLinkedList<usize> {
+    pub fn get_immediate_neighbors(&self, position: &Vector2<f32>) -> LinkedLinkedList<T> {
         self.get_neighbors_in_radius(position, self.cell_size)
     }
 
-    pub fn get_neighbors_in_radius(&self, position: Vector2<f32>, radius: f32) -> LinkedLinkedList<usize> {
+    pub fn get_neighbors_in_radius(&self, position: &Vector2<f32>, radius: f32) -> LinkedLinkedList<T> {
         if position.x < 0.0
             || position.x > self.width
             || position.y < 0.0

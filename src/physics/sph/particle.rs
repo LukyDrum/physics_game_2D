@@ -1,27 +1,27 @@
-use macroquad::math::Vec2;
 use crate::utility::runge_kutta;
+use crate::math::Vector2;
 
-const PRESSURE_BASE: f32 = 300.0;
+const PRESSURE_BASE: f32 = 400.0;
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Clone)]
 pub struct Particle {
-    pub position: Vec2,
-    pub predicted_position: Vec2,
-    pub velocity: Vec2,
+    pub position: Vector2<f32>,
+    pub predicted_position: Vector2<f32>,
+    pub velocity: Vector2<f32>,
     pub sph_density: f32,
     pub sph_near_density: f32,
     mass: f32,
     target_density: f32,
     pressure_multiplier: f32,
-    accumulated_force: Vec2,
+    accumulated_force: Vector2<f32>,
 }
 
 impl Particle {
-    pub fn new(position: Vec2) -> Self {
-        Self::new_with_velocity(position, Vec2::ZERO)
+    pub fn new(position: Vector2<f32>) -> Self {
+        Self::new_with_velocity(position, Vector2::zero())
     }
 
-    pub fn new_with_velocity(position: Vec2, velocity: Vec2) -> Self {
+    pub fn new_with_velocity(position: Vector2<f32>, velocity: Vector2<f32>) -> Self {
         Particle {
             position,
             predicted_position: position,
@@ -31,7 +31,7 @@ impl Particle {
             mass: 1.0,
             target_density: 1.0,
             pressure_multiplier: PRESSURE_BASE,
-            accumulated_force: Vec2::ZERO,
+            accumulated_force: Vector2::zero(),
         }
     }
 
@@ -47,12 +47,12 @@ impl Particle {
 
     /// Sets the accumulated force to a new value.
     /// Should not be use for simulations.
-    pub fn set_force(&mut self, force: Vec2) {
+    pub fn set_force(&mut self, force: Vector2<f32>) {
         self.accumulated_force = force;
     }
 
     /// Adds `force` to the accumulated force.
-    pub fn add_force(&mut self, force: Vec2) {
+    pub fn add_force(&mut self, force: Vector2<f32>) {
         self.accumulated_force += force;
     }
 
@@ -65,7 +65,7 @@ impl Particle {
 
         self.velocity = runge_kutta(self.velocity, delta_time, acceleration);
         // Reset the accumulated force
-        self.accumulated_force = Vec2::ZERO;
+        self.accumulated_force = Vector2::zero();
     }
 
     pub fn move_by_velocity(&mut self, delta_time: f32) {

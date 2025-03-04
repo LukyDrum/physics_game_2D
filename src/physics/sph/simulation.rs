@@ -1,10 +1,10 @@
-use macroquad::math::Vec2;
 use rayon::iter::{ParallelIterator, IntoParallelRefMutIterator};
 
 use crate::{utility::LookUp, physics::sph::Particle};
+use crate::math::Vector2;
 
 pub struct SimulationConfig {
-    pub gravity: Vec2,
+    pub gravity: Vector2<f32>,
     pub collision_damping: f32,
     pub smoothing_radius: f32,
 }
@@ -13,9 +13,9 @@ impl SimulationConfig {
     /// NOT implementation of Default trait, but a custom `const` function simulating default
     pub const fn default() -> Self {
         SimulationConfig {
-            gravity: Vec2::new(0.0, 9.8),
+            gravity: Vector2::new(0.0, 9.8),
             collision_damping: 0.2,
-            smoothing_radius: 20.0,
+            smoothing_radius: 12.0,
         }
     }
 }
@@ -55,7 +55,7 @@ fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
 pub struct Sph {
     pub particles: Vec<Particle>,
     pub lookup: LookUp,
-    pub gravity: Vec2,
+    pub gravity: Vector2<f32>,
     pub smoothing_radius: f32,
 }
 
@@ -94,17 +94,17 @@ impl Sph {
             let near_pressure = self.particles[i].near_pressure();
 
             let neighbors = self.lookup.get_immediate_neighbors(pos);
-            let pressure_force: Vec2 = neighbors
+            let pressure_force: Vector2<f32> = neighbors
                 .iter()
                 .map(|index| {
                     let p = &self.particles[*index];
                     let pos_diff = p.predicted_position - pos;
-                    let dir = pos_diff.normalize();
+                    let dir = pos_diff.normalized();
                     let other_pressure = p.pressure();
                     let other_near_pressure = p.near_pressure();
 
                     if dir.is_nan() || p.sph_density == 0.0 {
-                        Vec2::ZERO
+                        Vector2::zero()
                     } else {
                         let dist = pos_diff.length();
                         let shared_pressure = (pressure + other_pressure) / (2.0 * p.sph_density)
@@ -112,7 +112,7 @@ impl Sph {
                         let shared_near_pressure = (near_pressure + other_near_pressure)
                             / (2.0 * p.sph_near_density)
                             * near_kernel_derivative(dist, self.smoothing_radius);
-                        p.mass() * (shared_pressure + shared_near_pressure) * dir
+                        dir * p.mass() * (shared_pressure + shared_near_pressure)
                     }
                 })
                 .sum();
@@ -139,7 +139,7 @@ impl Sph {
         self.calculate_densities();
         self.apply_pressures();
         self.particles.par_iter_mut().for_each(|p| {
-            p.add_force(p.mass() * self.gravity);
+            p.add_force(self.gravity * p.mass());
             p.apply_accumulated_force(dt);
             p.move_by_velocity(dt);
         });

@@ -1,9 +1,9 @@
 use std::collections::LinkedList;
 
-use macroquad::math::Vec2;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{utility::LinkedLinkedList, physics::sph::Particle};
+use crate::math::Vector2;
 
 #[derive(Clone)]
 pub struct Cell(pub LinkedList<usize>);
@@ -67,11 +67,11 @@ impl LookUp {
         self.cells[row][col].insert(index);
     }
 
-    pub fn get_immediate_neighbors(&self, position: Vec2) -> LinkedLinkedList<usize> {
+    pub fn get_immediate_neighbors(&self, position: Vector2<f32>) -> LinkedLinkedList<usize> {
         self.get_neighbors_in_radius(position, self.cell_size)
     }
 
-    pub fn get_neighbors_in_radius(&self, position: Vec2, radius: f32) -> LinkedLinkedList<usize> {
+    pub fn get_neighbors_in_radius(&self, position: Vector2<f32>, radius: f32) -> LinkedLinkedList<usize> {
         if position.x < 0.0
             || position.x > self.width
             || position.y < 0.0

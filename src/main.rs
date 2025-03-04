@@ -1,13 +1,13 @@
 mod utility;
 mod physics;
-mod vec2_extension;
+mod math;
 
 use macroquad::prelude::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use vec2_extension::*;
 use crate::physics::sph::*;
 use crate::utility::runge_kutta;
+use crate::math::Vector2;
 
 const WIDTH: f32 = 500.0;
 const HEIGHT: f32 = 500.0;
@@ -96,7 +96,7 @@ async fn main() {
         // INPUT
         if is_mouse_button_down(MouseButton::Left) {
             let mouse_pos = mouse_position();
-            let new_particle = Particle::new(Vec2::new(mouse_pos.0, mouse_pos.1));
+            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1));
             sph.particles.push(new_particle);
         }
 

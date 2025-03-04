@@ -318,6 +318,7 @@ name = "sph"
 version = "0.1.0"
 dependencies = [
  "macroquad",
+ "num-traits",
  "rayon",
 ]
 

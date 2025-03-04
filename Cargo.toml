@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 macroquad = "0.4.13"
+num-traits = "0.2.19"
 rayon = "1.10.0"

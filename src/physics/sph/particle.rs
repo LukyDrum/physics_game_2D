@@ -10,10 +10,10 @@ pub struct Particle {
     pub velocity: Vector2<f32>,
     pub sph_density: f32,
     pub sph_near_density: f32,
-    mass: f32,
-    target_density: f32,
-    pressure_multiplier: f32,
-    accumulated_force: Vector2<f32>,
+    pub(super) mass: f32,
+    pub(super) target_density: f32,
+    pub(super) pressure_multiplier: f32,
+    pub(super) accumulated_force: Vector2<f32>,
 }
 
 impl Particle {

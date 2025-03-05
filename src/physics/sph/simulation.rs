@@ -1,4 +1,6 @@
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use rayon::iter::{
+    IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
+};
 
 use crate::math::Vector2;
 use crate::{physics::sph::Particle, utility::LookUp};
@@ -52,6 +54,17 @@ fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
     (3.0 * (dist - radius)) / (radius.powi(3))
 }
 
+/// This a helper structure which references fields from the `Particle` struct.
+/// Using this enables us to parallelize the calculation of densities.
+/// For clarity they are named the same as in the `Particle` struct
+///
+/// Contains only read only fields needed for density calculations.
+/// More info at `[DensityIntermediateMutable]`
+struct DensityIntermediateReadOnly {
+    predicted_position: Vector2<f32>,
+    mass: f32,
+}
+
 pub struct Sph {
     pub particles: Vec<Particle>,
     pub lookup: LookUp<usize>,
@@ -69,25 +82,40 @@ impl Sph {
         }
     }
 
-    fn calculate_densities(&mut self) {
-        for i in 0..self.particles.len() {
-            let pos = self.particles[i].predicted_position;
+    pub fn add_particle(&mut self, particle: Particle) {
+        self.particles.push(particle);
+    }
 
-            let neighbors = self.lookup.get_immediate_neighbors(&pos);
-            (
-                self.particles[i].sph_density,
-                self.particles[i].sph_near_density,
-            ) = neighbors
+    fn calculate_densities(&mut self) {
+        // Get readonly fields of the particles needed for density calculation.
+        let mut intermediates_read_only = Vec::with_capacity(self.particles.len());
+        self.particles
+            .par_iter()
+            .map(|p| DensityIntermediateReadOnly {
+                predicted_position: p.predicted_position,
+                mass: p.mass,
+            })
+            .collect_into_vec(&mut intermediates_read_only);
+
+        self.particles.par_iter_mut().for_each(|p| {
+            let neighbors = self
+                .lookup
+                .get_immediate_neighbors(&p.predicted_position);
+
+            (p.sph_density, p.sph_near_density) = neighbors
                 .iter()
                 .map(|index| {
-                    let p = &self.particles[*index];
-                    let dist = (pos - p.predicted_position).length();
-                    let density = p.mass() * kernel(dist, self.smoothing_radius);
-                    let near_density = p.mass() * near_kernel(dist, self.smoothing_radius);
+                    let other_inter = &intermediates_read_only[*index];
+                    let (other_pos, other_mass) =
+                        (other_inter.predicted_position, other_inter.mass);
+                    let dist = (p.predicted_position - other_pos).length();
+                    let density = other_mass * kernel(dist, self.smoothing_radius);
+                    let near_density = other_mass * near_kernel(dist, self.smoothing_radius);
                     (density, near_density)
                 })
                 .fold((0.0, 0.0), |acc, e| (acc.0 + e.0, acc.1 + e.1));
-        }
+
+        });
     }
 
     fn apply_pressures(&mut self) {

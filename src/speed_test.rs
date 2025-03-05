@@ -15,6 +15,7 @@ mod speed_tests {
         commit_hash: String,
         commit_message: String,
         datetime: String,
+        dev_comment: String,
         total_time_ms: u128,
         iterations: u32,
         total_avg_fps: f32,
@@ -117,6 +118,7 @@ mod speed_tests {
         let test_result = SpeedTestResult {
             commit_hash: String::new(),
             commit_message: String::new(),
+            dev_comment: String::new(),
             datetime: format!(
                 "{:02}.{:02}.{} {:02}:{:02}:{:02}",
                 dt.day(),

@@ -107,7 +107,7 @@ async fn main() {
         if is_mouse_button_down(MouseButton::Left) {
             let mouse_pos = mouse_position();
             let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1));
-            sph.particles.push(new_particle);
+            sph.add_particle(new_particle);
         }
 
         // CORE

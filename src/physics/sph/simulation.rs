@@ -58,11 +58,21 @@ fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
 /// Using this enables us to parallelize the calculation of densities.
 /// For clarity they are named the same as in the `Particle` struct
 ///
-/// Contains only read only fields needed for density calculations.
-/// More info at `[DensityIntermediateMutable]`
+/// Contains read only fields needed for density calculations.
 struct DensityIntermediateReadOnly {
     predicted_position: Vector2<f32>,
     mass: f32,
+}
+
+/// Contains read only fields needed for pressure calculations.
+/// More info at `[DensityIntermediateReadOnly]`
+struct PressureIntermediateReadOnly {
+    predicted_position: Vector2<f32>,
+    pressure: f32,
+    near_pressure: f32,
+    mass: f32,
+    sph_density: f32,
+    sph_near_density: f32,
 }
 
 pub struct Sph {
@@ -93,7 +103,7 @@ impl Sph {
             .par_iter()
             .map(|p| DensityIntermediateReadOnly {
                 predicted_position: p.predicted_position,
-                mass: p.mass,
+                mass: p.mass(),
             })
             .collect_into_vec(&mut intermediates_read_only);
 
@@ -119,38 +129,51 @@ impl Sph {
     }
 
     fn apply_pressures(&mut self) {
-        for i in 0..self.particles.len() {
-            let pos = self.particles[i].predicted_position;
-            let pressure = self.particles[i].pressure();
-            let near_pressure = self.particles[i].near_pressure();
+        let mut intermediates_read_only = Vec::with_capacity(self.particles.len());
+        self.particles
+            .par_iter()
+            .map(|p| PressureIntermediateReadOnly {
+                predicted_position: p.predicted_position,
+                pressure: p.pressure(),
+                near_pressure: p.near_pressure(),
+                mass: p.mass(),
+                sph_density: p.sph_density,
+                sph_near_density: p.sph_near_density,
+            })
+            .collect_into_vec(&mut intermediates_read_only);
+
+        self.particles.par_iter_mut().for_each(|p| {
+            let pos = p.predicted_position;
+            let pressure = p.pressure();
+            let near_pressure = p.near_pressure();
 
             let neighbors = self.lookup.get_immediate_neighbors(&pos);
             let pressure_force: Vector2<f32> = neighbors
                 .iter()
                 .map(|index| {
-                    let p = &self.particles[*index];
-                    let pos_diff = p.predicted_position - pos;
+                    let other_inter = &intermediates_read_only[*index];
+                    let pos_diff = other_inter.predicted_position - pos;
                     let dir = pos_diff.normalized();
-                    let other_pressure = p.pressure();
-                    let other_near_pressure = p.near_pressure();
+                    let other_pressure = other_inter.pressure;
+                    let other_near_pressure = other_inter.near_pressure;
 
-                    if dir.is_nan() || p.sph_density == 0.0 {
+                    if dir.is_nan() || other_inter.sph_density == 0.0 {
                         Vector2::zero()
                     } else {
                         let dist = pos_diff.length();
-                        let shared_pressure = (pressure + other_pressure) / (2.0 * p.sph_density)
+                        let shared_pressure = (pressure + other_pressure) / (2.0 * other_inter.sph_density)
                             * kernel_derivative(dist, self.smoothing_radius);
                         let shared_near_pressure = (near_pressure + other_near_pressure)
-                            / (2.0 * p.sph_near_density)
+                            / (2.0 * other_inter.sph_near_density)
                             * near_kernel_derivative(dist, self.smoothing_radius);
-                        dir * p.mass() * (shared_pressure + shared_near_pressure)
+                        dir * other_inter.mass * (shared_pressure + shared_near_pressure)
                     }
                 })
                 .sum();
 
-            self.particles[i].add_force(pressure_force);
-        }
-    }
+            p.add_force(pressure_force);
+        });
+   }
 
     fn setup_lookup(&mut self) {
         self.lookup.clear();

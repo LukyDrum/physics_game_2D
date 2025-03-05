@@ -50,7 +50,7 @@ where
     where
         T: Float,
     {
-        let mut norm = self.clone();
+        let mut norm = *self;
         norm.normalize();
         norm
     }
@@ -173,7 +173,10 @@ where
     }
 }
 
-impl<T> Sum for Vector2<T> where T: Num + NumOps + Copy + Default {
+impl<T> Sum for Vector2<T>
+where
+    T: Num + NumOps + Copy + Default,
+{
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Vector2::zero(), |acc, x| acc + x)
     }

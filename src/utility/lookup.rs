@@ -2,13 +2,18 @@ use std::collections::LinkedList;
 
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::utility::LinkedLinkedList;
 use crate::math::Vector2;
+use crate::utility::LinkedLinkedList;
 
 #[derive(Clone)]
-struct Cell<T>(pub LinkedList<T>) where T: Clone + Copy + Send;
+struct Cell<T>(pub LinkedList<T>)
+where
+    T: Clone + Copy + Send;
 
-impl<T> Cell<T> where T: Clone + Copy + Send {
+impl<T> Cell<T>
+where
+    T: Clone + Copy + Send,
+{
     pub fn empty() -> Self {
         Cell(LinkedList::new())
     }
@@ -22,14 +27,20 @@ impl<T> Cell<T> where T: Clone + Copy + Send {
     }
 }
 
-pub struct LookUp<T> where T: Clone + Copy + Send {
+pub struct LookUp<T>
+where
+    T: Clone + Copy + Send,
+{
     cells: Vec<Vec<Cell<T>>>,
     pub width: f32,
     pub height: f32,
     pub cell_size: f32,
 }
 
-impl<T> LookUp<T> where T: Clone + Copy + Send {
+impl<T> LookUp<T>
+where
+    T: Clone + Copy + Send,
+{
     /// Cell size should be equal to smoothing radius
     pub fn new(width: f32, height: f32, cell_size: f32) -> Self {
         let mut cols_count = (width / cell_size) as usize;
@@ -71,13 +82,17 @@ impl<T> LookUp<T> where T: Clone + Copy + Send {
         self.get_neighbors_in_radius(position, self.cell_size)
     }
 
-    pub fn get_neighbors_in_radius(&self, position: &Vector2<f32>, radius: f32) -> LinkedLinkedList<T> {
+    pub fn get_neighbors_in_radius(
+        &self,
+        position: &Vector2<f32>,
+        radius: f32,
+    ) -> LinkedLinkedList<T> {
         if position.x < 0.0
             || position.x > self.width
             || position.y < 0.0
             || position.y > self.height
         {
-            return LinkedLinkedList::new();
+            return LinkedLinkedList::default();
         }
 
         let off = (radius / self.cell_size) as i32;
@@ -85,7 +100,7 @@ impl<T> LookUp<T> where T: Clone + Copy + Send {
         let mid_col = (position.x / self.cell_size) as i32;
         let mid_row = (position.y / self.cell_size) as i32;
 
-        let mut neighbors = LinkedLinkedList::new();
+        let mut neighbors = LinkedLinkedList::default();
         for row in (mid_row - off)..=(mid_row + off) {
             for col in (mid_col - off)..=(mid_col + off) {
                 // When doing `mid - 1` the result can be negative (-1), casting that to usize will

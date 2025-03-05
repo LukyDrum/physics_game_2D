@@ -1,13 +1,14 @@
-mod utility;
-mod physics;
 mod math;
+mod physics;
+mod speed_test;
+mod utility;
 
 use macroquad::prelude::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
+use crate::math::Vector2;
 use crate::physics::sph::*;
 use crate::utility::runge_kutta;
-use crate::math::Vector2;
 
 const WIDTH: f32 = 500.0;
 const HEIGHT: f32 = 500.0;
@@ -77,6 +78,15 @@ fn resolve_boundaries(particle: &mut Particle) {
     }
 }
 
+/// The "heavy" part of the game (simulation and such) that does not require user interaction.
+/// Given the state of the individual systems it can progress.
+/// Is `pub` for use in speed tests.
+pub fn simulation_core(sph: &mut Sph) {
+    sph.step(delta_time());
+    sph.particles.par_iter_mut().for_each(|p| {
+        resolve_boundaries(p);
+    });
+}
 
 /// The coordinate system goes from (0, 0) = top-left to (WIDTH, HEIGHT) = bottom-right.
 ///
@@ -101,10 +111,7 @@ async fn main() {
         }
 
         // CORE
-        sph.step(delta_time());
-        sph.particles.par_iter_mut().for_each(|p| {
-            resolve_boundaries(p);
-        });
+        simulation_core(&mut sph);
 
         // Draw
         for p in &sph.particles {

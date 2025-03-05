@@ -2,11 +2,13 @@ use std::collections::{linked_list::Iter, LinkedList};
 
 pub struct LinkedLinkedList<'a, T>(LinkedList<&'a LinkedList<T>>);
 
-impl<'a, T> LinkedLinkedList<'a, T> {
-    pub fn new() -> Self {
+impl<T> Default for LinkedLinkedList<'_, T> {
+    fn default() -> Self {
         LinkedLinkedList(LinkedList::new())
     }
+}
 
+impl<'a, T> LinkedLinkedList<'a, T> {
     pub fn push_back(&mut self, list: &'a LinkedList<T>) {
         self.0.push_back(list);
     }

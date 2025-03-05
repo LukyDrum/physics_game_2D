@@ -1,7 +1,7 @@
-use rayon::iter::{ParallelIterator, IntoParallelRefMutIterator};
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{utility::LookUp, physics::sph::Particle};
 use crate::math::Vector2;
+use crate::{physics::sph::Particle, utility::LookUp};
 
 pub struct SimulationConfig {
     pub gravity: Vector2<f32>,
@@ -74,7 +74,10 @@ impl Sph {
             let pos = self.particles[i].predicted_position;
 
             let neighbors = self.lookup.get_immediate_neighbors(&pos);
-            (self.particles[i].sph_density, self.particles[i].sph_near_density) = neighbors
+            (
+                self.particles[i].sph_density,
+                self.particles[i].sph_near_density,
+            ) = neighbors
                 .iter()
                 .map(|index| {
                     let p = &self.particles[*index];
@@ -124,7 +127,8 @@ impl Sph {
     fn setup_lookup(&mut self) {
         self.lookup.clear();
         for index in 0..self.particles.len() {
-            self.lookup.insert(&self.particles[index].predicted_position, index);
+            self.lookup
+                .insert(&self.particles[index].predicted_position, index);
         }
     }
 
@@ -145,5 +149,3 @@ impl Sph {
         });
     }
 }
-
-

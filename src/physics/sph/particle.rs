@@ -1,5 +1,5 @@
-use crate::utility::runge_kutta;
 use crate::math::Vector2;
+use crate::utility::runge_kutta;
 
 const PRESSURE_BASE: f32 = 400.0;
 

@@ -1,7 +1,7 @@
-mod simulation;
 mod particle;
+mod simulation;
 
 pub use {
-    simulation::{Sph, SimulationConfig},
     particle::Particle,
+    simulation::{SimulationConfig, Sph},
 };

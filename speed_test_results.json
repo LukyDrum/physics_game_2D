@@ -1,2 +1,14 @@
 [
+  {
+    "commit_hash": "7072564b840323f9286d30f2ca9a71276db85ac7",
+    "commit_message": "Add speed test and clippy + fmt the whole project",
+    "datetime": "05.03.2025 10:24:33",
+    "total_time_ms": 10009,
+    "iterations": 327,
+    "total_avg_fps": 32.670113,
+    "mean_time_diff_ms": 28,
+    "min_time_diff_ms": 23,
+    "max_time_diff_ms": 43,
+    "sph_particle_count": 2500
+  }
 ]

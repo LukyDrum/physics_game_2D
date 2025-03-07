@@ -1,3 +1,5 @@
+use std::collections::LinkedList;
+
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
@@ -108,9 +110,7 @@ impl Sph {
             .collect_into_vec(&mut intermediates_read_only);
 
         self.particles.par_iter_mut().for_each(|p| {
-            let neighbors = self
-                .lookup
-                .get_immediate_neighbors(&p.predicted_position);
+            let neighbors = self.lookup.get_immediate_neighbors(&p.predicted_position);
 
             (p.sph_density, p.sph_near_density) = neighbors
                 .iter()
@@ -124,7 +124,6 @@ impl Sph {
                     (density, near_density)
                 })
                 .fold((0.0, 0.0), |acc, e| (acc.0 + e.0, acc.1 + e.1));
-
         });
     }
 
@@ -161,7 +160,8 @@ impl Sph {
                         Vector2::zero()
                     } else {
                         let dist = pos_diff.length();
-                        let shared_pressure = (pressure + other_pressure) / (2.0 * other_inter.sph_density)
+                        let shared_pressure = (pressure + other_pressure)
+                            / (2.0 * other_inter.sph_density)
                             * kernel_derivative(dist, self.smoothing_radius);
                         let shared_near_pressure = (near_pressure + other_near_pressure)
                             / (2.0 * other_inter.sph_near_density)
@@ -173,7 +173,7 @@ impl Sph {
 
             p.add_force(pressure_force);
         });
-   }
+    }
 
     fn setup_lookup(&mut self) {
         self.lookup.clear();
@@ -198,5 +198,29 @@ impl Sph {
             p.apply_accumulated_force(dt);
             p.move_by_velocity(dt);
         });
+    }
+
+    /// Used for the marching squares algorithm.
+    /// Returns the concentration of particles at the specified position.
+    pub fn concentration_at_position(&self, position: Vector2<f32>, radius: f32) -> f32 {
+        let neighbors = self.lookup.get_neighbors_in_radius(&position, radius);
+
+        neighbors
+            .iter()
+            .map(|index| {
+                let p_pos = self.particles[*index].position;
+                let dist = (position - p_pos).length();
+                radius / dist
+            })
+            .sum()
+    }
+
+    pub fn get_particles_around_position(&self, position: Vector2<f32>, radius: f32) -> LinkedList<&Particle> {
+        let neighbors = self.lookup.get_neighbors_in_radius(&position, radius);
+
+        neighbors
+            .iter()
+            .map(|index| &self.particles[*index])
+            .collect()
     }
 }

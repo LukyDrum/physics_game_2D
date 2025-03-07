@@ -1,10 +1,12 @@
 mod math;
 mod physics;
+mod rendering;
 mod speed_test;
 mod utility;
 
 use macroquad::prelude::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
+use rendering::{Renderer, ScalarFieldRenderer};
 
 use crate::math::Vector2;
 use crate::physics::sph::*;
@@ -100,6 +102,9 @@ pub fn simulation_core(sph: &mut Sph) {
 async fn main() {
     let mut sph = Sph::new(SIM_CONF, WIDTH, HEIGHT);
 
+    let mut renderer: Box<dyn Renderer> =
+        Box::new(ScalarFieldRenderer::new(WIDTH as usize, HEIGHT as usize, 5.0).unwrap());
+
     loop {
         clear_background(GRAY);
 
@@ -114,6 +119,10 @@ async fn main() {
         simulation_core(&mut sph);
 
         // Draw
+        renderer.setup(&sph);
+        renderer.draw();
+
+        /*
         for p in &sph.particles {
             let color = if p.mass() < 0.2 {
                 WHITE
@@ -124,6 +133,7 @@ async fn main() {
             };
             draw_circle(p.position.x, p.position.y, RADIUS, color);
         }
+        */
 
         // Draw obstacle
         let w = OBSTACLE_BR.x - OBSTACLE_TL.x;

@@ -6,7 +6,7 @@ mod utility;
 
 use macroquad::prelude::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
-use rendering::{Renderer, ScalarFieldRenderer};
+use rendering::{MarchingSquaresRenderer, Renderer, ScalarFieldRenderer};
 
 use crate::math::Vector2;
 use crate::physics::sph::*;
@@ -102,8 +102,11 @@ pub fn simulation_core(sph: &mut Sph) {
 async fn main() {
     let mut sph = Sph::new(SIM_CONF, WIDTH, HEIGHT);
 
-    let mut renderer: Box<dyn Renderer> =
-        Box::new(ScalarFieldRenderer::new(WIDTH as usize, HEIGHT as usize, 5.0).unwrap());
+    let mut renderers: Vec<Box<dyn Renderer>> = vec![
+        Box::new(ScalarFieldRenderer::new(WIDTH as usize, HEIGHT as usize, 5.0).unwrap()),
+        Box::new(MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 5.0).unwrap()),
+    ];
+
 
     loop {
         clear_background(GRAY);
@@ -119,8 +122,8 @@ async fn main() {
         simulation_core(&mut sph);
 
         // Draw
-        renderer.setup(&sph);
-        renderer.draw();
+        renderers[1].setup(&sph);
+        renderers[1].draw();
 
         /*
         for p in &sph.particles {

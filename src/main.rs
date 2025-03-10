@@ -16,7 +16,7 @@ const WIDTH: f32 = 500.0;
 const HEIGHT: f32 = 500.0;
 
 const SIM_CONF: SimulationConfig = SimulationConfig::default();
-const RADIUS: f32 = 4.5;
+const RADIUS: f32 = 2.5;
 
 const OBSTACLE_TL: Vec2 = Vec2::new(350.0, 200.0);
 const OBSTACLE_BR: Vec2 = Vec2::new(450.0, 450.0);
@@ -103,10 +103,20 @@ async fn main() {
     let mut sph = Sph::new(SIM_CONF, WIDTH, HEIGHT);
 
     let mut renderers: Vec<Box<dyn Renderer>> = vec![
-        Box::new(ScalarFieldRenderer::new(WIDTH as usize, HEIGHT as usize, 5.0).unwrap()),
-        Box::new(MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 5.0).unwrap()),
+        Box::new(
+            ScalarFieldRenderer::new(
+                WIDTH as usize,
+                HEIGHT as usize,
+                10.0,
+                SIM_CONF.smoothing_radius * 0.75,
+            )
+            .unwrap(),
+        ),
+        Box::new(
+            MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 20.0, 10.0).unwrap(),
+        ),
     ];
-
+    let draw_particles = false;
 
     loop {
         clear_background(GRAY);
@@ -122,21 +132,21 @@ async fn main() {
         simulation_core(&mut sph);
 
         // Draw
-        renderers[1].setup(&sph);
-        renderers[1].draw();
+        renderers[0].setup(&sph);
+        renderers[0].draw();
 
-        /*
-        for p in &sph.particles {
-            let color = if p.mass() < 0.2 {
-                WHITE
-            } else if p.mass() < 1.0 {
-                BLUE
-            } else {
-                RED
-            };
-            draw_circle(p.position.x, p.position.y, RADIUS, color);
+        if draw_particles {
+            for p in &sph.particles {
+                let color = if p.mass() < 0.2 {
+                    WHITE
+                } else if p.mass() < 1.0 {
+                    BLUE
+                } else {
+                    RED
+                };
+                draw_circle(p.position.x, p.position.y, RADIUS, color);
+            }
         }
-        */
 
         // Draw obstacle
         let w = OBSTACLE_BR.x - OBSTACLE_TL.x;

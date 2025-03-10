@@ -113,7 +113,7 @@ async fn main() {
             .unwrap(),
         ),
         Box::new(
-            MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 20.0, 10.0).unwrap(),
+            MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 10.0, 10.0).unwrap(),
         ),
     ];
     let draw_particles = false;
@@ -132,8 +132,8 @@ async fn main() {
         simulation_core(&mut sph);
 
         // Draw
-        renderers[0].setup(&sph);
-        renderers[0].draw();
+        renderers[1].setup(&sph);
+        renderers[1].draw();
 
         if draw_particles {
             for p in &sph.particles {

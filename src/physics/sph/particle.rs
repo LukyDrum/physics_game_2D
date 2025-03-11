@@ -1,4 +1,5 @@
 use crate::math::Vector2;
+use crate::rendering::Color;
 use crate::utility::runge_kutta;
 
 const PRESSURE_BASE: f32 = 400.0;
@@ -14,6 +15,7 @@ pub struct Particle {
     pub(super) target_density: f32,
     pub(super) pressure_multiplier: f32,
     pub(super) accumulated_force: Vector2<f32>,
+    pub color: Color,
 }
 
 impl Particle {
@@ -32,7 +34,13 @@ impl Particle {
             target_density: 1.0,
             pressure_multiplier: PRESSURE_BASE,
             accumulated_force: Vector2::zero(),
+            color: Color::rgb(0, 0, 255),
         }
+    }
+
+    pub fn with_color(mut self, color: Color) -> Self {
+        self.color = color;
+        self
     }
 
     pub fn mass(&self) -> f32 {

@@ -6,11 +6,11 @@ mod utility;
 
 use macroquad::prelude::*;
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
-use rendering::{MarchingSquaresRenderer, Renderer, ScalarFieldRenderer};
 
 use crate::math::Vector2;
 use crate::physics::sph::*;
 use crate::utility::runge_kutta;
+use rendering::{Color, MarchingSquaresRenderer, Renderer, ScalarFieldRenderer};
 
 const WIDTH: f32 = 500.0;
 const HEIGHT: f32 = 500.0;
@@ -124,7 +124,14 @@ async fn main() {
         // INPUT
         if is_mouse_button_down(MouseButton::Left) {
             let mouse_pos = mouse_position();
-            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1));
+            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1))
+                .with_color(Color::rgb(0, 0, 255));
+            sph.add_particle(new_particle);
+        }
+        if is_mouse_button_down(MouseButton::Right) {
+            let mouse_pos = mouse_position();
+            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1))
+                .with_color(Color::rgb(255, 0, 0));
             sph.add_particle(new_particle);
         }
 
@@ -132,19 +139,12 @@ async fn main() {
         simulation_core(&mut sph);
 
         // Draw
-        renderers[1].setup(&sph);
-        renderers[1].draw();
+        renderers[0].setup(&sph);
+        renderers[0].draw();
 
         if draw_particles {
             for p in &sph.particles {
-                let color = if p.mass() < 0.2 {
-                    WHITE
-                } else if p.mass() < 1.0 {
-                    BLUE
-                } else {
-                    RED
-                };
-                draw_circle(p.position.x, p.position.y, RADIUS, color);
+                draw_circle(p.position.x, p.position.y, RADIUS, WHITE);
             }
         }
 

@@ -3,9 +3,16 @@ use crate::{math::Vector2, Sph};
 use macroquad::prelude::*;
 
 use super::renderer::Renderer;
+use super::Color;
+
+#[derive(Default, Clone)]
+struct SamplePoint {
+    scalar_value: f32,
+    color: Color,
+}
 
 pub struct ScalarFieldRenderer {
-    scalar_field: Vec<f32>,
+    scalar_field: Vec<SamplePoint>,
     field_width: usize,
     field_height: usize,
     step_size: f32,
@@ -29,7 +36,7 @@ impl ScalarFieldRenderer {
         let field_height = (screen_height as f32 / step_size) as usize + 1;
 
         Ok(ScalarFieldRenderer {
-            scalar_field: vec![0f32; field_width * field_height],
+            scalar_field: vec![SamplePoint::default(); field_width * field_height],
             field_width,
             field_height,
             step_size,
@@ -51,32 +58,44 @@ impl Renderer for ScalarFieldRenderer {
             let pos = self.index_to_position(i);
 
             let particles = sph.get_particles_around_position(pos, self.influence_radius);
-            let value = particles
+            let sample = particles
                 .iter()
-                .map(|p| {
+                .enumerate()
+                .map(|(index, p)| {
                     let dist = (p.position - pos).length();
-                    self.step_size / dist
+                    (index, (self.step_size / dist, p.color))
                 })
-                .sum();
-            self.scalar_field[i] = value;
+                .fold(
+                    SamplePoint::default(),
+                    |mut acc, (index, (value, color))| {
+                        acc.scalar_value += value;
+                        let r = (index as f32 * acc.color.r + color.r) / (index as f32 + 1.0);
+                        let g = (index as f32 * acc.color.g + color.g) / (index as f32 + 1.0);
+                        let b = (index as f32 * acc.color.b + color.b) / (index as f32 + 1.0);
+                        acc.color = Color::new(r, g, b, 1.0); // Make the color always max alpha
+
+                        acc
+                    },
+                );
+            self.scalar_field[i] = sample;
         }
     }
 
     fn draw(&self) {
         for i in 0..(self.field_width * self.field_height) {
-            if self.scalar_field[i] < self.draw_threshold {
+            if self.scalar_field[i].scalar_value < self.draw_threshold {
                 continue;
             }
             let pos = self.index_to_position(i);
             // Make the color of the 'pixel' relative to the concentration there
-            let mut color = BLUE;
-            color.a = (self.scalar_field[i] / self.influence_radius).min(1.0);
+            let mut color = self.scalar_field[i].color;
+            color.a = (self.scalar_field[i].scalar_value / self.influence_radius).min(1.0);
             draw_rectangle(
                 pos.x - self.step_size * 0.5,
                 pos.y - self.step_size * 0.5,
                 self.step_size,
                 self.step_size,
-                color,
+                color.as_mq(),
             );
         }
     }

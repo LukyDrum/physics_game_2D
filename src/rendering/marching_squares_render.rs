@@ -1,9 +1,11 @@
+use crate::utility::non_zero_average;
 use crate::{math::Vector2, Sph};
 
 use macroquad::prelude::*;
 use num_traits::Pow;
 
 use super::renderer::Renderer;
+use super::{Color, SamplePoint};
 
 /// Alias for a tuple of 2 Vector2.
 /// They represent the start and end of a line.
@@ -37,7 +39,7 @@ fn configurations() -> [Vec<Line<f32>>; 16] {
 }
 
 pub struct MarchingSquaresRenderer {
-    scalar_field: Vec<f32>,
+    sample_field: Vec<SamplePoint>,
     field_width: usize,
     field_height: usize,
     step_size: f32,
@@ -63,7 +65,7 @@ impl MarchingSquaresRenderer {
         let field_height = (screen_height as f32 / step_size) as usize + 1;
 
         Ok(MarchingSquaresRenderer {
-            scalar_field: vec![0f32; field_width * field_height],
+            sample_field: vec![SamplePoint::default(); field_width * field_height],
             field_width,
             field_height,
             step_size,
@@ -81,17 +83,23 @@ impl MarchingSquaresRenderer {
 
     fn configuration_from_corner(&self, i: usize) -> Vec<Line<f32>> {
         // We know that `i` will always be a valid index
-        let top_left = self.scalar_field[i];
+        let top_left = self.sample_field[i].scalar_value;
         // We try the rest and always choose the previouse one if it is out of bounds
-        let top_right = *self.scalar_field.get(i + 1).unwrap_or(&top_left);
-        let bottom_left = *self
-            .scalar_field
+        let top_right = self
+            .sample_field
+            .get(i + 1)
+            .map(|s| s.scalar_value)
+            .unwrap_or(top_left);
+        let bottom_left = self
+            .sample_field
             .get(i + self.field_width)
-            .unwrap_or(&top_right);
-        let bottom_right = *self
-            .scalar_field
+            .map(|s| s.scalar_value)
+            .unwrap_or(top_right);
+        let bottom_right = self
+            .sample_field
             .get(i + self.field_width + 1)
-            .unwrap_or(&bottom_left);
+            .map(|s| s.scalar_value)
+            .unwrap_or(bottom_left);
 
         let mut conf_number = 0;
         // Exact order we need to iterate in
@@ -145,6 +153,34 @@ impl MarchingSquaresRenderer {
 
         conf
     }
+
+    fn get_color_from_corner(&self, i: usize) -> Color {
+        let top_left = self.sample_field[i].color;
+        // We try the rest and always choose the previouse one if it is out of bounds
+        let top_right = self
+            .sample_field
+            .get(i + 1)
+            .map(|s| s.color)
+            .unwrap_or(top_left);
+        let bottom_left = self
+            .sample_field
+            .get(i + self.field_width)
+            .map(|s| s.color)
+            .unwrap_or(top_right);
+        let bottom_right = self
+            .sample_field
+            .get(i + self.field_width + 1)
+            .map(|s| s.color)
+            .unwrap_or(bottom_left);
+
+        // Average the colors in each corner
+        let r = non_zero_average(&[top_left.r, top_right.r, bottom_left.r, bottom_right.r]);
+        let g = non_zero_average(&[top_left.g, top_right.g, bottom_left.g, bottom_right.g]);
+        let b = non_zero_average(&[top_left.b, top_right.b, bottom_left.b, bottom_right.b]);
+        let a = 1.0;
+
+        Color::new(r, g, b, a)
+    }
 }
 
 impl Renderer for MarchingSquaresRenderer {
@@ -153,26 +189,39 @@ impl Renderer for MarchingSquaresRenderer {
             let pos = self.index_to_position(i);
 
             let particles = sph.get_particles_around_position(pos, self.influence_radius);
-            let value = particles
+            let sample = particles
                 .iter()
-                .map(|p| {
+                .enumerate()
+                .map(|(index, p)| {
                     let dist = (p.position - pos).length();
-                    self.influence_radius / dist
+                    (index, (self.influence_radius / dist, p.color))
                 })
-                .sum();
-            self.scalar_field[i] = value;
+                .fold(
+                    SamplePoint::default(),
+                    |mut acc, (index, (value, color))| {
+                        acc.scalar_value += value;
+                        let r = (index as f32 * acc.color.r + color.r) / (index as f32 + 1.0);
+                        let g = (index as f32 * acc.color.g + color.g) / (index as f32 + 1.0);
+                        let b = (index as f32 * acc.color.b + color.b) / (index as f32 + 1.0);
+                        acc.color = Color::new(r, g, b, 1.0); // Make the color always max alpha
+
+                        acc
+                    },
+                );
+            self.sample_field[i] = sample;
         }
     }
 
     fn draw(&self) {
         for i in 0..(self.field_width * self.field_height) {
             let pos = self.index_to_position(i);
+            let color = self.get_color_from_corner(i);
 
             let conf = self.configuration_from_corner(i);
             for line in conf {
                 let a = pos + line.0 * self.step_size;
                 let b = pos + line.1 * self.step_size;
-                draw_line(a.x, a.y, b.x, b.y, 3.0, BLUE);
+                draw_line(a.x, a.y, b.x, b.y, 3.0, color.as_mq());
             }
         }
     }

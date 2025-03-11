@@ -3,13 +3,7 @@ use crate::{math::Vector2, Sph};
 use macroquad::prelude::*;
 
 use super::renderer::Renderer;
-use super::Color;
-
-#[derive(Default, Clone)]
-struct SamplePoint {
-    scalar_value: f32,
-    color: Color,
-}
+use super::{Color, SamplePoint};
 
 pub struct ScalarFieldRenderer {
     scalar_field: Vec<SamplePoint>,

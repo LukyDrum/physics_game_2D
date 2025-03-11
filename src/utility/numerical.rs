@@ -1,4 +1,6 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, Div, Mul};
+
+use num_traits::Num;
 
 /// Should be much more accurate than explicit euler method.
 ///
@@ -15,4 +17,24 @@ where
     let k4 = rate_of_change + k3 * step;
 
     current_value + (k1 + k2 * 2.0 + k3 * 2.0 + k4) * (step / 6.0)
+}
+
+pub fn non_zero_average<T>(values: &[T]) -> T
+where
+    T: Add + Div<Output = T> + Num + Copy,
+{
+    let mut sum = T::zero();
+    let mut count = T::zero();
+    for x in values {
+        if !x.is_zero() {
+            count = count + T::one();
+            sum = sum + *x;
+        }
+    }
+
+    if count.is_zero() {
+        return sum;
+    }
+
+    sum / count
 }

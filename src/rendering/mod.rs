@@ -6,7 +6,13 @@ pub use marching_squares_render::MarchingSquaresRenderer;
 pub use renderer::Renderer;
 pub use scalar_field_render::ScalarFieldRenderer;
 
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone)]
+struct SamplePoint {
+    scalar_value: f32,
+    color: Color,
+}
+
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Color {
     pub r: f32,
     pub g: f32,

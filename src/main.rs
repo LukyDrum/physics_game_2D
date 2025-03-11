@@ -139,8 +139,9 @@ async fn main() {
         simulation_core(&mut sph);
 
         // Draw
-        renderers[0].setup(&sph);
-        renderers[0].draw();
+        let renderer = &mut renderers[1];
+        renderer.setup(&sph);
+        renderer.draw();
 
         if draw_particles {
             for p in &sph.particles {

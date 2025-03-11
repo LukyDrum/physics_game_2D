@@ -113,7 +113,7 @@ async fn main() {
             .unwrap(),
         ),
         Box::new(
-            MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 10.0, 10.0).unwrap(),
+            MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 10.0, 10.0, 0.5).unwrap(),
         ),
     ];
     let draw_particles = false;

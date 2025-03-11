@@ -53,6 +53,7 @@ impl MarchingSquaresRenderer {
         screen_height: usize,
         step_size: f32,
         influence_radius: f32,
+        draw_threshold: f32,
     ) -> Result<Self, ()> {
         if screen_width as f32 % step_size != 0.0 || screen_height as f32 % step_size != 0.0 {
             return Err(());
@@ -67,7 +68,7 @@ impl MarchingSquaresRenderer {
             field_height,
             step_size,
             influence_radius,
-            draw_threshold: 0.5,
+            draw_threshold,
             configurations: configurations(),
         })
     }
@@ -78,7 +79,7 @@ impl MarchingSquaresRenderer {
         Vector2::new(x, y)
     }
 
-    fn configuration_number(&self, i: usize) -> usize {
+    fn configuration_from_corner(&self, i: usize) -> Vec<Line<f32>> {
         // We know that `i` will always be a valid index
         let top_left = self.scalar_field[i];
         // We try the rest and always choose the previouse one if it is out of bounds
@@ -104,7 +105,45 @@ impl MarchingSquaresRenderer {
             }
         }
 
-        conf_number
+        let mut conf = self.configurations[conf_number].clone();
+        // Linear interpolation for each line
+        for (a, b) in &mut conf {
+            for point in [a, b] {
+                // For x coordinate
+                if point.x > 0.0 && point.x < 1.0 {
+                    let (start, diff) = match point.y {
+                        // Top side
+                        0.0 => (top_left, top_left - top_right),
+                        // Bottom side
+                        1.0 => (bottom_left, bottom_left - bottom_right),
+                        _ => continue,
+                    };
+
+                    // Set the new interpolated x coordinate
+                    if diff > 0.0 {
+                        point.x = (self.draw_threshold - start).abs() / diff.abs();
+                    }
+                }
+
+                // For y coordinate
+                if point.y > 0.0 && point.y < 1.0 {
+                    let (start, diff) = match point.x {
+                        // Left side
+                        0.0 => (top_left, top_left - bottom_left),
+                        // Right side
+                        1.0 => (top_right, top_right - bottom_right),
+                        _ => continue,
+                    };
+
+                    // Set the new interpolated y coordinate
+                    if diff > 0.0 {
+                        point.y = (self.draw_threshold - start).abs() / diff.abs();
+                    }
+                }
+            }
+        }
+
+        conf
     }
 }
 
@@ -129,8 +168,7 @@ impl Renderer for MarchingSquaresRenderer {
         for i in 0..(self.field_width * self.field_height) {
             let pos = self.index_to_position(i);
 
-            let conf_number = self.configuration_number(i);
-            let conf = &self.configurations[conf_number];
+            let conf = self.configuration_from_corner(i);
             for line in conf {
                 let a = pos + line.0 * self.step_size;
                 let b = pos + line.1 * self.step_size;

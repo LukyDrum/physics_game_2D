@@ -215,7 +215,11 @@ impl Sph {
             .sum()
     }
 
-    pub fn get_particles_around_position(&self, position: Vector2<f32>, radius: f32) -> LinkedList<&Particle> {
+    pub fn get_particles_around_position(
+        &self,
+        position: Vector2<f32>,
+        radius: f32,
+    ) -> LinkedList<&Particle> {
         let neighbors = self.lookup.get_neighbors_in_radius(&position, radius);
 
         neighbors

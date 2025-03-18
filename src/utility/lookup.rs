@@ -75,7 +75,9 @@ where
         let col = (pos.x / self.cell_size) as usize;
         let row = (pos.y / self.cell_size) as usize;
 
-        self.cells[row][col].insert(item);
+        if let Some(cell) = self.cells.get_mut(row).and_then(|row| row.get_mut(col)) {
+            cell.insert(item);
+        }
     }
 
     pub fn get_immediate_neighbors(&self, position: &Vector2<f32>) -> LinkedLinkedList<T> {

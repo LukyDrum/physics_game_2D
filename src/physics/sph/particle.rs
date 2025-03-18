@@ -2,7 +2,7 @@ use crate::math::Vector2;
 use crate::rendering::Color;
 use crate::utility::runge_kutta;
 
-const PRESSURE_BASE: f32 = 20000.0;
+const PRESSURE_BASE: f32 = 10000.0;
 
 #[derive(Default, Clone)]
 pub struct Particle {

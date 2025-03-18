@@ -8,20 +8,6 @@ use crate::game::GameBody;
 use crate::math::Vector2;
 use crate::{physics::sph::Particle, utility::LookUp};
 
-pub struct SimulationConfig {
-    pub gravity: Vector2<f32>,
-    pub smoothing_radius: f32,
-}
-
-impl SimulationConfig {
-    /// NOT implementation of Default trait, but a custom `const` function simulating default
-    pub const fn default() -> Self {
-        SimulationConfig {
-            gravity: Vector2::new(0.0, 981.0), // Cm per second
-            smoothing_radius: 12.0,
-        }
-    }
-}
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -31,7 +17,7 @@ fn kernel(dist: f32, radius: f32) -> f32 {
     (1.0 - dist / radius).max(0.0).powi(2)
 }
 
-const NEAR_MAX: f32 = 10000.0;
+const NEAR_MAX: f32 = 2000.0;
 
 fn near_kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -93,17 +79,25 @@ pub struct Sph {
     pub gravity: Vector2<f32>,
     pub smoothing_radius: f32,
 
+    // Inner helping stuff
     id_counter: u32,
+    density_intermediates: Vec<DensityIntermediateReadOnly>,
+    pressure_intermediates: Vec<PressureIntermediateReadOnly>,
 }
 
 impl Sph {
-    pub fn new(config: SimulationConfig, width: f32, height: f32) -> Self {
+    pub fn new(width: f32, height: f32) -> Self {
+        let smoothing_radius = 12.0;
         Sph {
             particles: Vec::new(),
-            lookup: LookUp::new(width, height, config.smoothing_radius),
-            gravity: config.gravity,
-            smoothing_radius: config.smoothing_radius,
+            lookup: LookUp::new(width, height, smoothing_radius * 2.0),
+            gravity: Vector2::new(0.0, 981.0),
+            smoothing_radius,
+
             id_counter: 0,
+            // 1000 chosen as a good starting capacity
+            density_intermediates: Vec::with_capacity(1000),
+            pressure_intermediates: Vec::with_capacity(1000),
         }
     }
 
@@ -121,7 +115,6 @@ impl Sph {
 
     fn calculate_densities(&mut self) {
         // Get readonly fields of the particles needed for density calculation.
-        let mut intermediates_read_only = Vec::with_capacity(self.particles.len());
         self.particles
             .par_iter()
             .map(|p| DensityIntermediateReadOnly {
@@ -129,7 +122,7 @@ impl Sph {
                 mass: p.mass(),
                 id: p.id,
             })
-            .collect_into_vec(&mut intermediates_read_only);
+            .collect_into_vec(&mut self.density_intermediates);
 
         self.particles.par_iter_mut().for_each(|p| {
             let neighbors = self.lookup.get_immediate_neighbors(&p.predicted_position);
@@ -137,7 +130,7 @@ impl Sph {
             (p.sph_density, p.sph_near_density) = neighbors
                 .iter()
                 .map(|index| {
-                    let other_inter = &intermediates_read_only[*index];
+                    let other_inter = &self.density_intermediates[*index];
                     if p.id == other_inter.id {
                         (0.0, 0.0)
                     } else {
@@ -154,7 +147,6 @@ impl Sph {
     }
 
     fn apply_pressures(&mut self) {
-        let mut intermediates_read_only = Vec::with_capacity(self.particles.len());
         self.particles
             .par_iter()
             .map(|p| PressureIntermediateReadOnly {
@@ -166,7 +158,7 @@ impl Sph {
                 sph_near_density: p.sph_near_density,
                 id: p.id,
             })
-            .collect_into_vec(&mut intermediates_read_only);
+            .collect_into_vec(&mut self.pressure_intermediates);
 
         self.particles.par_iter_mut().for_each(|p| {
             let pos = p.predicted_position;
@@ -177,7 +169,7 @@ impl Sph {
             let pressure_force: Vector2<f32> = neighbors
                 .iter()
                 .map(|index| {
-                    let other_inter = &intermediates_read_only[*index];
+                    let other_inter = &self.pressure_intermediates[*index];
 
                     if other_inter.sph_density == 0.0 || p.id == other_inter.id {
                         Vector2::zero()

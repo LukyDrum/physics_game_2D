@@ -8,7 +8,7 @@ use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{Body, Container, Line, RBox, Triangle},
     rendering::{Color, Draw, Renderer, ScalarFieldRenderer},
-    Particle, SimulationConfig, Sph,
+    Particle, Sph,
 };
 
 pub trait GameBody: Body + Draw + Sync {}
@@ -37,7 +37,7 @@ impl Game {
     pub fn new(width: usize, height: usize) -> Self {
         let (f_width, f_height) = (width as f32, height as f32);
 
-        let sph = Sph::new(SimulationConfig::default(), f_width, f_height);
+        let sph = Sph::new(f_width, f_height);
         let renderer_step_size = f_width / 100.0;
         // Add basic container
         let bodies: Vec<Box<dyn GameBody>> = vec![Box::new(Container::new(

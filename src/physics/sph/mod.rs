@@ -3,5 +3,5 @@ mod simulation;
 
 pub use {
     particle::Particle,
-    simulation::{SimulationConfig, Sph},
+    simulation::Sph,
 };

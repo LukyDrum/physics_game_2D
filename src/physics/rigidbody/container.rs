@@ -41,12 +41,14 @@ impl Body for Container {
 
         // *HACKS*: 🙈
         // This should help particles to NOT group in corners
-        let x_diff = x - point.x;
-        let y_diff = y - point.y;
-        if x_diff.abs() > y_diff.abs() {
-            x += x_diff.clamp(-MAX_OFFSET, MAX_OFFSET);
-        } else {
-            y += y_diff.clamp(-MAX_OFFSET, MAX_OFFSET);
+        if x != point.x && y != point.y {
+            let x_diff = x - point.x;
+            let y_diff = y - point.y;
+            if x_diff.abs() > y_diff.abs() {
+                x += x_diff.clamp(-MAX_OFFSET, MAX_OFFSET);
+            } else {
+                y += y_diff.clamp(-MAX_OFFSET, MAX_OFFSET);
+            }
         }
 
         SurfacePoint {

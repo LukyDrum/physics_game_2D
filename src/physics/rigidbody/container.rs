@@ -19,13 +19,15 @@ impl Container {
     }
 }
 
+const MAX_OFFSET: f32 = 5.0;
+
 impl Body for Container {
     fn closest_surface_point(&self, point: Vector2<f32>) -> SurfacePoint {
-        let x = point.x.clamp(
+        let mut x = point.x.clamp(
             self.center.x - self.half_width,
             self.center.x + self.half_width,
         );
-        let y = point.y.clamp(
+        let mut y = point.y.clamp(
             self.center.y - self.half_height,
             self.center.y + self.half_height,
         );
@@ -36,6 +38,16 @@ impl Body for Container {
         } else {
             v2!(0.0, 1.0)
         };
+
+        // *HACKS*: 🙈
+        // This should help particles to NOT group in corners
+        let x_diff = x - point.x;
+        let y_diff = y - point.y;
+        if x_diff.abs() > y_diff.abs() {
+            x += x_diff.clamp(-MAX_OFFSET, MAX_OFFSET);
+        } else {
+            y += y_diff.clamp(-MAX_OFFSET, MAX_OFFSET);
+        }
 
         SurfacePoint {
             point: v2!(x, y),

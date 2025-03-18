@@ -18,7 +18,6 @@ macro_rules! v2 {
 
 pub(crate) use v2;
 
-
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Vector2<T>
 where
@@ -95,20 +94,29 @@ where
     }
 
     /// Calculates the reflection (bounce) of this vector with respect to the `surface_normal`.
-    pub fn reflect(&self, surface_normal: Vector2<T>) -> Vector2<T> where T: Float {
+    pub fn reflect(&self, surface_normal: Vector2<T>) -> Vector2<T>
+    where
+        T: Float,
+    {
         let lhs = surface_normal * self.dot(surface_normal);
         // Hacky way to do: `lhs * 2`, but stay generic
-         *self - (lhs + lhs)
+        *self - (lhs + lhs)
     }
 
     /// Returns a vector that is perpendicular to this one. Not to be mistaken with normalize!
-    pub fn normal(&self) -> Vector2<T> where T: Neg<Output = T> {
+    pub fn normal(&self) -> Vector2<T>
+    where
+        T: Neg<Output = T>,
+    {
         Vector2::new(-self.y, self.x)
     }
 
     /// Absolute value of this vector. Makes both components positive (both components now have
     /// their absolute value).
-    pub fn abs(&self) -> Vector2<T> where T: Float {
+    pub fn abs(&self) -> Vector2<T>
+    where
+        T: Float,
+    {
         Vector2::new(self.x.abs(), self.y.abs())
     }
 
@@ -228,7 +236,6 @@ where
         iter.fold(Vector2::zero(), |acc, x| acc + x)
     }
 }
-
 
 #[cfg(test)]
 mod tests {

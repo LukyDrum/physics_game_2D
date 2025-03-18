@@ -1,15 +1,14 @@
 use crate::math::Vector2;
 
-mod line;
 mod r#box;
-mod triangle;
 mod container;
+mod line;
+mod triangle;
 
+pub use container::Container;
 pub use line::Line;
 pub use r#box::RBox;
 pub use triangle::Triangle;
-pub use container::Container;
-
 
 pub struct SurfacePoint {
     pub point: Vector2<f32>,

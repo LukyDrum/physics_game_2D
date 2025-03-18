@@ -1,5 +1,5 @@
-mod vector2;
 mod matrix;
+mod vector2;
 
-pub use vector2::Vector2;
 pub(crate) use vector2::v2;
+pub use vector2::Vector2;

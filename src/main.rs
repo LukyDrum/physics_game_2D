@@ -2,8 +2,8 @@ mod math;
 mod physics;
 mod rendering;
 // mod speed_test;
-mod utility;
 mod game;
+mod utility;
 
 use game::Game;
 use macroquad::prelude::*;
@@ -40,7 +40,7 @@ async fn main() {
         game.handle_input();
         game.update();
         game.draw();
-        
+
         println!("FPS: {}", get_fps());
         next_frame().await
     }

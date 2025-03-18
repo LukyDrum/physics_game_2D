@@ -1,5 +1,7 @@
 use macroquad::{
-    input::{is_mouse_button_down, mouse_position, MouseButton}, shapes::draw_circle, window::clear_background
+    input::{is_mouse_button_down, mouse_position, MouseButton},
+    shapes::draw_circle,
+    window::clear_background,
 };
 
 use crate::{
@@ -38,9 +40,11 @@ impl Game {
         let sph = Sph::new(SimulationConfig::default(), f_width, f_height);
         let renderer_step_size = f_width / 100.0;
         // Add basic container
-        let bodies: Vec<Box<dyn GameBody>> = vec![
-            Box::new(Container::new(v2!(f_width * 0.5, f_height * 0.5), f_width, f_height)),
-        ];
+        let bodies: Vec<Box<dyn GameBody>> = vec![Box::new(Container::new(
+            v2!(f_width * 0.5, f_height * 0.5),
+            f_width,
+            f_height,
+        ))];
 
         Game {
             time_step: 0.01,
@@ -88,7 +92,12 @@ impl Game {
 
         // Draw individual particles as circles
         for p in &self.fluid_system.particles {
-            draw_circle(p.position.x, p.position.y, 2.0, Color::rgb(255, 255, 255).as_mq());
+            draw_circle(
+                p.position.x,
+                p.position.y,
+                2.0,
+                Color::rgb(255, 255, 255).as_mq(),
+            );
         }
     }
 

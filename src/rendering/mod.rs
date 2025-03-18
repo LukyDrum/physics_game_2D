@@ -1,12 +1,12 @@
+mod draw;
 mod marching_squares_render;
 mod renderer;
 mod scalar_field_render;
-mod draw;
 
+pub use draw::*;
 pub use marching_squares_render::MarchingSquaresRenderer;
 pub use renderer::Renderer;
 pub use scalar_field_render::ScalarFieldRenderer;
-pub use draw::*;
 
 #[derive(Default, Clone)]
 struct SamplePoint {

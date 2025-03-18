@@ -1,6 +1,5 @@
 use std::collections::LinkedList;
 
-use num_traits::Float;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };

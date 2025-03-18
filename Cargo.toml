@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.40"
+fastrand = "2.3.0"
 macroquad = "0.4.13"
 num-traits = "0.2.19"
 rayon = "1.10.0"

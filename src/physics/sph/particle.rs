@@ -2,7 +2,7 @@ use crate::math::Vector2;
 use crate::rendering::Color;
 use crate::utility::runge_kutta;
 
-const PRESSURE_BASE: f32 = 400.0;
+const PRESSURE_BASE: f32 = 20000.0;
 
 #[derive(Default, Clone)]
 pub struct Particle {
@@ -16,6 +16,8 @@ pub struct Particle {
     pub(super) pressure_multiplier: f32,
     pub(super) accumulated_force: Vector2<f32>,
     pub color: Color,
+    /// Should be set by the simulation when the particle is inserted
+    pub(super) id: u32,
 }
 
 impl Particle {
@@ -35,6 +37,7 @@ impl Particle {
             pressure_multiplier: PRESSURE_BASE,
             accumulated_force: Vector2::zero(),
             color: Color::rgb(0, 0, 255),
+            id: 0,
         }
     }
 
@@ -89,6 +92,6 @@ impl Particle {
     }
 
     pub fn near_pressure(&self) -> f32 {
-        10.0 * self.sph_near_density
+        self.sph_near_density
     }
 }

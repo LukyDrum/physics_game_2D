@@ -5,7 +5,21 @@ use std::{
 
 use num_traits::{Float, Num, NumAssignOps, NumOps};
 
-#[derive(Copy, Clone, Debug, Default)]
+/// A macro for quickly creating a new Vector2 with `x` and `y` components.
+/// If a `type` is given, it will cast the components to that type.
+macro_rules! v2 {
+    ($x:expr, $y:expr) => {
+        Vector2::new($x, $y)
+    };
+    ($x:expr, $y:expr; $type:ty) => {
+        Vector2::new($x as $type, $y as $type)
+    };
+}
+
+pub(crate) use v2;
+
+
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Vector2<T>
 where
     T: Num + NumOps + Copy + Default,
@@ -74,6 +88,39 @@ where
         T: Neg<Output = T>,
     {
         self.y = -self.y;
+    }
+
+    pub fn dot(&self, other: Vector2<T>) -> T {
+        self.x * other.x + self.y * other.y
+    }
+
+    /// Calculates the reflection (bounce) of this vector with respect to the `surface_normal`.
+    pub fn reflect(&self, surface_normal: Vector2<T>) -> Vector2<T> where T: Float {
+        let lhs = surface_normal * self.dot(surface_normal);
+        // Hacky way to do: `lhs * 2`, but stay generic
+         *self - (lhs + lhs)
+    }
+
+    /// Returns a vector that is perpendicular to this one. Not to be mistaken with normalize!
+    pub fn normal(&self) -> Vector2<T> where T: Neg<Output = T> {
+        Vector2::new(-self.y, self.x)
+    }
+
+    /// Absolute value of this vector. Makes both components positive (both components now have
+    /// their absolute value).
+    pub fn abs(&self) -> Vector2<T> where T: Float {
+        Vector2::new(self.x.abs(), self.y.abs())
+    }
+
+    /// Creates a random unit length vector
+    pub fn random_unit() -> Vector2<f32> {
+        let x = fastrand::f32();
+        let y = fastrand::f32();
+        Vector2::new(x, y).normalized()
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.x.is_zero() && self.y.is_zero()
     }
 }
 
@@ -179,5 +226,31 @@ where
 {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Vector2::zero(), |acc, x| acc + x)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::Vector2;
+
+    #[test]
+    fn reflection_same_side() {
+        let vector = v2!(3, -3; f32);
+        let surface_normal = v2!(0, 1; f32);
+
+        let reflected = vector.reflect(surface_normal);
+
+        assert_eq!(reflected, v2!(3, 3; f32))
+    }
+
+    #[test]
+    fn reflection_opposite_side() {
+        let vector = v2!(3, -3; f32);
+        let surface_normal = v2!(0, -1; f32);
+
+        let reflected = vector.reflect(surface_normal);
+
+        assert_eq!(reflected, v2!(3, 3; f32))
     }
 }

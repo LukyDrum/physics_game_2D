@@ -1,15 +1,16 @@
 use std::collections::LinkedList;
 
+use num_traits::Float;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
 
+use crate::game::GameBody;
 use crate::math::Vector2;
 use crate::{physics::sph::Particle, utility::LookUp};
 
 pub struct SimulationConfig {
     pub gravity: Vector2<f32>,
-    pub collision_damping: f32,
     pub smoothing_radius: f32,
 }
 
@@ -17,8 +18,7 @@ impl SimulationConfig {
     /// NOT implementation of Default trait, but a custom `const` function simulating default
     pub const fn default() -> Self {
         SimulationConfig {
-            gravity: Vector2::new(0.0, 9.8),
-            collision_damping: 0.2,
+            gravity: Vector2::new(0.0, 981.0), // Cm per second
             smoothing_radius: 12.0,
         }
     }
@@ -32,12 +32,18 @@ fn kernel(dist: f32, radius: f32) -> f32 {
     (1.0 - dist / radius).max(0.0).powi(2)
 }
 
+const NEAR_MAX: f32 = 10000.0;
+
 fn near_kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
         return 0.0;
     }
+    if dist == 0.0 {
+        return NEAR_MAX;
+    }
 
-    (1.0 - dist / radius).max(0.0).powi(3)
+    let radius_inv = 1.0 / radius;
+    (radius_inv / dist - radius_inv).max(NEAR_MAX)
 }
 
 fn kernel_derivative(dist: f32, radius: f32) -> f32 {
@@ -52,8 +58,11 @@ fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
     if dist > radius {
         return 0.0;
     }
+    if dist == 0.0 {
+        return -NEAR_MAX;
+    }
 
-    (3.0 * (dist - radius)) / (radius.powi(3))
+    (-1.0 / radius * dist.powi(2)).max(-NEAR_MAX)
 }
 
 /// This a helper structure which references fields from the `Particle` struct.
@@ -64,6 +73,7 @@ fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
 struct DensityIntermediateReadOnly {
     predicted_position: Vector2<f32>,
     mass: f32,
+    id: u32,
 }
 
 /// Contains read only fields needed for pressure calculations.
@@ -75,6 +85,7 @@ struct PressureIntermediateReadOnly {
     mass: f32,
     sph_density: f32,
     sph_near_density: f32,
+    id: u32,
 }
 
 pub struct Sph {
@@ -82,6 +93,8 @@ pub struct Sph {
     pub lookup: LookUp<usize>,
     pub gravity: Vector2<f32>,
     pub smoothing_radius: f32,
+
+    id_counter: u32,
 }
 
 impl Sph {
@@ -91,11 +104,20 @@ impl Sph {
             lookup: LookUp::new(width, height, config.smoothing_radius),
             gravity: config.gravity,
             smoothing_radius: config.smoothing_radius,
+            id_counter: 0,
         }
     }
 
-    pub fn add_particle(&mut self, particle: Particle) {
+    pub fn add_particle(&mut self, mut particle: Particle) {
+        particle.id = self.id_counter;
         self.particles.push(particle);
+        self.id_counter += 1;
+    }
+
+    fn add_gravity_force(&mut self) {
+        self.particles
+            .par_iter_mut()
+            .for_each(|p| p.add_force(self.gravity * p.mass));
     }
 
     fn calculate_densities(&mut self) {
@@ -106,6 +128,7 @@ impl Sph {
             .map(|p| DensityIntermediateReadOnly {
                 predicted_position: p.predicted_position,
                 mass: p.mass(),
+                id: p.id,
             })
             .collect_into_vec(&mut intermediates_read_only);
 
@@ -116,12 +139,16 @@ impl Sph {
                 .iter()
                 .map(|index| {
                     let other_inter = &intermediates_read_only[*index];
-                    let (other_pos, other_mass) =
-                        (other_inter.predicted_position, other_inter.mass);
-                    let dist = (p.predicted_position - other_pos).length();
-                    let density = other_mass * kernel(dist, self.smoothing_radius);
-                    let near_density = other_mass * near_kernel(dist, self.smoothing_radius);
-                    (density, near_density)
+                    if p.id == other_inter.id {
+                        (0.0, 0.0)
+                    } else {
+                        let (other_pos, other_mass) =
+                            (other_inter.predicted_position, other_inter.mass);
+                        let dist = (p.predicted_position - other_pos).length();
+                        let density = other_mass * kernel(dist, self.smoothing_radius);
+                        let near_density = other_mass * near_kernel(dist, self.smoothing_radius);
+                        (density, near_density)
+                    }
                 })
                 .fold((0.0, 0.0), |acc, e| (acc.0 + e.0, acc.1 + e.1));
         });
@@ -138,6 +165,7 @@ impl Sph {
                 mass: p.mass(),
                 sph_density: p.sph_density,
                 sph_near_density: p.sph_near_density,
+                id: p.id,
             })
             .collect_into_vec(&mut intermediates_read_only);
 
@@ -151,14 +179,19 @@ impl Sph {
                 .iter()
                 .map(|index| {
                     let other_inter = &intermediates_read_only[*index];
-                    let pos_diff = other_inter.predicted_position - pos;
-                    let dir = pos_diff.normalized();
-                    let other_pressure = other_inter.pressure;
-                    let other_near_pressure = other_inter.near_pressure;
 
-                    if dir.is_nan() || other_inter.sph_density == 0.0 {
+                    if other_inter.sph_density == 0.0 || p.id == other_inter.id {
                         Vector2::zero()
                     } else {
+                        let other_pressure = other_inter.pressure;
+                        let other_near_pressure = other_inter.near_pressure;
+                        let pos_diff = other_inter.predicted_position - pos;
+
+                        let dir = if pos_diff.is_zero() {
+                            Vector2::<f32>::random_unit()
+                        } else {
+                            pos_diff.normalized()
+                        };
                         let dist = pos_diff.length();
                         let shared_pressure = (pressure + other_pressure)
                             / (2.0 * other_inter.sph_density)
@@ -175,6 +208,23 @@ impl Sph {
         });
     }
 
+    fn resolve_collisions(&mut self, bodies: &Vec<Box<dyn GameBody>>) {
+        self.particles.par_iter_mut().for_each(|p| {
+            for body in bodies {
+                if body.is_inside(p.position) {
+                    // Move particle to surface
+                    let surface_point = body.closest_surface_point(p.position);
+                    p.position = surface_point.point;
+                    p.velocity = p.velocity.reflect(surface_point.surface_normal);
+                    p.velocity *= 0.3;
+
+                    // Lets suppose that the particle can only be inside a single body at a time
+                    break;
+                }
+            }
+        });
+    }
+
     fn setup_lookup(&mut self) {
         self.lookup.clear();
         for index in 0..self.particles.len() {
@@ -183,7 +233,7 @@ impl Sph {
         }
     }
 
-    pub fn step(&mut self, delta_time: f32) {
+    pub fn step(&mut self, delta_time: f32, bodies: &Vec<Box<dyn GameBody>>) {
         self.setup_lookup();
 
         let dt = delta_time;
@@ -191,28 +241,17 @@ impl Sph {
         self.particles
             .par_iter_mut()
             .for_each(|p| p.predict_position(dt));
+        // Add gravity force
+        self.add_gravity_force();
         self.calculate_densities();
         self.apply_pressures();
+        // Apply accumulated force and move particle by it
         self.particles.par_iter_mut().for_each(|p| {
-            p.add_force(self.gravity * p.mass());
             p.apply_accumulated_force(dt);
             p.move_by_velocity(dt);
         });
-    }
 
-    /// Used for the marching squares algorithm.
-    /// Returns the concentration of particles at the specified position.
-    pub fn concentration_at_position(&self, position: Vector2<f32>, radius: f32) -> f32 {
-        let neighbors = self.lookup.get_neighbors_in_radius(&position, radius);
-
-        neighbors
-            .iter()
-            .map(|index| {
-                let p_pos = self.particles[*index].position;
-                let dist = (position - p_pos).length();
-                radius / dist
-            })
-            .sum()
+        self.resolve_collisions(bodies);
     }
 
     pub fn get_particles_around_position(

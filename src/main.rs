@@ -1,93 +1,27 @@
 mod math;
 mod physics;
 mod rendering;
-mod speed_test;
+// mod speed_test;
 mod utility;
+mod game;
 
+use game::Game;
 use macroquad::prelude::*;
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::math::Vector2;
 use crate::physics::sph::*;
-use crate::utility::runge_kutta;
-use rendering::{Color, MarchingSquaresRenderer, Renderer, ScalarFieldRenderer};
 
 const WIDTH: f32 = 500.0;
 const HEIGHT: f32 = 500.0;
 
-const SIM_CONF: SimulationConfig = SimulationConfig::default();
-const RADIUS: f32 = 2.5;
-
-const OBSTACLE_TL: Vec2 = Vec2::new(350.0, 200.0);
-const OBSTACLE_BR: Vec2 = Vec2::new(450.0, 450.0);
-
 /// Creates the window configruation for Macroquad
 fn window_conf() -> Conf {
     Conf {
-        window_title: "SPH".to_owned(),
+        window_title: "Physics Game".to_owned(),
         window_width: WIDTH as i32,
         window_height: HEIGHT as i32,
-        window_resizable: false,
+        window_resizable: true,
         ..Default::default()
     }
-}
-
-/// Gets the difference in time from last frame.
-fn delta_time() -> f32 {
-    // get_frame_time()
-    1.0 / 15.0
-}
-
-/// Checks boundaries and adjusts the particles velocitiy accordingly.
-fn resolve_boundaries(particle: &mut Particle) {
-    // TODO: Rewrite boundary checks - this is horrible
-    let x = particle.position.x;
-    let y = particle.position.y;
-
-    let mut flip_x = false;
-    let mut flip_y = false;
-
-    if !(RADIUS..=WIDTH - RADIUS).contains(&x) {
-        flip_x = true;
-    }
-    if !(RADIUS..=HEIGHT - RADIUS).contains(&y) {
-        flip_y = true;
-    }
-
-    // Hacky check for the obstacle
-    if x + RADIUS > OBSTACLE_TL.x
-        && x - RADIUS < OBSTACLE_BR.x
-        && y + RADIUS > OBSTACLE_TL.y
-        && y - RADIUS < OBSTACLE_BR.y
-    {
-        if x + RADIUS > OBSTACLE_TL.x && x - RADIUS < OBSTACLE_BR.x {
-            flip_x = true;
-        }
-        if y + RADIUS > OBSTACLE_TL.y && y - RADIUS < OBSTACLE_BR.y {
-            flip_y = true;
-        }
-    }
-
-    if flip_x {
-        particle.velocity.flip_x();
-        particle.position.x = runge_kutta(particle.position.x, delta_time(), particle.velocity.x);
-        particle.velocity.x *= SIM_CONF.collision_damping;
-    }
-    if flip_y {
-        particle.velocity.flip_y();
-        particle.position.y = runge_kutta(particle.position.y, delta_time(), particle.velocity.y);
-        particle.velocity.y *= SIM_CONF.collision_damping;
-    }
-}
-
-/// The "heavy" part of the game (simulation and such) that does not require user interaction.
-/// Given the state of the individual systems it can progress.
-/// Is `pub` for use in speed tests.
-pub fn simulation_core(sph: &mut Sph) {
-    sph.step(delta_time());
-    sph.particles.par_iter_mut().for_each(|p| {
-        resolve_boundaries(p);
-    });
 }
 
 /// The coordinate system goes from (0, 0) = top-left to (WIDTH, HEIGHT) = bottom-right.
@@ -100,60 +34,13 @@ pub fn simulation_core(sph: &mut Sph) {
 ///  (0, HEIGHT) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut sph = Sph::new(SIM_CONF, WIDTH, HEIGHT);
-
-    let mut renderers: Vec<Box<dyn Renderer>> = vec![
-        Box::new(
-            ScalarFieldRenderer::new(
-                WIDTH as usize,
-                HEIGHT as usize,
-                10.0,
-                SIM_CONF.smoothing_radius * 0.75,
-            )
-            .unwrap(),
-        ),
-        Box::new(
-            MarchingSquaresRenderer::new(WIDTH as usize, HEIGHT as usize, 10.0, 10.0, 0.5).unwrap(),
-        ),
-    ];
-    let draw_particles = false;
+    let mut game = Game::new(WIDTH as usize, HEIGHT as usize);
 
     loop {
-        clear_background(GRAY);
-
-        // INPUT
-        if is_mouse_button_down(MouseButton::Left) {
-            let mouse_pos = mouse_position();
-            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1))
-                .with_color(Color::rgb(0, 0, 255));
-            sph.add_particle(new_particle);
-        }
-        if is_mouse_button_down(MouseButton::Right) {
-            let mouse_pos = mouse_position();
-            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1))
-                .with_color(Color::rgb(255, 0, 0));
-            sph.add_particle(new_particle);
-        }
-
-        // CORE
-        simulation_core(&mut sph);
-
-        // Draw
-        let renderer = &mut renderers[1];
-        renderer.setup(&sph);
-        renderer.draw();
-
-        if draw_particles {
-            for p in &sph.particles {
-                draw_circle(p.position.x, p.position.y, RADIUS, WHITE);
-            }
-        }
-
-        // Draw obstacle
-        let w = OBSTACLE_BR.x - OBSTACLE_TL.x;
-        let h = OBSTACLE_BR.y - OBSTACLE_TL.y;
-        draw_rectangle(OBSTACLE_TL.x, OBSTACLE_TL.y, w, h, YELLOW);
-
+        game.handle_input();
+        game.update();
+        game.draw();
+        
         println!("FPS: {}", get_fps());
         next_frame().await
     }

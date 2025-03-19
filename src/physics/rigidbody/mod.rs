@@ -1,11 +1,9 @@
 use crate::math::Vector2;
 
 mod r#box;
-mod container;
 mod line;
 mod triangle;
 
-pub use container::Container;
 pub use line::Line;
 pub use r#box::RBox;
 pub use triangle::Triangle;

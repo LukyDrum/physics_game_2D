@@ -6,8 +6,8 @@ use macroquad::{
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{Body, Container, Line, RBox, Triangle},
-    rendering::{Color, Draw, MarchingSquaresRenderer, Renderer, ScalarFieldRenderer},
+    physics::rigidbody::{Body, Line, RBox, Triangle},
+    rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     Particle, Sph,
 };
 
@@ -15,7 +15,6 @@ pub trait GameBody: Body + Draw + Sync {}
 impl GameBody for Line {}
 impl GameBody for RBox {}
 impl GameBody for Triangle {}
-impl GameBody for Container {}
 
 pub struct Game {
     // Physics stuff

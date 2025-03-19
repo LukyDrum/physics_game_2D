@@ -1,6 +1,6 @@
 use crate::math::{v2, Vector2};
 
-use super::{Body, Line, SurfacePoint, Triangle};
+use super::{Body, Line, CollisionInfo, Triangle};
 
 pub struct RBox {
     pub center: Vector2<f32>,
@@ -76,11 +76,11 @@ impl RBox {
 
 impl Body for RBox {
     /// Find the closest point on the surface of the Box.
-    fn closest_surface_point(&self, point: Vector2<f32>) -> SurfacePoint {
-        let mut closest_point = self.lines[0].closest_surface_point(point);
+    fn collision_info(&self, point: Vector2<f32>) -> CollisionInfo {
+        let mut closest_point = self.lines[0].collision_info(point);
         let mut closest_dist_sq = (closest_point.point - point).length_squared();
         for line in &self.lines[1..] {
-            let surface_point = line.closest_surface_point(point);
+            let surface_point = line.collision_info(point);
             let dist_sq = (surface_point.point - point).length_squared();
             if dist_sq < closest_dist_sq {
                 closest_point = surface_point;
@@ -93,5 +93,9 @@ impl Body for RBox {
 
     fn is_inside(&self, point: Vector2<f32>) -> bool {
         self.triangulation[0].is_inside(point) || self.triangulation[1].is_inside(point)
+    }
+
+    fn center_of_mass(&self) -> Vector2<f32> {
+        self.center
     }
 }

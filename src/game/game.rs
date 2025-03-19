@@ -7,7 +7,7 @@ use macroquad::{
 use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{Body, Container, Line, RBox, Triangle},
-    rendering::{Color, Draw, Renderer, ScalarFieldRenderer},
+    rendering::{Color, Draw, MarchingSquaresRenderer, Renderer, ScalarFieldRenderer},
     Particle, Sph,
 };
 
@@ -20,6 +20,9 @@ impl GameBody for Container {}
 pub struct Game {
     // Physics stuff
     time_step: f32,
+    /// This will divide the `time_step` into **n** parts and perform **n** steps of the physical simulation
+    /// with those time steps. Leads to better accuracy at cost of performance.
+    step_division: u8,
     fluid_system: Sph,
 
     bodies: Vec<Box<dyn GameBody>>,
@@ -38,16 +41,30 @@ impl Game {
         let (f_width, f_height) = (width as f32, height as f32);
 
         let sph = Sph::new(f_width, f_height);
-        let renderer_step_size = f_width / 100.0;
+        let renderer_step_size = f_width / 75.0;
         // Add basic container
-        let bodies: Vec<Box<dyn GameBody>> = vec![Box::new(Container::new(
-            v2!(f_width * 0.5, f_height * 0.5),
-            f_width,
-            f_height,
-        ))];
+        let bodies: Vec<Box<dyn GameBody>> = vec![
+            /*
+            Box::new(Container::new(
+                v2!(f_width * 0.5, f_height * 0.5),
+                f_width,
+                f_height,
+            )),
+            */
+            Box::new(RBox::new(v2!(10.0, f_height * 0.5), 15.0, f_height)),
+            Box::new(RBox::new(v2!(f_width - 10.0, f_height * 0.5), 15.0, f_height)),
+            Box::new(RBox::new(v2!(f_width * 0.5, 10.0), f_width, 15.0)),
+            Box::new(RBox::new(v2!(f_width * 0.5, f_height - 10.0), f_width, 15.0)),
+            Box::new(Triangle::new(
+                v2!(f_width * 0.5, 200.0),
+                v2!(f_width * 0.5 - 100.0, 300.0),
+                v2!(f_width * 0.5 + 100.0, 300.0),
+            )),
+        ];
 
         Game {
             time_step: 0.01,
+            step_division: 2,
             fluid_system: sph,
             bodies,
 
@@ -55,8 +72,14 @@ impl Game {
             gameview_width: f_width,
             gameview_height: f_height,
             renderer: Box::new(
-                ScalarFieldRenderer::new(width, height, renderer_step_size, renderer_step_size)
-                    .unwrap(),
+                MarchingSquaresRenderer::new(
+                    width,
+                    height,
+                    renderer_step_size,
+                    renderer_step_size,
+                    0.5,
+                )
+                .unwrap(),
             ),
         }
     }
@@ -76,8 +99,12 @@ impl Game {
         }
     }
 
+    /// Performs a single update of the game. Should correspond to a single frame.
     pub fn update(&mut self) {
-        self.fluid_system.step(self.time_step, &self.bodies);
+        let dt = self.time_step / self.step_division as f32;
+        for _ in 0..self.step_division {
+            self.fluid_system.step(dt, &self.bodies);
+        }
 
         // Setup graphics
         self.renderer.setup(&self.fluid_system);

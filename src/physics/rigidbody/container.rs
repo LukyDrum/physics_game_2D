@@ -1,6 +1,6 @@
 use crate::math::{v2, Vector2};
 
-use super::{Body, SurfacePoint};
+use super::{Body, CollisionInfo};
 
 /// Axis-aligned box that keeps stuff INSIDE it.
 pub struct Container {
@@ -22,7 +22,7 @@ impl Container {
 const MAX_OFFSET: f32 = 5.0;
 
 impl Body for Container {
-    fn closest_surface_point(&self, point: Vector2<f32>) -> SurfacePoint {
+    fn collision_info(&self, point: Vector2<f32>) -> CollisionInfo {
         let mut x = point.x.clamp(
             self.center.x - self.half_width,
             self.center.x + self.half_width,
@@ -51,7 +51,7 @@ impl Body for Container {
             }
         }
 
-        SurfacePoint {
+        CollisionInfo {
             point: v2!(x, y),
             surface_normal,
         }
@@ -61,5 +61,9 @@ impl Body for Container {
     fn is_inside(&self, point: Vector2<f32>) -> bool {
         let diff = (self.center - point).abs();
         diff.x > self.half_width || diff.y > self.half_height
+    }
+
+    fn center_of_mass(&self) -> Vector2<f32> {
+        self.center
     }
 }

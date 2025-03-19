@@ -57,10 +57,6 @@ impl MarchingSquaresRenderer {
         influence_radius: f32,
         draw_threshold: f32,
     ) -> Result<Self, ()> {
-        if screen_width as f32 % step_size != 0.0 || screen_height as f32 % step_size != 0.0 {
-            return Err(());
-        }
-
         let field_width = (screen_width as f32 / step_size) as usize + 1;
         let field_height = (screen_height as f32 / step_size) as usize + 1;
 
@@ -194,7 +190,12 @@ impl Renderer for MarchingSquaresRenderer {
                 .enumerate()
                 .map(|(index, p)| {
                     let dist = (p.position - pos).length();
-                    (index, (self.influence_radius / dist, p.color))
+                    let influence = if dist > self.influence_radius {
+                        0.0
+                    } else {
+                        self.influence_radius / dist
+                    };
+                    (index, (influence, p.color))
                 })
                 .fold(
                     SamplePoint::default(),

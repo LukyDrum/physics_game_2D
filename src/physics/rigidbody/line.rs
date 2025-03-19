@@ -1,6 +1,6 @@
-use crate::math::Vector2;
+use crate::math::{v2, Vector2};
 
-use super::{Body, SurfacePoint};
+use super::{Body, CollisionInfo};
 
 pub struct Line {
     pub start: Vector2<f32>,
@@ -23,13 +23,13 @@ impl Line {
 }
 
 impl Body for Line {
-    fn closest_surface_point(&self, point: Vector2<f32>) -> SurfacePoint {
+    fn collision_info(&self, point: Vector2<f32>) -> CollisionInfo {
         let start_to_point = point - self.start;
         let dot = self.vector.dot(start_to_point);
         let t = (dot / self.vector.length_squared()).clamp(0.0, 1.0);
 
         let point = self.start + self.vector * t;
-        SurfacePoint {
+        CollisionInfo {
             point,
             surface_normal: self.unit_normal,
         }
@@ -38,6 +38,10 @@ impl Body for Line {
     /// Always false as a line does not have any inside
     fn is_inside(&self, _point: Vector2<f32>) -> bool {
         false
+    }
+
+    fn center_of_mass(&self) -> Vector2<f32> {
+        v2!((self.start.x + self.end.x) / 2.0, (self.start.y + self.end.y) / 2.0)
     }
 }
 
@@ -54,7 +58,7 @@ mod tests {
         let point = Vector2::new(3.0, 4.0);
 
         assert_eq!(
-            line.closest_surface_point(point).point,
+            line.collision_info(point).point,
             Vector2::new(3.0, 0.0)
         )
     }

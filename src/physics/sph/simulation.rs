@@ -1,5 +1,6 @@
 use std::collections::LinkedList;
 
+use num_traits::Signed;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
@@ -7,7 +8,6 @@ use rayon::iter::{
 use crate::game::GameBody;
 use crate::math::Vector2;
 use crate::{physics::sph::Particle, utility::LookUp};
-
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -17,7 +17,7 @@ fn kernel(dist: f32, radius: f32) -> f32 {
     (1.0 - dist / radius).max(0.0).powi(2)
 }
 
-const NEAR_MAX: f32 = 2000.0;
+const NEAR_MAX: f32 = 1.0;
 
 fn near_kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -204,13 +204,15 @@ impl Sph {
             for body in bodies {
                 if body.is_inside(p.position) {
                     // Move particle to surface
-                    let surface_point = body.closest_surface_point(p.position);
-                    p.position = surface_point.point;
-                    p.velocity = p.velocity.reflect(surface_point.surface_normal);
-                    p.velocity *= 0.3;
-
-                    // Lets suppose that the particle can only be inside a single body at a time
-                    break;
+                    let collision_info = body.collision_info(p.position);
+                    let elasticity = 0.1;
+                    let impulse =
+                        -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
+                    // Let's say that body has mass of 100
+                    let impulse = impulse / (1.0 / p.mass() + 1.0 / 100.0);
+                    
+                    p.velocity = p.velocity + collision_info.surface_normal * (impulse / p.mass());
+                    p.position = collision_info.point;
                 }
             }
         });
@@ -242,7 +244,11 @@ impl Sph {
             p.move_by_velocity(dt);
         });
 
+        // Do collision detection and resolution
         self.resolve_collisions(bodies);
+        self.particles.par_iter_mut().for_each(|p| {
+            p.move_by_velocity(dt);
+        });
     }
 
     pub fn get_particles_around_position(

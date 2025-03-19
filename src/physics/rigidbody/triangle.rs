@@ -1,6 +1,6 @@
 use crate::math::{v2, Vector2};
 
-use super::{Body, Line, SurfacePoint};
+use super::{Body, Line, CollisionInfo};
 
 pub struct Triangle {
     pub a: Vector2<f32>,
@@ -9,6 +9,7 @@ pub struct Triangle {
 
     // Cached values to speed up calculation
     pub(crate) lines: [Line; 3],
+    pub(crate) center_of_mass: Vector2<f32>,
 }
 
 impl Triangle {
@@ -18,22 +19,33 @@ impl Triangle {
             b,
             c,
             lines: [Line::new(a, b), Line::new(b, c), Line::new(c, a)],
+            center_of_mass: Self::get_center_of_mass(a, b, c),
         }
     }
 
-    fn setup_lines(&mut self) {
+    fn get_center_of_mass(a: Vector2<f32>, b: Vector2<f32>, c: Vector2<f32>) -> Vector2<f32> {
+        let x = (a.x + b.x + c.x) / 3.0;
+        let y = (a.y + b.y + c.y) / 3.0;
+        v2!(x, y)
+    }
+
+    fn update_cached_values(&mut self) {
+        // Setup lines
         self.lines[0] = Line::new(self.a, self.b);
         self.lines[1] = Line::new(self.b, self.c);
         self.lines[2] = Line::new(self.c, self.a);
+
+        // Setup center of mass
+        self.center_of_mass = Self::get_center_of_mass(self.a, self.b, self.c);
     }
 }
 
 impl Body for Triangle {
-    fn closest_surface_point(&self, point: Vector2<f32>) -> SurfacePoint {
-        let mut closest_point = self.lines[0].closest_surface_point(point);
+    fn collision_info(&self, point: Vector2<f32>) -> CollisionInfo {
+        let mut closest_point = self.lines[0].collision_info(point);
         let mut closest_dist_sq = (closest_point.point - point).length_squared();
         for line in &self.lines[1..] {
-            let surface_point = line.closest_surface_point(point);
+            let surface_point = line.collision_info(point);
             let dist_sq = (surface_point.point - point).length_squared();
             if dist_sq < closest_dist_sq {
                 closest_point = surface_point;
@@ -62,5 +74,9 @@ impl Body for Triangle {
         let u = 1.0 - v - w;
 
         v >= 0.0 && w >= 0.0 && u >= 0.0
+    }
+
+    fn center_of_mass(&self) -> Vector2<f32> {
+        self.center_of_mass
     }
 }

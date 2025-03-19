@@ -19,6 +19,7 @@ where
     current_value + (k1 + k2 * 2.0 + k3 * 2.0 + k4) * (step / 6.0)
 }
 
+/// Calculates the average of the slice only from values which are non-zero.
 pub fn non_zero_average<T>(values: &[T]) -> T
 where
     T: Add + Div<Output = T> + Num + Copy,

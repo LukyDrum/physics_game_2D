@@ -1,6 +1,5 @@
 use std::collections::LinkedList;
 
-use num_traits::Signed;
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
@@ -17,7 +16,7 @@ fn kernel(dist: f32, radius: f32) -> f32 {
     (1.0 - dist / radius).max(0.0).powi(2)
 }
 
-const NEAR_MAX: f32 = 1.0;
+const NEAR_MAX: f32 = 10_000.0;
 
 fn near_kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {

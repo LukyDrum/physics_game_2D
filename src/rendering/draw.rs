@@ -1,17 +1,7 @@
-use macroquad::{
-    math::Vec2,
-    shapes::{draw_line, draw_triangle},
-};
+use macroquad::shapes::{draw_line, draw_triangle};
 
-use super::Color;
-use crate::{
-    math::Vector2,
-    physics::rigidbody::{Line, RBox, Triangle},
-};
-
-fn vector2_as_mq(vector: Vector2<f32>) -> Vec2 {
-    Vec2::new(vector.x, vector.y)
-}
+use super::{Color, VectorAsMQ};
+use crate::physics::rigidbody::{Line, BoxBody, TriangleBody};
 
 /// Implementors of this trait have the ability to be drawn to the screen.
 pub trait Draw {
@@ -28,7 +18,7 @@ impl Draw for Line {
     }
 }
 
-impl Draw for RBox {
+impl Draw for BoxBody {
     fn draw(&self) {
         for trian in &self.triangulation {
             trian.draw();
@@ -36,12 +26,12 @@ impl Draw for RBox {
     }
 }
 
-impl Draw for Triangle {
+impl Draw for TriangleBody {
     fn draw(&self) {
         draw_triangle(
-            vector2_as_mq(self.a),
-            vector2_as_mq(self.b),
-            vector2_as_mq(self.c),
+            self.a.as_mq(),
+            self.b.as_mq(),
+            self.c.as_mq(),
             BLACK.as_mq(),
         );
     }

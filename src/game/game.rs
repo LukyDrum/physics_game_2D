@@ -1,20 +1,18 @@
 use macroquad::{
-    input::{is_mouse_button_down, mouse_position, MouseButton},
-    shapes::draw_circle,
-    window::clear_background,
+    color::RED, input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton}, models::draw_grid, shapes::draw_circle, window::clear_background
 };
 
 use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{Body, BoxBody, Line, TriangleBody},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
-    Particle, Sph,
+    Particle, Sph, WIDTH,
 };
 
 pub trait GameBody: Body + Draw + Sync {}
 impl GameBody for Line {}
-impl GameBody for RBox {}
-impl GameBody for Triangle {}
+impl GameBody for BoxBody {}
+impl GameBody for TriangleBody {}
 
 pub struct Game {
     // Physics stuff
@@ -23,7 +21,8 @@ pub struct Game {
     /// with those time steps. Leads to better accuracy at cost of performance.
     step_division: u8,
     fluid_system: Sph,
-
+    /// If the physics are currently being simulated or not
+    is_simulating: bool,
     bodies: Vec<Box<dyn GameBody>>,
 
     // GUI things
@@ -31,6 +30,7 @@ pub struct Game {
     gameview_width: f32,
     gameview_height: f32,
     renderer: Box<dyn Renderer>,
+    draw_particles: bool,
 }
 
 impl Game {
@@ -40,7 +40,7 @@ impl Game {
         let (f_width, f_height) = (width as f32, height as f32);
 
         let sph = Sph::new(f_width, f_height);
-        let renderer_step_size = f_width / 75.0;
+        let renderer_step_size = f_width / 100.0;
         // Add basic container
         let bodies: Vec<Box<dyn GameBody>> = vec![
             /*
@@ -50,11 +50,19 @@ impl Game {
                 f_height,
             )),
             */
-            Box::new(RBox::new(v2!(10.0, f_height * 0.5), 15.0, f_height)),
-            Box::new(RBox::new(v2!(f_width - 10.0, f_height * 0.5), 15.0, f_height)),
-            Box::new(RBox::new(v2!(f_width * 0.5, 10.0), f_width, 15.0)),
-            Box::new(RBox::new(v2!(f_width * 0.5, f_height - 10.0), f_width, 15.0)),
-            Box::new(Triangle::new(
+            Box::new(BoxBody::new(v2!(10.0, f_height * 0.5), 15.0, f_height)),
+            Box::new(BoxBody::new(
+                v2!(f_width - 10.0, f_height * 0.5),
+                15.0,
+                f_height,
+            )),
+            Box::new(BoxBody::new(v2!(f_width * 0.5, 10.0), f_width, 15.0)),
+            Box::new(BoxBody::new(
+                v2!(f_width * 0.5, f_height - 10.0),
+                f_width,
+                15.0,
+            )),
+            Box::new(TriangleBody::new(
                 v2!(f_width * 0.5, 200.0),
                 v2!(f_width * 0.5 - 100.0, 300.0),
                 v2!(f_width * 0.5 + 100.0, 300.0),
@@ -65,6 +73,7 @@ impl Game {
             time_step: 0.01,
             step_division: 2,
             fluid_system: sph,
+            is_simulating: true,
             bodies,
 
             gameview_offset: Vector2::zero(),
@@ -75,11 +84,12 @@ impl Game {
                     width,
                     height,
                     renderer_step_size,
-                    renderer_step_size,
-                    0.5,
+                    renderer_step_size * 1.5,
+                    0.4,
                 )
                 .unwrap(),
             ),
+            draw_particles: false,
         }
     }
 
@@ -96,13 +106,20 @@ impl Game {
                 .with_color(Color::rgb(255, 0, 0));
             self.fluid_system.add_particle(new_particle);
         }
+
+        // Pause / Resume
+        if is_key_pressed(KeyCode::Space) {
+            self.is_simulating = !self.is_simulating;
+        }
     }
 
     /// Performs a single update of the game. Should correspond to a single frame.
     pub fn update(&mut self) {
-        let dt = self.time_step / self.step_division as f32;
-        for _ in 0..self.step_division {
-            self.fluid_system.step(dt, &self.bodies);
+        if self.is_simulating {
+            let dt = self.time_step / self.step_division as f32;
+            for _ in 0..self.step_division {
+                self.fluid_system.step(dt, &self.bodies);
+            }
         }
 
         // Setup graphics
@@ -117,13 +134,15 @@ impl Game {
         }
 
         // Draw individual particles as circles
-        for p in &self.fluid_system.particles {
-            draw_circle(
-                p.position.x,
-                p.position.y,
-                2.0,
-                Color::rgb(255, 255, 255).as_mq(),
-            );
+        if self.draw_particles {
+            for p in &self.fluid_system.particles {
+                draw_circle(
+                    p.position.x,
+                    p.position.y,
+                    2.0,
+                    Color::rgb(255, 255, 255).as_mq(),
+                );
+            }
         }
     }
 

@@ -1,21 +1,21 @@
 use crate::math::{v2, Vector2};
 
-use super::{Body, Line, CollisionInfo, Triangle};
+use super::{Body, Line, CollisionInfo, TriangleBody};
 
-pub struct RBox {
+pub struct BoxBody {
     pub center: Vector2<f32>,
     pub width: f32,
     pub height: f32,
 
     // Chached values for faster computations
     pub(crate) lines: [Line; 4],
-    pub(crate) triangulation: [Triangle; 2],
+    pub(crate) triangulation: [TriangleBody; 2],
 }
 
-impl RBox {
+impl BoxBody {
     pub fn new(center: Vector2<f32>, width: f32, height: f32) -> Self {
         // Init with empty cache values, then set them up
-        let mut rbox = RBox {
+        let mut rbox = BoxBody {
             center,
             width,
             height,
@@ -26,8 +26,8 @@ impl RBox {
                 Line::new(Vector2::zero(), Vector2::zero()),
             ],
             triangulation: [
-                Triangle::new(Vector2::zero(), Vector2::zero(), Vector2::zero()),
-                Triangle::new(Vector2::zero(), Vector2::zero(), Vector2::zero()),
+                TriangleBody::new(Vector2::zero(), Vector2::zero(), Vector2::zero()),
+                TriangleBody::new(Vector2::zero(), Vector2::zero(), Vector2::zero()),
             ],
         };
         rbox.setup_lines();
@@ -69,12 +69,12 @@ impl RBox {
         let br = self.lines[2].start;
         let bl = self.lines[3].start;
 
-        self.triangulation[0] = Triangle::new(tl, tr, bl);
-        self.triangulation[1] = Triangle::new(br, bl, tr);
+        self.triangulation[0] = TriangleBody::new(tl, tr, bl);
+        self.triangulation[1] = TriangleBody::new(br, bl, tr);
     }
 }
 
-impl Body for RBox {
+impl Body for BoxBody {
     /// Find the closest point on the surface of the Box.
     fn collision_info(&self, point: Vector2<f32>) -> CollisionInfo {
         let mut closest_point = self.lines[0].collision_info(point);

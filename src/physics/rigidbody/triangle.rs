@@ -2,7 +2,7 @@ use crate::math::{v2, Vector2};
 
 use super::{Body, Line, CollisionInfo};
 
-pub struct Triangle {
+pub struct TriangleBody {
     pub a: Vector2<f32>,
     pub b: Vector2<f32>,
     pub c: Vector2<f32>,
@@ -12,9 +12,9 @@ pub struct Triangle {
     pub(crate) center_of_mass: Vector2<f32>,
 }
 
-impl Triangle {
-    pub fn new(a: Vector2<f32>, b: Vector2<f32>, c: Vector2<f32>) -> Triangle {
-        Triangle {
+impl TriangleBody {
+    pub fn new(a: Vector2<f32>, b: Vector2<f32>, c: Vector2<f32>) -> TriangleBody {
+        TriangleBody {
             a,
             b,
             c,
@@ -40,7 +40,7 @@ impl Triangle {
     }
 }
 
-impl Body for Triangle {
+impl Body for TriangleBody {
     fn collision_info(&self, point: Vector2<f32>) -> CollisionInfo {
         let mut closest_point = self.lines[0].collision_info(point);
         let mut closest_dist_sq = (closest_point.point - point).length_squared();

@@ -6,7 +6,7 @@ use macroquad::{
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{Body, Line, RBox, Triangle},
+    physics::rigidbody::{Body, BoxBody, Line, TriangleBody},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     Particle, Sph,
 };

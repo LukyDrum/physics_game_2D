@@ -5,8 +5,8 @@ mod line;
 mod triangle;
 
 pub use line::Line;
-pub use r#box::RBox;
-pub use triangle::Triangle;
+pub use r#box::BoxBody;
+pub use triangle::TriangleBody;
 
 pub struct CollisionInfo {
     pub point: Vector2<f32>,

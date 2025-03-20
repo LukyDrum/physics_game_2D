@@ -37,9 +37,9 @@ where
     fn add(self, rhs: Matrix<T, R, C>) -> Self::Output {
         let mut new_inner = [[T::default(); C]; R];
 
-        for row in 0..R {
-            for col in 0..C {
-                new_inner[row][col] = self.inner[row][col] + rhs.inner[row][col];
+        for (row_index, row) in new_inner.iter_mut().enumerate().take(R) {
+            for (col_index, value) in row.iter_mut().enumerate().take(C) {
+                *value = self.inner[row_index][col_index] + rhs.inner[row_index][col_index];
             }
         }
 
@@ -57,13 +57,13 @@ where
     fn mul(self, rhs: Matrix<T, C, Q>) -> Self::Output {
         let mut new_inner = [[T::default(); Q]; R];
 
-        for row in 0..R {
-            for col in 0..Q {
+        for (row_index, row) in new_inner.iter_mut().enumerate().take(R) {
+            for (col_index, value) in row.iter_mut().enumerate().take(Q) {
                 let mut sum = T::default();
                 for i in 0..C {
-                    sum += self.inner[row][i] * rhs.inner[i][col];
+                    sum += self.inner[row_index][i] * rhs.inner[i][col_index];
                 }
-                new_inner[row][col] = sum;
+                *value = sum;
             }
         }
 
@@ -81,9 +81,9 @@ where
     fn mul(self, rhs: T) -> Self::Output {
         let mut new_inner = [[T::default(); C]; R];
 
-        for row in 0..R {
-            for col in 0..C {
-                new_inner[row][col] = self.inner[row][col] * rhs;
+        for (row_index, row) in new_inner.iter_mut().enumerate().take(R) {
+            for (col_index, value) in row.iter_mut().enumerate().take(C) {
+                *value = self.inner[row_index][col_index] * rhs;
             }
         }
 

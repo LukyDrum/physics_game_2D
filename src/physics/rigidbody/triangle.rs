@@ -1,6 +1,6 @@
 use crate::math::{v2, Vector2};
 
-use super::{Body, Line, CollisionInfo};
+use super::{Body, CollisionInfo, Line};
 
 pub struct TriangleBody {
     pub a: Vector2<f32>,

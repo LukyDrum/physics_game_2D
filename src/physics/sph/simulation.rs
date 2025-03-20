@@ -209,8 +209,8 @@ impl Sph {
                         -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
                     // Let's say that body has mass of 100
                     let impulse = impulse / (1.0 / p.mass() + 1.0 / 100.0);
-                    
-                    p.velocity = p.velocity + collision_info.surface_normal * (impulse / p.mass());
+
+                    p.velocity += collision_info.surface_normal * (impulse / p.mass());
                     p.position = collision_info.point;
                 }
             }

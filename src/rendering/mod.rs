@@ -1,14 +1,11 @@
 mod draw;
 mod marching_squares_render;
 mod renderer;
-mod scalar_field_render;
 
 pub use draw::*;
 use macroquad::math::Vec2;
 pub use marching_squares_render::MarchingSquaresRenderer;
-use num_traits::Float;
 pub use renderer::Renderer;
-pub use scalar_field_render::ScalarFieldRenderer;
 
 use crate::math::Vector2;
 

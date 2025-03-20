@@ -1,6 +1,6 @@
 use crate::math::{v2, Vector2};
 
-use super::{Body, Line, CollisionInfo, TriangleBody};
+use super::{Body, CollisionInfo, Line, TriangleBody};
 
 pub struct BoxBody {
     pub center: Vector2<f32>,

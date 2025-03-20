@@ -41,7 +41,10 @@ impl Body for Line {
     }
 
     fn center_of_mass(&self) -> Vector2<f32> {
-        v2!((self.start.x + self.end.x) / 2.0, (self.start.y + self.end.y) / 2.0)
+        v2!(
+            (self.start.x + self.end.x) / 2.0,
+            (self.start.y + self.end.y) / 2.0
+        )
     }
 }
 
@@ -57,9 +60,6 @@ mod tests {
         let line = Line::new(Vector2::new(0.0, 0.0), Vector2::new(5.0, 0.0));
         let point = Vector2::new(3.0, 4.0);
 
-        assert_eq!(
-            line.collision_info(point).point,
-            Vector2::new(3.0, 0.0)
-        )
+        assert_eq!(line.collision_info(point).point, Vector2::new(3.0, 0.0))
     }
 }

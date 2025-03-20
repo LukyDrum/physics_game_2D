@@ -188,11 +188,22 @@ impl MarchingSquaresRenderer {
 
         let average = (tl_value + tr_value + bl_value + br_value) * 0.25;
         // Average the colors in each corner
-        let r = non_zero_average(&[top_left.r, top_right.r, bottom_left.r, bottom_right.r], 0.2);
-        let g = non_zero_average(&[top_left.g, top_right.g, bottom_left.g, bottom_right.g], 0.2);
-        let b = non_zero_average(&[top_left.b, top_right.b, bottom_left.b, bottom_right.b], 0.2);
-        let a =
-            non_zero_average(&[top_left.a, top_right.a, bottom_left.a, bottom_right.a], 0.2) * average;
+        let r = non_zero_average(
+            &[top_left.r, top_right.r, bottom_left.r, bottom_right.r],
+            0.2,
+        );
+        let g = non_zero_average(
+            &[top_left.g, top_right.g, bottom_left.g, bottom_right.g],
+            0.2,
+        );
+        let b = non_zero_average(
+            &[top_left.b, top_right.b, bottom_left.b, bottom_right.b],
+            0.2,
+        );
+        let a = non_zero_average(
+            &[top_left.a, top_right.a, bottom_left.a, bottom_right.a],
+            0.2,
+        ) * average;
 
         Color::new(r, g, b, a)
     }
@@ -237,7 +248,7 @@ impl Renderer for MarchingSquaresRenderer {
                 sample.color.b / sample.scalar_value,
                 1.0,
             );
-            
+
             self.sample_field[i].color = color;
             self.sample_field[i].scalar_value =
                 (self.sample_field[i].scalar_value + sample.scalar_value) * 0.5;

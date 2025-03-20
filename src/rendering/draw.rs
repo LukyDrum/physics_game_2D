@@ -1,7 +1,7 @@
 use macroquad::shapes::{draw_line, draw_triangle};
 
 use super::{Color, VectorAsMQ};
-use crate::physics::rigidbody::{Line, BoxBody, TriangleBody};
+use crate::physics::rigidbody::{BoxBody, Line, TriangleBody};
 
 /// Implementors of this trait have the ability to be drawn to the screen.
 pub trait Draw {

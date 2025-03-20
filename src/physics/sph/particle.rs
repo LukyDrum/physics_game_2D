@@ -56,12 +56,6 @@ impl Particle {
         self.pressure_multiplier = PRESSURE_BASE / self.mass;
     }
 
-    /// Sets the accumulated force to a new value.
-    /// Should not be use for simulations.
-    pub fn set_force(&mut self, force: Vector2<f32>) {
-        self.accumulated_force = force;
-    }
-
     /// Adds `force` to the accumulated force.
     pub fn add_force(&mut self, force: Vector2<f32>) {
         self.accumulated_force += force;

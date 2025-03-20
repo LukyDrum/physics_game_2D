@@ -1,12 +1,14 @@
 use macroquad::{
-    color::RED, input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton}, models::draw_grid, shapes::draw_circle, window::clear_background
+    input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton},
+    shapes::draw_circle,
+    window::clear_background,
 };
 
 use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{Body, BoxBody, Line, TriangleBody},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
-    Particle, Sph, WIDTH,
+    Particle, Sph,
 };
 
 pub trait GameBody: Body + Draw + Sync {}
@@ -43,13 +45,6 @@ impl Game {
         let renderer_step_size = f_width / 100.0;
         // Add basic container
         let bodies: Vec<Box<dyn GameBody>> = vec![
-            /*
-            Box::new(Container::new(
-                v2!(f_width * 0.5, f_height * 0.5),
-                f_width,
-                f_height,
-            )),
-            */
             Box::new(BoxBody::new(v2!(10.0, f_height * 0.5), 15.0, f_height)),
             Box::new(BoxBody::new(
                 v2!(f_width - 10.0, f_height * 0.5),

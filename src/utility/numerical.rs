@@ -20,14 +20,14 @@ where
 }
 
 /// Calculates the average of the slice only from values which are non-zero.
-pub fn non_zero_average<T>(values: &[T]) -> T
+pub fn non_zero_average<T>(values: &[T], threshold: T) -> T
 where
-    T: Add + Div<Output = T> + Num + Copy,
+    T: Add + Div<Output = T> + Num + Copy + PartialOrd,
 {
     let mut sum = T::zero();
     let mut count = T::zero();
     for x in values {
-        if !x.is_zero() {
+        if *x > threshold {
             count = count + T::one();
             sum = sum + *x;
         }

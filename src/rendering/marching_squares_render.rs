@@ -165,7 +165,10 @@ impl MarchingSquaresRenderer {
     }
 
     fn get_color_from_corner(&self, i: usize) -> Color {
-        let (top_left, tl_value) = (self.sample_field[i].color, self.sample_field[i].scalar_value);
+        let (top_left, tl_value) = (
+            self.sample_field[i].color,
+            self.sample_field[i].scalar_value,
+        );
         // We try the rest and always choose the previouse one if it is out of bounds
         let (top_right, tr_value) = self
             .sample_field
@@ -185,10 +188,11 @@ impl MarchingSquaresRenderer {
 
         let average = (tl_value + tr_value + bl_value + br_value) * 0.25;
         // Average the colors in each corner
-        let r = non_zero_average(&[top_left.r, top_right.r, bottom_left.r, bottom_right.r]);
-        let g = non_zero_average(&[top_left.g, top_right.g, bottom_left.g, bottom_right.g]);
-        let b = non_zero_average(&[top_left.b, top_right.b, bottom_left.b, bottom_right.b]);
-        let a = non_zero_average(&[top_left.a, top_right.a, bottom_left.a, bottom_right.a]) * average;
+        let r = non_zero_average(&[top_left.r, top_right.r, bottom_left.r, bottom_right.r], 0.2);
+        let g = non_zero_average(&[top_left.g, top_right.g, bottom_left.g, bottom_right.g], 0.2);
+        let b = non_zero_average(&[top_left.b, top_right.b, bottom_left.b, bottom_right.b], 0.2);
+        let a =
+            non_zero_average(&[top_left.a, top_right.a, bottom_left.a, bottom_right.a], 0.2) * average;
 
         Color::new(r, g, b, a)
     }
@@ -205,33 +209,36 @@ impl Renderer for MarchingSquaresRenderer {
             let pos = self.index_to_position(i) + v2!(half_step, half_step);
 
             let particles = sph.get_particles_around_position(pos, self.influence_radius);
+
             let sample = particles
                 .iter()
-                .enumerate()
-                .map(|(index, p)| {
+                .map(|p| {
                     let dist = (p.position - pos).length();
                     let influence = if dist > self.influence_radius {
                         0.0
                     } else {
                         self.influence_radius / dist
                     };
-                    (index, (influence, p.color))
+                    (influence, p.color)
                 })
-                .fold(
-                    SamplePoint::default(),
-                    |mut acc, (index, (value, color))| {
-                        acc.scalar_value += value;
-                        let r = (index as f32 * acc.color.r + color.r) / (index as f32 + 1.0);
-                        let g = (index as f32 * acc.color.g + color.g) / (index as f32 + 1.0);
-                        let b = (index as f32 * acc.color.b + color.b) / (index as f32 + 1.0);
-                        let a = (index as f32 * acc.color.a + color.a) / (index as f32 + 1.0);
-                        acc.color = Color::new(r, g, b, a);
+                .fold(SamplePoint::default(), |mut acc, (value, color)| {
+                    acc.scalar_value += value;
+                    acc.color.r += color.r * value;
+                    acc.color.g += color.g * value;
+                    acc.color.b += color.b * value;
 
-                        acc
-                    },
-                );
+                    acc
+                });
 
-            self.sample_field[i].color = sample.color;
+            // Get weighted average of the color
+            let color = Color::new(
+                sample.color.r / sample.scalar_value,
+                sample.color.g / sample.scalar_value,
+                sample.color.b / sample.scalar_value,
+                1.0,
+            );
+            
+            self.sample_field[i].color = color;
             self.sample_field[i].scalar_value =
                 (self.sample_field[i].scalar_value + sample.scalar_value) * 0.5;
         }

@@ -6,6 +6,7 @@ mod scalar_field_render;
 pub use draw::*;
 use macroquad::math::Vec2;
 pub use marching_squares_render::MarchingSquaresRenderer;
+use num_traits::Float;
 pub use renderer::Renderer;
 pub use scalar_field_render::ScalarFieldRenderer;
 
@@ -17,6 +18,8 @@ struct SamplePoint {
     color: Color,
 }
 
+/// Representation of a RGBA color.
+/// Acts only as a container for the 4 values.
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Color {
     pub r: f32,
@@ -26,8 +29,15 @@ pub struct Color {
 }
 
 impl Color {
-    pub const fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
-        Color { r, g, b, a }
+    /// Creates a new RGBA color from these floats where each should be in [0..1] range.
+    /// Other values will be clamped into that range.
+    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
+        Color {
+            r: r.clamp(0.0, 1.0),
+            g: g.clamp(0.0, 1.0),
+            b: b.clamp(0.0, 1.0),
+            a: a.clamp(0.0, 1.0),
+        }
     }
 
     pub const fn rgba(r: u8, g: u8, b: u8, a: u8) -> Self {

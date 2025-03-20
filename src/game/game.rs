@@ -85,7 +85,7 @@ impl Game {
                     height,
                     renderer_step_size,
                     renderer_step_size * 1.5,
-                    0.4,
+                    0.3,
                 )
                 .unwrap(),
             ),

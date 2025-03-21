@@ -1,7 +1,11 @@
-use macroquad::shapes::{draw_line, draw_triangle};
+use macroquad::shapes::draw_triangle;
+
+use crate::{
+    physics::rigidbody::Polygon,
+    shapes::{Triangle, Triangulation},
+};
 
 use super::{Color, VectorAsMQ};
-use crate::physics::rigidbody::{BoxBody, Line, TriangleBody};
 
 /// Implementors of this trait have the ability to be drawn to the screen.
 pub trait Draw {
@@ -10,29 +14,14 @@ pub trait Draw {
 
 const BLACK: Color = Color::rgb(0, 0, 0);
 
-impl Draw for Line {
-    fn draw(&self) {
-        let a = self.start;
-        let b = self.end;
-        draw_line(a.x, a.y, b.x, b.y, 2.0, BLACK.as_mq());
+pub fn draw_triangulation(triangulation: &Triangulation, color: Color) {
+    for Triangle { a, b, c } in triangulation {
+        draw_triangle(a.as_mq(), b.as_mq(), c.as_mq(), color.as_mq());
     }
 }
 
-impl Draw for BoxBody {
+impl Draw for Polygon {
     fn draw(&self) {
-        for trian in &self.triangulation {
-            trian.draw();
-        }
-    }
-}
-
-impl Draw for TriangleBody {
-    fn draw(&self) {
-        draw_triangle(
-            self.a.as_mq(),
-            self.b.as_mq(),
-            self.c.as_mq(),
-            BLACK.as_mq(),
-        );
+        draw_triangulation(&self.global_triangulation, BLACK)
     }
 }

@@ -1,6 +1,7 @@
 use core::panic;
 
 use crate::math::v2;
+use crate::shapes::{triangulate_convex_polygon, Triangle};
 use crate::utility::non_zero_average;
 use crate::{math::Vector2, Sph};
 
@@ -8,7 +9,7 @@ use macroquad::prelude::*;
 use num_traits::Pow;
 
 use super::renderer::Renderer;
-use super::{triangulate_convex_polygon, VectorAsMQ};
+use super::VectorAsMQ;
 use super::{Color, SamplePoint};
 
 /// Alias for a tuple of 2 Vector2.
@@ -422,7 +423,7 @@ impl Renderer for MarchingSquaresRenderer {
             };
 
             // Draw the triangulation
-            for (a, b, c) in triangulate_convex_polygon(points) {
+            for Triangle { a, b, c } in triangulate_convex_polygon(points) {
                 draw_triangle(
                     self.local_point(pos, a).as_mq(),
                     self.local_point(pos, b).as_mq(),

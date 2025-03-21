@@ -201,9 +201,9 @@ impl Sph {
     fn resolve_collisions(&mut self, bodies: &Vec<Box<dyn GameBody>>) {
         self.particles.par_iter_mut().for_each(|p| {
             for body in bodies {
-                if body.is_inside(p.position) {
+                if body.contains_point(p.position) {
                     // Move particle to surface
-                    let collision_info = body.collision_info(p.position);
+                    let collision_info = body.point_collision_info(p.position);
                     let elasticity = 0.1;
                     let impulse =
                         -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
@@ -211,7 +211,7 @@ impl Sph {
                     let impulse = impulse / (1.0 / p.mass() + 1.0 / 100.0);
 
                     p.velocity += collision_info.surface_normal * (impulse / p.mass());
-                    p.position = collision_info.point;
+                    p.position = collision_info.surface_point;
                 }
             }
         });

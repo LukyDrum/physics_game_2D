@@ -3,18 +3,17 @@ use macroquad::{
     shapes::draw_circle,
     window::clear_background,
 };
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{Body, BoxBody, Line, TriangleBody},
+    physics::rigidbody::{Body, Polygon, RbSimulator, Rectangle},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     Particle, Sph,
 };
 
-pub trait GameBody: Body + Draw + Sync {}
-impl GameBody for Line {}
-impl GameBody for BoxBody {}
-impl GameBody for TriangleBody {}
+pub trait GameBody: Body + Draw {}
+impl GameBody for Polygon {}
 
 pub struct Game {
     // Physics stuff
@@ -25,6 +24,8 @@ pub struct Game {
     fluid_system: Sph,
     /// If the physics are currently being simulated or not
     is_simulating: bool,
+
+    rb_simulator: RbSimulator,
     bodies: Vec<Box<dyn GameBody>>,
 
     // GUI things
@@ -43,24 +44,29 @@ impl Game {
 
         let sph = Sph::new(f_width, f_height);
         let renderer_step_size = f_width / 100.0;
-        // Add basic container
+
+        // Add recrtangles that act as walls and such
+        let wall_thickness = 20.0;
         let bodies: Vec<Box<dyn GameBody>> = vec![
-            Box::new(BoxBody::new(v2!(10.0, f_height * 0.5), 15.0, f_height)),
-            Box::new(BoxBody::new(
-                v2!(f_width - 10.0, f_height * 0.5),
-                15.0,
-                f_height,
-            )),
-            Box::new(BoxBody::new(v2!(f_width * 0.5, 10.0), f_width, 15.0)),
-            Box::new(BoxBody::new(
-                v2!(f_width * 0.5, f_height - 10.0),
-                f_width,
-                15.0,
-            )),
-            Box::new(TriangleBody::new(
-                v2!(f_width * 0.5, 200.0),
-                v2!(f_width * 0.5 - 100.0, 300.0),
-                v2!(f_width * 0.5 + 100.0, 300.0),
+            // Floor
+            Box::new(
+                Rectangle!(v2!(f_width * 0.5, f_height - wall_thickness * 0.5); f_width, wall_thickness),
+            ),
+            // Ceiling
+            Box::new(Rectangle!(v2!(f_width * 0.5, wall_thickness * 0.5); f_width, wall_thickness)),
+            // Left wall
+            Box::new(
+                Rectangle!(v2!(wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height),
+            ),
+            // Right wall
+            Box::new(
+                Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height),
+            ),
+            Box::new(Rectangle!(
+                v2!(200, 200; f32),
+                v2!(300, 200; f32),
+                v2!(300, 300; f32),
+                v2!(200, 300; f32)
             )),
         ];
 
@@ -69,6 +75,8 @@ impl Game {
             step_division: 2,
             fluid_system: sph,
             is_simulating: true,
+
+            rb_simulator: RbSimulator {},
             bodies,
 
             gameview_offset: Vector2::zero(),
@@ -112,6 +120,14 @@ impl Game {
     pub fn update(&mut self) {
         if self.is_simulating {
             let dt = self.time_step / self.step_division as f32;
+
+            // Do preupdate for bodies
+            self.bodies
+                .par_iter_mut()
+                .for_each(|body| body.pre_update());
+
+            self.rb_simulator.step(&mut self.bodies);
+
             for _ in 0..self.step_division {
                 self.fluid_system.step(dt, &self.bodies);
             }

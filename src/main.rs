@@ -1,6 +1,7 @@
 mod math;
 mod physics;
 mod rendering;
+mod shapes;
 // mod speed_test;
 mod game;
 mod utility;

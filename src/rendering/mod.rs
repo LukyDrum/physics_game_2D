@@ -64,23 +64,3 @@ impl VectorAsMQ for Vector2<f32> {
         Vec2::new(self.x, self.y)
     }
 }
-
-pub type Triangle = (Vector2<f32>, Vector2<f32>, Vector2<f32>);
-
-/// Returns triangulation of the convex polygon given by `point`.
-/// The points must be in circular order.
-pub fn triangulate_convex_polygon(points: &[Vector2<f32>]) -> Vec<Triangle> {
-    let count = points.len();
-    if count < 3 {
-        return Vec::new();
-    }
-
-    let ref_point = points[0];
-    let mut triangles = Vec::with_capacity(count - 2);
-
-    for i in 2..count {
-        triangles.push((ref_point, points[i - 1], points[i]));
-    }
-
-    triangles
-}

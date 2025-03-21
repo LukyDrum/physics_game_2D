@@ -130,3 +130,42 @@ impl Body for Polygon {
         todo!()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::f32::consts::PI;
+
+    use crate::math::{v2, Vector2};
+    use crate::physics::rigidbody::{BodyBehaviour, Polygon};
+
+    fn test_poly() -> Polygon {
+        Polygon::new(
+            v2!(10.0, 10.0),
+            vec![v2!(0.0, 5.0), v2!(5.0, 0.0), v2!(-5.0, 0.0)],
+            BodyBehaviour::Static,
+        )
+    }
+
+    #[test]
+    fn local_to_global_point() {
+        let poly = test_poly();
+        let local_point = poly.points[0];
+
+        assert_eq!(local_point, v2!(0.0, 5.0));
+
+        let global_point = poly.local_point_to_global(local_point);
+        assert_eq!(global_point, local_point + poly.state.position)
+    }
+
+    #[test]
+    fn local_to_global_point_rotated() {
+        let mut poly = test_poly();
+        poly.state.rotation = -PI * 0.5;
+        let local_point = poly.points[0];
+
+        assert_eq!(local_point, v2!(0.0, 5.0));
+
+        let global_point = poly.local_point_to_global(local_point);
+        assert_eq!(global_point, poly.state.position + v2!(5.0, 0.0))
+    }
+}

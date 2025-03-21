@@ -7,7 +7,7 @@ use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{Body, Polygon, RbSimulator, Rectangle},
+    physics::rigidbody::{Body, BodyBehaviour, Polygon, RbSimulator, Rectangle},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     Particle, Sph,
 };
@@ -50,23 +50,26 @@ impl Game {
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
-                Rectangle!(v2!(f_width * 0.5, f_height - wall_thickness * 0.5); f_width, wall_thickness),
+                Rectangle!(v2!(f_width * 0.5, f_height - wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
             ),
             // Ceiling
-            Box::new(Rectangle!(v2!(f_width * 0.5, wall_thickness * 0.5); f_width, wall_thickness)),
+            Box::new(
+                Rectangle!(v2!(f_width * 0.5, wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
+            ),
             // Left wall
             Box::new(
-                Rectangle!(v2!(wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height),
+                Rectangle!(v2!(wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
             // Right wall
             Box::new(
-                Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height),
+                Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
             Box::new(Rectangle!(
                 v2!(200, 200; f32),
                 v2!(300, 200; f32),
                 v2!(300, 300; f32),
-                v2!(200, 300; f32)
+                v2!(200, 300; f32);
+                BodyBehaviour::Dynamic
             )),
         ];
 
@@ -76,7 +79,7 @@ impl Game {
             fluid_system: sph,
             is_simulating: true,
 
-            rb_simulator: RbSimulator {},
+            rb_simulator: RbSimulator::new(v2!(0.0, 981.0)),
             bodies,
 
             gameview_offset: Vector2::zero(),
@@ -121,12 +124,7 @@ impl Game {
         if self.is_simulating {
             let dt = self.time_step / self.step_division as f32;
 
-            // Do preupdate for bodies
-            self.bodies
-                .par_iter_mut()
-                .for_each(|body| body.pre_update());
-
-            self.rb_simulator.step(&mut self.bodies);
+            self.rb_simulator.step(&mut self.bodies, dt);
 
             for _ in 0..self.step_division {
                 self.fluid_system.step(dt, &self.bodies);

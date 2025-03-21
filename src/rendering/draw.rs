@@ -22,6 +22,6 @@ pub fn draw_triangulation(triangulation: &Triangulation, color: Color) {
 
 impl Draw for Polygon {
     fn draw(&self) {
-        draw_triangulation(&self.global_triangulation, BLACK)
+        draw_triangulation(self.global_triangulation(), BLACK)
     }
 }

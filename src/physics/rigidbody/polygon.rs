@@ -1,7 +1,7 @@
 use crate::math::{v2, Matrix, Vector2};
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};
 
-use super::{Body, BodyState, PointCollisionInfo};
+use super::{Body, BodyBehaviour, BodyState, PointCollisionInfo};
 
 /// Simple convex polygon.
 pub struct Polygon {
@@ -10,29 +10,31 @@ pub struct Polygon {
     pub points: Vec<Vector2<f32>>,
 
     /// Cached values - they should periodicly update
-    pub(crate) global_points: Vec<Vector2<f32>>,
+    pub(super) global_points: Vec<Vector2<f32>>,
     /// Triangulation of the polygon in global space
-    pub(crate) global_triangulation: Triangulation,
-    pub(crate) global_lines: Vec<Line>,
+    pub(super) global_triangulation: Triangulation,
+    pub(super) global_lines: Vec<Line>,
 }
 
 impl Polygon {
-    pub fn new(position: Vector2<f32>, points: Vec<Vector2<f32>>) -> Polygon {
+    pub fn new(
+        position: Vector2<f32>,
+        points: Vec<Vector2<f32>>,
+        behaviour: BodyBehaviour,
+    ) -> Polygon {
         let points_size = points.len();
 
-        Polygon {
-            state: BodyState {
-                position,
-                velocity: Vector2::zero(),
-                mass: 1.0,
-                rotation: 0.0,
-            },
+        let mut poly = Polygon {
+            state: BodyState::new(position, behaviour),
             points,
 
             global_points: Vec::with_capacity(points_size),
             global_triangulation: Vec::with_capacity(points_size - 2),
             global_lines: Vec::with_capacity(points_size),
-        }
+        };
+        poly.update_inner_values();
+
+        poly
     }
 
     fn local_point_to_global(&self, point: Vector2<f32>) -> Vector2<f32> {
@@ -70,6 +72,10 @@ impl Polygon {
             ));
         }
     }
+
+    pub fn global_triangulation(&self) -> &Triangulation {
+        &self.global_triangulation
+    }
 }
 
 impl Body for Polygon {
@@ -77,8 +83,12 @@ impl Body for Polygon {
         self.update_inner_values();
     }
 
-    fn state(&self) -> BodyState {
-        self.state
+    fn state(&self) -> &BodyState {
+        &self.state
+    }
+
+    fn state_mut(&mut self) -> &mut BodyState {
+        &mut self.state
     }
 
     fn point_collision_info(&self, point: Vector2<f32>) -> PointCollisionInfo {
@@ -110,6 +120,13 @@ impl Body for Polygon {
     }
 
     fn center_of_mass(&self) -> Vector2<f32> {
+        self.global_points
+            .iter()
+            .fold(Vector2::zero(), |acc, x| acc + *x)
+            / self.global_points.len() as f32
+    }
+
+    fn apply_force_at_point(&mut self, force: Vector2<f32>, point: Vector2<f32>) {
         todo!()
     }
 }

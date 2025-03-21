@@ -5,7 +5,7 @@ use rayon::iter::{
 };
 
 use crate::game::GameBody;
-use crate::math::Vector2;
+use crate::math::{v2, Vector2};
 use crate::{physics::sph::Particle, utility::LookUp};
 
 fn kernel(dist: f32, radius: f32) -> f32 {
@@ -101,9 +101,17 @@ impl Sph {
     }
 
     pub fn add_particle(&mut self, mut particle: Particle) {
+        // Add very small offset to particles position
+        particle.position += v2!(fastrand::f32() - 0.5, fastrand::f32() - 0.5);
+        let pos = particle.position;
+
         particle.id = self.id_counter;
         self.particles.push(particle);
         self.id_counter += 1;
+
+        // Insert particles index into lookup
+        let index = self.particles.len() - 1;
+        self.lookup.insert(&pos, index);
     }
 
     fn add_gravity_force(&mut self) {

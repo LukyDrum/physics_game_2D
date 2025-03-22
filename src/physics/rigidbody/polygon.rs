@@ -1,7 +1,8 @@
+use crate::game::GameBody;
 use crate::math::{v2, Matrix, Vector2};
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};
 
-use super::{Body, BodyBehaviour, BodyState, PointCollisionInfo};
+use super::{Body, BodyBehaviour, BodyCollisionInfo, BodyProjection, BodyState, PointCollisionInfo};
 
 /// Simple convex polygon.
 pub struct Polygon {
@@ -128,6 +129,20 @@ impl Body for Polygon {
 
     fn apply_force_at_point(&mut self, force: Vector2<f32>, point: Vector2<f32>) {
         todo!()
+    }
+
+    fn project_onto_axis(&self, axis: Vector2<f32>) -> BodyProjection {
+        let mut proj = BodyProjection::default();
+        for point in &self.global_points {
+            let dist = point.dot(axis);
+            proj.add(dist);
+        }
+
+        proj
+    }
+
+    fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionInfo> {
+        
     }
 }
 

@@ -4,6 +4,7 @@ use crate::{game::GameBody, math::Vector2};
 
 use super::BodyBehaviour;
 
+
 pub struct RbSimulator {
     pub gravity: Vector2<f32>,
 }
@@ -12,9 +13,7 @@ impl RbSimulator {
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator { gravity }
     }
-}
 
-impl RbSimulator {
     pub fn step(&mut self, bodies: &mut Vec<Box<dyn GameBody>>, time_step: f32) {
         let mut sim_bodies = bodies
             .par_iter_mut()
@@ -22,11 +21,11 @@ impl RbSimulator {
             .collect();
 
         self.apply_gravity(&mut sim_bodies, time_step);
-        self.move_bodies_by_velocity(&mut sim_bodies, time_step);
-        self.update_inner_values(&mut sim_bodies);
+        Self::move_bodies_by_velocity(&mut sim_bodies, time_step);
+        Self::update_inner_values(&mut sim_bodies);
     }
 
-    fn update_inner_values(&self, sim_bodies: &mut Vec<&mut Box<dyn GameBody>>) {
+    fn update_inner_values(sim_bodies: &mut Vec<&mut Box<dyn GameBody>>) {
         sim_bodies.par_iter_mut().for_each(|body| body.pre_update());
     }
 
@@ -40,12 +39,15 @@ impl RbSimulator {
     }
 
     fn move_bodies_by_velocity(
-        &self,
         sim_bodies: &mut Vec<&mut Box<dyn GameBody>>,
         time_step: f32,
     ) {
         sim_bodies
             .par_iter_mut()
             .for_each(|body| body.state_mut().move_by_velocity(time_step));
+    }
+
+    fn check_collision(reference: &mut Box<dyn GameBody>, other: &mut Box<dyn GameBody>) {
+        
     }
 }

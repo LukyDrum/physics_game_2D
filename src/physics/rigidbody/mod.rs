@@ -1,8 +1,9 @@
-use crate::{math::Vector2, utility::runge_kutta};
+use crate::{game::GameBody, math::Vector2, utility::runge_kutta};
 
 mod polygon;
 mod rb_simulation;
 
+use num_traits::{float::FloatCore, Float};
 pub use polygon::Polygon;
 pub use rb_simulation::RbSimulator;
 
@@ -56,6 +57,36 @@ pub struct PointCollisionInfo {
     pub surface_normal: Vector2<f32>,
 }
 
+#[derive(Default)]
+struct BodyProjection {
+    min: f32,
+    max: f32,
+}
+
+impl BodyProjection {
+    pub fn add(&mut self, value: f32) {
+        self.min = self.min.min(value);
+        self.max = self.max.max(value);
+    }
+
+    /// Returns the size of the overlap between these 2 projections or None if the do not overlap.
+    pub fn get_overlap(&self, other: &BodyProjection) -> Option<f32> {
+        let a = self.max - other.min;
+        if a > 0.0 {
+            return Some(a);
+        }
+
+        let b = other.max - self.min;
+        if b > 0.0 {
+            return Some(b);
+        }
+
+        None
+    }
+}
+
+pub struct BodyCollisionInfo {}
+
 /// A physical object that can be simulated in the game world
 pub trait Body: Send + Sync {
     fn pre_update(&mut self);
@@ -71,6 +102,10 @@ pub trait Body: Send + Sync {
     fn center_of_mass(&self) -> Vector2<f32>;
 
     fn apply_force_at_point(&mut self, force: Vector2<f32>, point: Vector2<f32>);
+
+    fn project_onto_axis(&self, axis: Vector2<f32>) -> BodyProjection;
+
+    fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionInfo>;
 }
 
 macro_rules! Rectangle {

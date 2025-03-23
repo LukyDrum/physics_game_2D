@@ -42,7 +42,6 @@ async fn main() {
         game.update();
         game.draw();
 
-        println!("FPS: {}", get_fps());
         next_frame().await
     }
 }

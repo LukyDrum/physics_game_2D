@@ -1,7 +1,12 @@
+use std::collections::LinkedList;
+
+use crate::game::GameBody;
 use crate::math::{v2, Matrix, Vector2};
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};
 
-use super::{Body, BodyBehaviour, BodyState, PointCollisionInfo};
+use super::{
+    Body, BodyBehaviour, BodyCollisionData, BodyProjection, BodyState, PointCollisionData,
+};
 
 /// Simple convex polygon.
 pub struct Polygon {
@@ -79,7 +84,7 @@ impl Polygon {
 }
 
 impl Body for Polygon {
-    fn pre_update(&mut self) {
+    fn update_inner_values(&mut self) {
         self.update_inner_values();
     }
 
@@ -91,7 +96,7 @@ impl Body for Polygon {
         &mut self.state
     }
 
-    fn point_collision_info(&self, point: Vector2<f32>) -> PointCollisionInfo {
+    fn point_collision_info(&self, point: Vector2<f32>) -> PointCollisionData {
         let mut closest_line = &self.global_lines[0];
         let mut surface_point = closest_line.closest_point(point);
         let mut dist_sq = (surface_point - point).length_squared();
@@ -107,7 +112,7 @@ impl Body for Polygon {
             }
         }
 
-        PointCollisionInfo {
+        PointCollisionData {
             surface_point,
             surface_normal: closest_line.normal(),
         }
@@ -126,8 +131,49 @@ impl Body for Polygon {
             / self.global_points.len() as f32
     }
 
-    fn apply_force_at_point(&mut self, force: Vector2<f32>, point: Vector2<f32>) {
-        todo!()
+    fn project_onto_axis(&self, axis: Vector2<f32>) -> BodyProjection {
+        let mut proj = BodyProjection::default();
+        for point in &self.global_points {
+            let dist = point.dot(axis);
+            proj.add(dist);
+        }
+
+        proj
+    }
+
+    fn projection_axes(&self) -> LinkedList<Vector2<f32>> {
+        self.global_lines
+            .iter()
+            .map(|line| line.normal().abs())
+            .collect()
+    }
+
+    fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData> {
+        let mut projection_axes = self.projection_axes();
+        projection_axes.append(&mut other.projection_axes());
+
+        // Try to project both bodies on each axis
+        let mut min_penetration = f32::MAX;
+        let mut min_axis = Vector2::zero();
+        for axis in projection_axes {
+            let proj_a = self.project_onto_axis(axis);
+            let proj_b = other.project_onto_axis(axis);
+
+            if let Some(penetration) = proj_a.get_overlap(&proj_b) {
+                if penetration < min_penetration {
+                    min_penetration = penetration;
+                    min_axis = axis;
+                }
+            } else {
+                // If they do not overlap on at least one axis, then they do not collide
+                return None;
+            }
+        }
+
+        Some(BodyCollisionData {
+            normal: min_axis,
+            penetration: min_penetration,
+        })
     }
 }
 
@@ -135,8 +181,9 @@ impl Body for Polygon {
 mod tests {
     use std::f32::consts::PI;
 
+    use crate::game::GameBody;
     use crate::math::{v2, Vector2};
-    use crate::physics::rigidbody::{BodyBehaviour, Polygon};
+    use crate::physics::rigidbody::{Body, BodyBehaviour, Polygon, Rectangle};
 
     fn test_poly() -> Polygon {
         Polygon::new(
@@ -167,5 +214,53 @@ mod tests {
 
         let global_point = poly.local_point_to_global(local_point);
         assert_eq!(global_point, poly.state.position + v2!(5.0, 0.0))
+    }
+
+    #[test]
+    fn projection_onto_horizontal_axis() {
+        let poly = test_poly();
+
+        // Project onto a horizontal line
+        let proj = poly.project_onto_axis(v2!(1.0, 0.0));
+
+        assert_eq!(proj.min, 5.0);
+        assert_eq!(proj.max, 15.0);
+    }
+
+    #[test]
+    fn projection_onto_vertical_axis() {
+        let poly = test_poly();
+
+        // Project onto a vertical line
+        let proj = poly.project_onto_axis(v2!(0.0, 1.0));
+
+        assert_eq!(proj.min, 10.0);
+        assert_eq!(proj.max, 15.0);
+    }
+
+    #[test]
+    fn rectangles_not_colliding() {
+        // Square centered at (0.0, 0.0) with width = 5.0 and height = 5.0
+        let rect1 = Box::new(Rectangle!(v2!(0.0, 0.0); 5.0, 5.0; BodyBehaviour::Static));
+        // Same square but centered at (0.0, 10.0)
+        let rect2: Box<dyn GameBody> =
+            Box::new(Rectangle!(v2!(0.0, 10.0); 5.0, 5.0; BodyBehaviour::Static));
+
+        assert!(rect1.check_collision_against(&rect2).is_none())
+    }
+
+    #[test]
+    fn rectangles_colliding() {
+        // Square centered at (0.0, 0.0) with width = 5.0 and height = 5.0
+        let rect1 = Box::new(Rectangle!(v2!(0.0, 0.0); 5.0, 5.0; BodyBehaviour::Static));
+        // Same square but centered at (0.0, 10.0)
+        let rect2: Box<dyn GameBody> =
+            Box::new(Rectangle!(v2!(0.0, 4.0); 5.0, 5.0; BodyBehaviour::Static));
+
+        if let Some(collision_data) = rect1.check_collision_against(&rect2) {
+            assert_eq!(collision_data.penetration, 1.0)
+        } else {
+            assert!(false)
+        }
     }
 }

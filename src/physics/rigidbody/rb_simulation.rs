@@ -10,8 +10,8 @@ use crate::{game::GameBody, math::Vector2};
 use super::{BodyBehaviour, BodyCollisionData};
 
 struct BodyBodyCollision {
-    body_a_index: usize,
-    body_b_index: usize,
+    index_a: usize,
+    index_b: usize,
     collision_data: BodyCollisionData,
 }
 
@@ -34,6 +34,7 @@ impl RbSimulator {
         Self::update_inner_values(bodies);
 
         let collisions = Self::check_collisions(bodies);
+        Self::resolve_collisions(bodies, collisions);
     }
 
     /// Update the inner stored values of each body, such as global vertices or lines.
@@ -79,8 +80,8 @@ impl RbSimulator {
                     bodies[index_a].check_collision_against(&bodies[index_b])
                 {
                     Some(BodyBodyCollision {
-                        body_a_index: index_a,
-                        body_b_index: index_b,
+                        index_a,
+                        index_b,
                         collision_data,
                     })
                 } else {
@@ -89,4 +90,64 @@ impl RbSimulator {
             })
             .collect()
     }
+
+    fn resolve_collisions(
+        bodies: &mut Vec<Box<dyn GameBody>>,
+        collisions: LinkedList<BodyBodyCollision>,
+    ) {
+        let resolutions: LinkedList<CollisionResolution> = collisions
+            .par_iter()
+            .filter_map(|collision| {
+                let body_a = &bodies[collision.index_a];
+                let body_b = &bodies[collision.index_b];
+
+                let a_is_dynamic = body_a.state().behaviour == BodyBehaviour::Dynamic;
+                let b_is_dynamic = body_b.state().behaviour == BodyBehaviour::Dynamic;
+
+                let penetration = collision.collision_data.penetration;
+                let normal = collision.collision_data.normal;
+
+                match (a_is_dynamic, b_is_dynamic) {
+                    (true, true) => Some(CollisionResolution {
+                        index_a: collision.index_a,
+                        index_b: collision.index_b,
+                        offset_a: normal * -penetration * 0.5,
+                        offset_b: normal * penetration * 0.5,
+                    }),
+                    (true, false) => Some(CollisionResolution {
+                        index_a: collision.index_a,
+                        index_b: collision.index_b,
+                        offset_a: normal * -penetration,
+                        offset_b: Vector2::zero(),
+                    }),
+                    (false, true) => Some(CollisionResolution {
+                        index_a: collision.index_a,
+                        index_b: collision.index_b,
+                        offset_a: Vector2::zero(),
+                        offset_b: normal * penetration,
+                    }),
+                    (false, false) => None,
+                }
+            })
+            .collect();
+
+        for res in resolutions {
+            let CollisionResolution {
+                index_a,
+                index_b,
+                offset_a,
+                offset_b,
+            } = res;
+
+            bodies[index_a].state_mut().position += offset_a;
+            bodies[index_b].state_mut().position += offset_b;
+        }
+    }
+}
+
+struct CollisionResolution {
+    index_a: usize,
+    index_b: usize,
+    offset_a: Vector2<f32>,
+    offset_b: Vector2<f32>,
 }

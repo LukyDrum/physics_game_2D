@@ -63,7 +63,7 @@ impl RbSimulator {
     }
 
     /// Checks for possible collisions and returns a `LinkedList` of `BodyBodyCollision` where each
-    /// record represents a detected collision.
+    /// record represents a collison between 2 bodies.
     fn check_collisions(bodies: &Vec<Box<dyn GameBody>>) -> LinkedList<BodyBodyCollision> {
         let mut index_pairs = LinkedList::new();
         for i in 1..bodies.len() {

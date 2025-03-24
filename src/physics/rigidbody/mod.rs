@@ -1,6 +1,6 @@
 use std::collections::LinkedList;
 
-use crate::{game::GameBody, math::Vector2, utility::runge_kutta};
+use crate::{game::GameBody, math::Vector2, shapes::Line, utility::runge_kutta};
 
 mod polygon;
 mod rb_simulation;
@@ -101,6 +101,8 @@ pub struct BodyCollisionData {
     pub normal: Vector2<f32>,
     /// The depth of the penetration/collision.
     pub penetration: f32,
+    /// Points of the collision manifold. There should be 1 or 2 points
+    pub collision_points: Vec<Vector2<f32>>,
 }
 
 /// A physical object that can be simulated in the game world
@@ -126,9 +128,12 @@ pub trait Body: Send + Sync {
     /// Returns the projection of this Body onto the provided `axis`.
     fn project_onto_axis(&self, axis: Vector2<f32>) -> BodyProjection;
 
-    /// Returns a list of projection axis from this Body. That is a list of normals of the lines
-    /// this body consist of.
+    /// Returns a list of projection axis (and their corresponding lines) from this Body. That is a list of normals of the lines
+    /// this body consist of. They will always be pointing away from the body.
     fn projection_axes(&self) -> LinkedList<Vector2<f32>>;
+
+    /// Returns the colliding line based on the collision normal.
+    fn find_colliding_line(&self, normal: Vector2<f32>) -> Line;
 
     /// Checks if this Body collides with the `other` Body and if so returns a `BodyCollisionInfo`.
     /// Otherwise returns `None` (meaning they do not collide).

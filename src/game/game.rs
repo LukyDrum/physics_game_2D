@@ -1,7 +1,7 @@
+use std::{collections::LinkedList, f32::consts::PI};
+
 use macroquad::{
-    input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton},
-    shapes::draw_circle,
-    window::clear_background,
+    color::GREEN, input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton}, shapes::draw_circle, window::clear_background
 };
 use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 

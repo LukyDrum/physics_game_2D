@@ -1,5 +1,6 @@
 use crate::math::Vector2;
 
+#[derive(Clone)]
 pub struct Line {
     pub start: Vector2<f32>,
     pub end: Vector2<f32>,
@@ -29,5 +30,9 @@ impl Line {
 
     pub fn normal(&self) -> Vector2<f32> {
         self.unit_normal
+    }
+
+    pub fn vector(&self) -> Vector2<f32> {
+        self.vector
     }
 }

@@ -1,5 +1,8 @@
 use std::collections::LinkedList;
 
+use macroquad::color::GREEN;
+use macroquad::shapes::draw_line;
+
 use crate::game::GameBody;
 use crate::math::{v2, Matrix, Vector2};
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};
@@ -144,8 +147,47 @@ impl Body for Polygon {
     fn projection_axes(&self) -> LinkedList<Vector2<f32>> {
         self.global_lines
             .iter()
-            .map(|line| line.normal().abs())
+            .map(|line| {
+                let normal = line.normal();
+                if line.vector().dot(self.state.position) > 0.0 {
+                    normal
+                } else {
+                    normal * -1.0
+                }
+            })
             .collect()
+    }
+
+    fn find_colliding_line(&self, normal: Vector2<f32>) -> Line {
+        // Find farthest vertex
+        let mut max = 0.0;
+        let mut farthest_vertex_index = 0;
+        for (index, v) in self.global_points.iter().enumerate() {
+            let projection = normal.dot(*v);
+            if projection > max {
+                max = projection;
+                farthest_vertex_index = index;
+            }
+        }
+
+        let edge_before_v = &self.global_lines[if farthest_vertex_index == 0 {
+            self.global_points.len() - 1
+        } else {
+            farthest_vertex_index - 1
+        }];
+        let edge_after_v = &self.global_lines[farthest_vertex_index];
+
+        // We want both vectors to point towards the max vertex
+        let l = edge_before_v.normal();
+        let r = (edge_after_v.start - edge_after_v.end).normal();
+
+        // Choose the one that is more perpendicular to the normal - will have dot product closer
+        // to 0
+        if l.dot(normal).abs() < r.dot(normal).abs() {
+            edge_before_v.clone()
+        } else {
+            edge_after_v.clone()
+        }
     }
 
     fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData> {
@@ -170,11 +212,65 @@ impl Body for Polygon {
             }
         }
 
+        // Find collision manifold points
+        // Find the "best" lines from this body and the other
+        let line_a = self.find_colliding_line(min_axis);
+        let line_b = other.find_colliding_line(min_axis * -1.0);
+
+        // Find the reference and incident line
+        let (ref_line, inc_line);
+        if line_a.vector().normalized().dot(min_axis).abs()
+            <= line_b.vector().normalized().dot(min_axis)
+        {
+            ref_line = line_a;
+            inc_line = line_b;
+        } else {
+            ref_line = line_b;
+            inc_line = line_a;
+        }
+
+        // Clip the incident line to find the collision points
+        let collision_points = clip_incident_line(ref_line, inc_line, min_axis);
+
         Some(BodyCollisionData {
             normal: min_axis,
             penetration: min_penetration,
+            collision_points,
         })
     }
+}
+
+fn clip_incident_line(ref_line: Line, inc_line: Line, normal: Vector2<f32>) -> Vec<Vector2<f32>> {
+    // Projections of the ref_line end points
+    let ref_vec = ref_line.vector();
+    let ref_start_proj = ref_line.start.dot(ref_vec);
+    let ref_end_proj = ref_line.end.dot(ref_vec);
+
+    // Clip incident line to start
+    let point_a = if ref_vec.dot(inc_line.start) < ref_start_proj {
+        ref_line.start
+    } else {
+        inc_line.start
+    };
+
+    // Clip incident line to end
+    let point_b = if ref_vec.dot(inc_line.end) > ref_end_proj {
+        ref_line.end
+    } else {
+        inc_line.end
+    };
+
+    // Use only points in the correct half
+    let mut points = Vec::with_capacity(2);
+    let max = normal.dot(ref_line.start).max(normal.dot(ref_line.end));
+    if normal.dot(point_a) < max {
+        points.push(point_a);
+    }
+    if normal.dot(point_b) < max {
+        points.push(point_b);
+    }
+
+    points
 }
 
 #[cfg(test)]

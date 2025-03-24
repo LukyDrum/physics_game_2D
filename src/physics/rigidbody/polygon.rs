@@ -1,8 +1,5 @@
 use std::collections::LinkedList;
 
-use macroquad::color::GREEN;
-use macroquad::shapes::draw_line;
-
 use crate::game::GameBody;
 use crate::math::{v2, Matrix, Vector2};
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};

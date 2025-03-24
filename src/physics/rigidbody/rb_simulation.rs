@@ -107,40 +107,56 @@ impl RbSimulator {
                 let penetration = collision.collision_data.penetration;
                 let normal = collision.collision_data.normal;
 
-                match (a_is_dynamic, b_is_dynamic) {
-                    (true, true) => Some(CollisionResolution {
-                        index_a: collision.index_a,
-                        index_b: collision.index_b,
-                        offset_a: normal * -penetration * 0.5,
-                        offset_b: normal * penetration * 0.5,
-                    }),
-                    (true, false) => Some(CollisionResolution {
-                        index_a: collision.index_a,
-                        index_b: collision.index_b,
-                        offset_a: normal * -penetration,
-                        offset_b: Vector2::zero(),
-                    }),
-                    (false, true) => Some(CollisionResolution {
-                        index_a: collision.index_a,
-                        index_b: collision.index_b,
-                        offset_a: Vector2::zero(),
-                        offset_b: normal * penetration,
-                    }),
-                    (false, false) => None,
-                }
+                let (offset_a, offset_b) = match (a_is_dynamic, b_is_dynamic) {
+                    (true, true) => (normal * -penetration * 0.5, normal * penetration * 0.5),
+                    (true, false) => (normal * -penetration, Vector2::zero()),
+                    (false, true) => (Vector2::zero(), normal * penetration),
+                    (false, false) => return None,
+                };
+
+                Some(CollisionResolution {
+                    index_a: collision.index_a,
+                    index_b: collision.index_b,
+                    offset_a,
+                    offset_b,
+                    normal,
+                })
             })
             .collect();
 
+        let elasticity = 0.5;
         for res in resolutions {
             let CollisionResolution {
                 index_a,
                 index_b,
                 offset_a,
                 offset_b,
+                normal,
             } = res;
 
+            // Move the bodies apart
             bodies[index_a].state_mut().position += offset_a;
             bodies[index_b].state_mut().position += offset_b;
+
+            // Calculate and add impulses
+            let relative_velocity =
+                bodies[index_a].state().velocity - bodies[index_b].state().velocity;
+            let mass_a = bodies[index_a].state().mass;
+            let mass_b = bodies[index_b].state().mass;
+
+            // TODO: Fix elasticity - the value should be only 1.0 (not 2.0)
+            let top_part = relative_velocity.dot(normal) * -(2.0 + elasticity);
+            let bottom_part = normal.dot(normal) * (1.0 / mass_a + 1.0 / mass_b);
+            let impulse = top_part / bottom_part;
+
+            if bodies[index_a].state().behaviour == BodyBehaviour::Dynamic {
+                bodies[index_a].state_mut().velocity += normal * (impulse / mass_a);
+                bodies[index_a].update_inner_values();
+            }
+            if bodies[index_b].state().behaviour == BodyBehaviour::Dynamic {
+                bodies[index_b].state_mut().velocity -= normal * (impulse / mass_b);
+                bodies[index_b].update_inner_values();
+            }
         }
     }
 }
@@ -150,4 +166,5 @@ struct CollisionResolution {
     index_b: usize,
     offset_a: Vector2<f32>,
     offset_b: Vector2<f32>,
+    normal: Vector2<f32>,
 }

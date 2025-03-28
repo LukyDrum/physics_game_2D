@@ -1,6 +1,7 @@
 use core::panic;
 use std::collections::LinkedList;
 
+use num_traits::{float::FloatCore, Float};
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{game::GameBody, math::Vector2};
@@ -144,36 +145,56 @@ impl RbSimulator {
                 let relative_velocity = (velocity_b + radius_b * angular_velocity_b)
                     - (velocity_a + radius_a * angular_velocity_a);
 
-                let elasticity = 0.2;
-                // TODO: Fix elasticity - the value should be only 1.0 (not 2.0)
-                // Numerator
-                let numerator = relative_velocity.dot(normal) * -(2.0 + elasticity);
-                // Denominator is more complex:
-                // denom = inv_masses + (term_a + term_b).dot(normal)
                 let inv_masses = 1.0 / mass_a + 1.0 / mass_b;
-                let term_a = (radius_a.cross(normal)).powi(2) / inertia_a;
-                let term_b = (radius_b.cross(normal)).powi(2) / inertia_b;
-                let denominator = inv_masses + term_a + term_b;
+                let angular_term_fn = |v: Vector2<f32>| {
+                    let inv_inertia_a = 1.0 / inertia_a;
+                    let inv_inertia_b = 1.0 / inertia_b;
+                    let cross_a = scalar_vector_cross(radius_a.cross(v), radius_a);
+                    let cross_b = scalar_vector_cross(radius_b.cross(v), radius_b);
 
-                let impulse = (numerator / denominator) * multiplier;
+                    (cross_a * inv_inertia_a + cross_b * inv_inertia_b).dot(v)
+                };
+                let elasticity = 0.2;
+                let impulse_normal = {
+                    let numerator = relative_velocity.dot(normal) * -(1.0 + elasticity);
+                    let denominator = inv_masses + angular_term_fn(normal);
 
-                // Add impulse to both bodies
+                    (numerator / denominator) * multiplier
+                };
+                // Friction
+                let tangent = normal.normal();
+                let impulse_tangent = {
+                    let numerator = -relative_velocity.dot(tangent);
+                    let denominator = inv_masses + angular_term_fn(tangent);
+
+                    (numerator / denominator) * multiplier
+                };
+
+                // Add impulses to both bodies
                 if a_is_dynamic {
                     let state = bodies[index_a].state_mut();
-                    state.velocity -= normal * (impulse / mass_a);
-                    let ang = (impulse / inertia_a) * radius_a.cross(normal);
-                    state.angular_velocity -= ang;
+                    // Apply normal impulse
+                    state.velocity -= normal * (impulse_normal / mass_a);
+                    state.angular_velocity -= (impulse_normal / inertia_a) * radius_a.cross(normal);
+                    // Apply tangent impulse
+                    state.velocity -= tangent * (impulse_tangent / mass_a);
+                    state.angular_velocity -= (impulse_tangent / inertia_a) * radius_a.cross(tangent);
+
                 }
                 if b_is_dynamic {
                     let state = bodies[index_b].state_mut();
-                    state.velocity += normal * (impulse / mass_b);
-                    state.angular_velocity += (impulse / inertia_b) * radius_b.cross(normal);
+                    // Apply normal impulse
+                    state.velocity += normal * (impulse_normal / mass_b);
+                    state.angular_velocity -= (impulse_normal / inertia_b) * radius_b.cross(normal);
+                    // Apply tangent impulse
+                    state.velocity += tangent * (impulse_tangent / mass_b);
+                    state.angular_velocity -= (impulse_tangent / inertia_b) * radius_b.cross(tangent);
                 }
             }
 
             // Offset the bodies positions by the penetration
             let (a_pen, b_pen) = match (a_is_dynamic, b_is_dynamic) {
-                    (true, true) => (0.5, 0.5),
+                    (true, true) => (0.5 * (mass_a / (mass_a + mass_b)), 0.5 * (mass_b / (mass_a + mass_b))),
                     (true, false) => (1.0, 0.0),
                     (false, true) => (0.0, 1.0),
                     // This case should not be possible
@@ -189,4 +210,8 @@ impl RbSimulator {
             }
         }
     }
+}
+
+fn scalar_vector_cross(scalar: f32, vector: Vector2<f32>) -> Vector2<f32> {
+    Vector2::new(-scalar * vector.y, scalar * vector.x)
 }

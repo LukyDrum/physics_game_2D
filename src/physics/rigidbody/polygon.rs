@@ -1,3 +1,4 @@
+use core::f32;
 use std::collections::LinkedList;
 
 use crate::game::GameBody;
@@ -5,7 +6,7 @@ use crate::math::{v2, Matrix, Vector2};
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};
 
 use super::{
-    Body, BodyBehaviour, BodyCollisionData, BodyProjection, BodyState, PointCollisionData,
+    Body, BodyBehaviour, BodyCollisionData, BodyState, PointCollisionData, PointsProjection,
 };
 
 /// Simple convex polygon.
@@ -19,6 +20,10 @@ pub struct Polygon {
     /// Triangulation of the polygon in global space
     pub(super) global_triangulation: Triangulation,
     pub(super) global_lines: Vec<Line>,
+
+    /// Calculated from the mass of the polygon and it's points when created. Stays the same for
+    /// the duration of its existance.
+    moment_of_inertia: f32,
 }
 
 impl Polygon {
@@ -36,8 +41,14 @@ impl Polygon {
             global_points: Vec::with_capacity(points_size),
             global_triangulation: Vec::with_capacity(points_size - 2),
             global_lines: Vec::with_capacity(points_size),
+
+            moment_of_inertia: 0.0,
         };
         poly.update_inner_values();
+
+        // Calculate moment of inertia
+        poly.moment_of_inertia =
+            calculate_moment_of_inertia(&poly.global_points, poly.state().mass);
 
         poly
     }
@@ -81,6 +92,19 @@ impl Polygon {
     pub fn global_triangulation(&self) -> &Triangulation {
         &self.global_triangulation
     }
+
+    /// Returns a normal vector of the provided line that is pointing away from the center of this
+    /// polygon.
+    fn lines_normal_pointing_outside(&self, line: &Line) -> Vector2<f32> {
+        let normal = line.normal();
+        let line_to_pos = self.state.position - line.middle();
+        // Make the normal point away from this body - away from this center/position
+        if normal.dot(line_to_pos) <= 0.0 {
+            normal
+        } else {
+            normal * -1.0
+        }
+    }
 }
 
 impl Body for Polygon {
@@ -96,7 +120,7 @@ impl Body for Polygon {
         &mut self.state
     }
 
-    fn point_collision_info(&self, point: Vector2<f32>) -> PointCollisionData {
+    fn point_collision_data(&self, point: Vector2<f32>) -> PointCollisionData {
         let mut closest_line = &self.global_lines[0];
         let mut surface_point = closest_line.closest_point(point);
         let mut dist_sq = (surface_point - point).length_squared();
@@ -131,8 +155,8 @@ impl Body for Polygon {
             / self.global_points.len() as f32
     }
 
-    fn project_onto_axis(&self, axis: Vector2<f32>) -> BodyProjection {
-        let mut proj = BodyProjection::default();
+    fn project_onto_axis(&self, axis: Vector2<f32>) -> PointsProjection {
+        let mut proj = PointsProjection::default();
         for point in &self.global_points {
             let dist = point.dot(axis);
             proj.add(dist);
@@ -144,57 +168,51 @@ impl Body for Polygon {
     fn projection_axes(&self) -> LinkedList<Vector2<f32>> {
         self.global_lines
             .iter()
-            .map(|line| {
-                let normal = line.normal();
-                if line.vector().dot(self.state.position) > 0.0 {
-                    normal
-                } else {
-                    normal * -1.0
-                }
-            })
+            .map(|line| self.lines_normal_pointing_outside(line))
             .collect()
     }
 
+    /// `normal` is a normal vector of some line. This vector points away from this body and
+    /// represents the direction in which the penetration is minimal. We asume it is normalized.
+    /// This function finds a line of this body that has the most similiar normal to `normal`.
     fn find_colliding_line(&self, normal: Vector2<f32>) -> Line {
-        // Find farthest vertex
-        let mut max = 0.0;
-        let mut farthest_vertex_index = 0;
-        for (index, v) in self.global_points.iter().enumerate() {
-            let projection = normal.dot(*v);
-            if projection > max {
-                max = projection;
-                farthest_vertex_index = index;
+        let mut best_dot = f32::MIN;
+        let mut best_line = &self.global_lines[0];
+        for line in &self.global_lines {
+            let line_normal = self.lines_normal_pointing_outside(line);
+            let dot = normal.dot(line_normal);
+            if dot > best_dot {
+                best_dot = dot;
+                best_line = line;
             }
         }
 
-        let edge_before_v = &self.global_lines[if farthest_vertex_index == 0 {
-            self.global_points.len() - 1
-        } else {
-            farthest_vertex_index - 1
-        }];
-        let edge_after_v = &self.global_lines[farthest_vertex_index];
-
-        // We want both vectors to point towards the max vertex
-        let l = edge_before_v.normal();
-        let r = (edge_after_v.start - edge_after_v.end).normal();
-
-        // Choose the one that is more perpendicular to the normal - will have dot product closer
-        // to 0
-        if l.dot(normal).abs() < r.dot(normal).abs() {
-            edge_before_v.clone()
-        } else {
-            edge_after_v.clone()
-        }
+        best_line.clone()
     }
 
     fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData> {
-        let mut projection_axes = self.projection_axes();
-        projection_axes.append(&mut other.projection_axes());
+        let other_position = other.state().position;
+        let this_position = self.state().position;
+        let this_to_other = other_position - this_position;
+        let other_to_this = this_position - other_position;
+
+        // Get the possible projection axes and choose only those that point towards the other body
+        // (in context of from which body the axis came from).
+        let this_projection_axes = self
+            .projection_axes()
+            .into_iter()
+            .filter(|axis| axis.dot(this_to_other) >= 0.0);
+        let other_projection_axes = other
+            .projection_axes()
+            .into_iter()
+            .filter(|axis| axis.dot(other_to_this) >= 0.0);
 
         // Try to project both bodies on each axis
         let mut min_penetration = f32::MAX;
         let mut min_axis = Vector2::zero();
-        for axis in projection_axes {
+
+        // Test projection axes of this body
+        for axis in this_projection_axes {
             let proj_a = self.project_onto_axis(axis);
             let proj_b = other.project_onto_axis(axis);
 
@@ -208,26 +226,54 @@ impl Body for Polygon {
                 return None;
             }
         }
+        // Test projection axes of the other body
+        let mut axis_is_from_other = false;
+        for axis in other_projection_axes {
+            let proj_a = self.project_onto_axis(axis);
+            let proj_b = other.project_onto_axis(axis);
+
+            if let Some(penetration) = proj_a.get_overlap(&proj_b) {
+                if penetration < min_penetration {
+                    min_penetration = penetration;
+                    min_axis = axis;
+                    axis_is_from_other = true;
+                }
+            } else {
+                // If they do not overlap on at least one axis, then they do not collide
+                return None;
+            }
+        }
+
+        if axis_is_from_other {
+            min_axis *= -1.0;
+        }
 
         // Find collision manifold points
         // Find the "best" lines from this body and the other
         let line_a = self.find_colliding_line(min_axis);
+        // Negate `min_axis` so that it points away from the body
         let line_b = other.find_colliding_line(min_axis * -1.0);
 
         // Find the reference and incident line
         let (ref_line, inc_line);
+        let ref_body_proj;
+        // Select the line that is more perpendicular to the normal
         if line_a.vector().normalized().dot(min_axis).abs()
-            <= line_b.vector().normalized().dot(min_axis)
+            <= line_b.vector().normalized().dot(min_axis).abs()
         {
             ref_line = line_a;
             inc_line = line_b;
+
+            ref_body_proj = self.project_onto_axis(min_axis);
         } else {
             ref_line = line_b;
             inc_line = line_a;
+
+            ref_body_proj = other.project_onto_axis(min_axis);
         }
 
         // Clip the incident line to find the collision points
-        let collision_points = clip_incident_line(ref_line, inc_line, min_axis);
+        let collision_points = clip_incident_line(ref_line, inc_line, min_axis, ref_body_proj);
 
         Some(BodyCollisionData {
             normal: min_axis,
@@ -235,35 +281,70 @@ impl Body for Polygon {
             collision_points,
         })
     }
+
+    fn moment_of_inertia(&self) -> f32 {
+        self.moment_of_inertia
+    }
 }
 
-fn clip_incident_line(ref_line: Line, inc_line: Line, normal: Vector2<f32>) -> Vec<Vector2<f32>> {
+fn calculate_moment_of_inertia(points: &Vec<Vector2<f32>>, mass: f32) -> f32 {
+    let mut iter = points.iter().cycle().peekable();
+    let mut sum = 0.0;
+    let mut sub_sum = 0.0;
+
+    for _ in 0..points.len() {
+        // Should be safe to unwrap
+        let this = iter.next().unwrap();
+        let after = iter.peek().unwrap();
+
+        let a = after.cross(*this);
+        let b = this.dot(*this);
+        let c = this.dot(**after);
+        let d = after.dot(**after);
+
+        sub_sum += a;
+        sum += a * (b + c + d);
+    }
+
+    mass * (sum / (6.0 * sub_sum))
+}
+
+fn clip_incident_line(
+    ref_line: Line,
+    inc_line: Line,
+    normal: Vector2<f32>,
+    ref_body_proj: PointsProjection,
+) -> Vec<Vector2<f32>> {
     // Projections of the ref_line end points
-    let ref_vec = ref_line.vector();
-    let ref_start_proj = ref_line.start.dot(ref_vec);
-    let ref_end_proj = ref_line.end.dot(ref_vec);
+    let ref_vec = ref_line.vector().normalized();
+    let mut ref_proj = PointsProjection::default();
+    let mut inc_proj = PointsProjection::default();
+
+    ref_proj.add(ref_vec.dot(ref_line.start));
+    ref_proj.add(ref_vec.dot(ref_line.end));
+    inc_proj.add(ref_vec.dot(inc_line.start));
+    inc_proj.add(ref_vec.dot(inc_line.end));
 
     // Clip incident line to start
-    let point_a = if ref_vec.dot(inc_line.start) < ref_start_proj {
+    let point_a = if inc_proj.min < ref_proj.min {
         ref_line.start
     } else {
         inc_line.start
     };
 
     // Clip incident line to end
-    let point_b = if ref_vec.dot(inc_line.end) > ref_end_proj {
+    let point_b = if inc_proj.max > ref_proj.max {
         ref_line.end
     } else {
         inc_line.end
     };
 
-    // Use only points in the correct half
+    // Use only points in the correct half - that is inside the reference polygon
     let mut points = Vec::with_capacity(2);
-    let max = normal.dot(ref_line.start).max(normal.dot(ref_line.end));
-    if normal.dot(point_a) < max {
+    if ref_body_proj.contains(normal.dot(point_a)) {
         points.push(point_a);
     }
-    if normal.dot(point_b) < max {
+    if ref_body_proj.contains(normal.dot(point_b)) {
         points.push(point_b);
     }
 
@@ -284,6 +365,10 @@ mod tests {
             vec![v2!(0.0, 5.0), v2!(5.0, 0.0), v2!(-5.0, 0.0)],
             BodyBehaviour::Static,
         )
+    }
+
+    fn test_rect() -> Polygon {
+        Rectangle!(v2!(0.0, 0.0); 5.0, 5.0; BodyBehaviour::Static)
     }
 
     #[test]
@@ -332,12 +417,33 @@ mod tests {
     }
 
     #[test]
+    fn outside_pointing_line_normal() {
+        let rect = test_rect();
+        // This should be the top line
+        let line_top = &rect.global_lines[0];
+        let line_right = &rect.global_lines[1];
+        let line_bottom = &rect.global_lines[2];
+        let line_left = &rect.global_lines[3];
+
+        let line_top_normal = rect.lines_normal_pointing_outside(line_top);
+        let line_right_normal = rect.lines_normal_pointing_outside(line_right);
+        let line_bottom_normal = rect.lines_normal_pointing_outside(line_bottom);
+        let line_left_normal = rect.lines_normal_pointing_outside(line_left);
+
+        assert_eq!(line_top_normal, v2!(0.0, -1.0));
+        assert_eq!(line_right_normal, v2!(1.0, 0.0));
+        assert_eq!(line_bottom_normal, v2!(0.0, 1.0));
+        assert_eq!(line_left_normal, v2!(-1.0, 0.0));
+    }
+
+    #[test]
     fn rectangles_not_colliding() {
         // Square centered at (0.0, 0.0) with width = 5.0 and height = 5.0
-        let rect1 = Box::new(Rectangle!(v2!(0.0, 0.0); 5.0, 5.0; BodyBehaviour::Static));
-        // Same square but centered at (0.0, 10.0)
-        let rect2: Box<dyn GameBody> =
-            Box::new(Rectangle!(v2!(0.0, 10.0); 5.0, 5.0; BodyBehaviour::Static));
+        let rect1 = Box::new(test_rect());
+        // Same square but centered at (0.0, 100.0)
+        let mut rect2: Box<dyn GameBody> = Box::new(test_rect());
+        rect2.state_mut().position = v2!(100.0, 100.0);
+        rect2.update_inner_values();
 
         assert!(rect1.check_collision_against(&rect2).is_none())
     }
@@ -345,10 +451,11 @@ mod tests {
     #[test]
     fn rectangles_colliding() {
         // Square centered at (0.0, 0.0) with width = 5.0 and height = 5.0
-        let rect1 = Box::new(Rectangle!(v2!(0.0, 0.0); 5.0, 5.0; BodyBehaviour::Static));
-        // Same square but centered at (0.0, 10.0)
-        let rect2: Box<dyn GameBody> =
-            Box::new(Rectangle!(v2!(0.0, 4.0); 5.0, 5.0; BodyBehaviour::Static));
+        let rect1 = Box::new(test_rect());
+        // Same square but centered at (0.0, 4.0)
+        let mut rect2: Box<dyn GameBody> = Box::new(test_rect());
+        rect2.state_mut().position = v2!(0.0, 4.0);
+        rect2.update_inner_values();
 
         if let Some(collision_data) = rect1.check_collision_against(&rect2) {
             assert_eq!(collision_data.penetration, 1.0)

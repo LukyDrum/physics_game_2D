@@ -211,7 +211,7 @@ impl Sph {
             for body in bodies {
                 if body.contains_point(p.position) {
                     // Move particle to surface
-                    let collision_info = body.point_collision_info(p.position);
+                    let collision_info = body.point_collision_data(p.position);
                     let elasticity = 0.1;
                     let impulse =
                         -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);

@@ -35,4 +35,8 @@ impl Line {
     pub fn vector(&self) -> Vector2<f32> {
         self.vector
     }
+
+    pub fn middle(&self) -> Vector2<f32> {
+        (self.start + self.end) * 0.5
+    }
 }

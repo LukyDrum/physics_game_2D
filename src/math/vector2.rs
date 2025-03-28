@@ -130,6 +130,10 @@ where
     pub fn is_zero(&self) -> bool {
         self.x.is_zero() && self.y.is_zero()
     }
+
+    pub fn cross(&self, other: Vector2<T>) -> T {
+        self.x * other.y - self.y * other.x
+    }
 }
 
 impl<T> Add for Vector2<T>

@@ -1,9 +1,10 @@
-use std::{collections::LinkedList, f32::consts::PI};
+use std::f32::consts::PI;
 
 use macroquad::{
-    color::GREEN, input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton}, shapes::draw_circle, window::clear_background
+    input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton},
+    shapes::draw_circle,
+    window::clear_background,
 };
-use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 
 use crate::{
     math::{v2, Vector2},
@@ -47,6 +48,22 @@ impl Game {
 
         // Add recrtangles that act as walls and such
         let wall_thickness = 20.0;
+        let mut rect = Box::new(Rectangle!(
+            v2!(150, 200; f32),
+            v2!(300, 200; f32),
+            v2!(300, 300; f32),
+            v2!(200, 300; f32);
+            BodyBehaviour::Dynamic
+        ));
+        rect.state_mut().rotation = PI * 0.2;
+        let mut rect2 = Box::new(Rectangle!(
+            v2!(225, 100; f32),
+            v2!(400, 100; f32),
+            v2!(400, 150; f32),
+            v2!(225, 150; f32);
+            BodyBehaviour::Dynamic
+        ));
+        rect2.state_mut().velocity.x = -80.0;
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
@@ -64,13 +81,8 @@ impl Game {
             Box::new(
                 Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
-            Box::new(Rectangle!(
-                v2!(200, 200; f32),
-                v2!(300, 200; f32),
-                v2!(300, 300; f32),
-                v2!(200, 300; f32);
-                BodyBehaviour::Dynamic
-            )),
+            rect,
+            rect2,
         ];
 
         Game {

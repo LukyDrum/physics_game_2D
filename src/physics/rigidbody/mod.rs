@@ -1,3 +1,4 @@
+use core::f32;
 use std::collections::LinkedList;
 
 use crate::{game::GameBody, math::Vector2, shapes::Line, utility::runge_kutta};
@@ -26,25 +27,45 @@ pub struct BodyState {
     pub velocity: Vector2<f32>,
     /// Angular velocity measured in radians
     pub angular_velocity: f32,
-    pub rotation: f32,
-    pub mass: f32,
+    pub orientation: f32,
+    mass: f32,
+    moment_of_inertia: f32,
 
     accumulated_force: Vector2<f32>,
     accumulated_torque: f32,
 }
 
 impl BodyState {
-    pub fn new(position: Vector2<f32>, behaviour: BodyBehaviour) -> BodyState {
+    pub fn new(position: Vector2<f32>, mass: f32, behaviour: BodyBehaviour) -> BodyState {
         BodyState {
             position,
             behaviour,
             velocity: Vector2::zero(),
             angular_velocity: 0.0,
-            rotation: 0.0,
-            mass: 10.0,
+            orientation: 0.0,
+            mass,
+            // Set it to mass just so it is not empty - it will be set by the body when it is
+            // created
+            moment_of_inertia: mass,
 
             accumulated_force: Vector2::zero(),
             accumulated_torque: 0.0,
+        }
+    }
+
+    pub fn mass(&self) -> f32 {
+        if self.behaviour == BodyBehaviour::Static {
+            f32::INFINITY
+        } else {
+            self.mass
+        }
+    }
+
+    pub fn moment_of_inertia(&self) -> f32 {
+        if self.behaviour == BodyBehaviour::Static {
+            f32::INFINITY
+        } else {
+            self.moment_of_inertia
         }
     }
 
@@ -64,7 +85,7 @@ impl BodyState {
 
     pub fn move_by_velocity(&mut self, time_step: f32) {
         self.position = runge_kutta(self.position, time_step, self.velocity);
-        self.rotation = runge_kutta(self.rotation, time_step, self.angular_velocity);
+        self.orientation = runge_kutta(self.orientation, time_step, self.angular_velocity);
     }
 }
 
@@ -114,6 +135,7 @@ impl PointsProjection {
     }
 }
 
+#[derive(Clone)]
 pub struct BodyCollisionData {
     /// Vector point away from the edge. This will be the normal unit vector of the edge on which
     /// the collision occured.
@@ -157,8 +179,6 @@ pub trait Body: Send + Sync {
     /// Checks if this Body collides with the `other` Body and if so returns a `BodyCollisionInfo`.
     /// Otherwise returns `None` (meaning they do not collide).
     fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData>;
-
-    fn moment_of_inertia(&self) -> f32;
 }
 
 macro_rules! Rectangle {

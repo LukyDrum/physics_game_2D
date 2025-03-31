@@ -20,10 +20,6 @@ pub struct Polygon {
     /// Triangulation of the polygon in global space
     pub(super) global_triangulation: Triangulation,
     pub(super) global_lines: Vec<Line>,
-
-    /// Calculated from the mass of the polygon and it's points when created. Stays the same for
-    /// the duration of its existance.
-    moment_of_inertia: f32,
 }
 
 impl Polygon {
@@ -35,27 +31,24 @@ impl Polygon {
         let points_size = points.len();
 
         let mut poly = Polygon {
-            state: BodyState::new(position, behaviour),
+            state: BodyState::new(position, 1000.0, behaviour),
             points,
 
             global_points: Vec::with_capacity(points_size),
             global_triangulation: Vec::with_capacity(points_size - 2),
             global_lines: Vec::with_capacity(points_size),
-
-            moment_of_inertia: 0.0,
         };
         poly.update_inner_values();
 
         // Calculate moment of inertia
-        poly.moment_of_inertia =
-            calculate_moment_of_inertia(&poly.global_points, poly.state().mass);
+        poly.state.moment_of_inertia = calculate_moment_of_inertia(&poly.points, poly.state.mass);
 
         poly
     }
 
     fn local_point_to_global(&self, point: Vector2<f32>) -> Vector2<f32> {
-        let sin = self.state.rotation.sin();
-        let cos = self.state.rotation.cos();
+        let sin = self.state.orientation.sin();
+        let cos = self.state.orientation.cos();
 
         let rot_mat = Matrix::new([[cos, -sin], [sin, cos]]);
         let local = Matrix::new([[point.x], [point.y]]);
@@ -281,10 +274,6 @@ impl Body for Polygon {
             collision_points,
         })
     }
-
-    fn moment_of_inertia(&self) -> f32 {
-        self.moment_of_inertia
-    }
 }
 
 fn calculate_moment_of_inertia(points: &Vec<Vector2<f32>>, mass: f32) -> f32 {
@@ -306,7 +295,7 @@ fn calculate_moment_of_inertia(points: &Vec<Vector2<f32>>, mass: f32) -> f32 {
         sum += a * (b + c + d);
     }
 
-    mass * (sum / (6.0 * sub_sum))
+    mass * (sum / (6.0 * sub_sum)) * 10.0
 }
 
 fn clip_incident_line(
@@ -385,7 +374,7 @@ mod tests {
     #[test]
     fn local_to_global_point_rotated() {
         let mut poly = test_poly();
-        poly.state.rotation = -PI * 0.5;
+        poly.state.orientation = -PI * 0.5;
         let local_point = poly.points[0];
 
         assert_eq!(local_point, v2!(0.0, 5.0));

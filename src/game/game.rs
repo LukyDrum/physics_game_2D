@@ -55,15 +55,15 @@ impl Game {
             v2!(200, 300; f32);
             BodyBehaviour::Dynamic
         ));
-        rect.state_mut().rotation = PI * 0.2;
+        rect.state_mut().orientation = PI * 0.02;
         let mut rect2 = Box::new(Rectangle!(
-            v2!(225, 100; f32),
-            v2!(400, 100; f32),
-            v2!(400, 150; f32),
-            v2!(225, 150; f32);
+            v2!(225, 200; f32),
+            v2!(400, 200; f32),
+            v2!(400, 250; f32),
+            v2!(225, 250; f32);
             BodyBehaviour::Dynamic
         ));
-        rect2.state_mut().velocity.x = -80.0;
+        rect2.state_mut().orientation = PI * -0.3;
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
@@ -136,10 +136,9 @@ impl Game {
         if self.is_simulating {
             let dt = self.time_step / self.step_division as f32;
 
-            self.rb_simulator.step(&mut self.bodies, dt);
-
             for _ in 0..self.step_division {
                 self.fluid_system.step(dt, &self.bodies);
+                self.rb_simulator.step(&mut self.bodies, dt);
             }
         }
 

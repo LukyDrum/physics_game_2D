@@ -131,7 +131,7 @@ impl Body for Polygon {
 
         PointCollisionData {
             surface_point,
-            surface_normal: closest_line.normal(),
+            surface_normal: self.lines_normal_pointing_outside(closest_line),
         }
     }
 

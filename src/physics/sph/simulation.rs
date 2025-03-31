@@ -206,17 +206,19 @@ impl Sph {
         });
     }
 
-    fn resolve_collisions(&mut self, bodies: &Vec<Box<dyn GameBody>>) {
+    fn resolve_collisions(&mut self, bodies: &Vec<Box<dyn GameBody>>, delta_time: f32) {
         self.particles.par_iter_mut().for_each(|p| {
             for body in bodies {
                 if body.contains_point(p.position) {
-                    // Move particle to surface
-                    let collision_info = body.point_collision_data(p.position);
+                    // Use particles position before moving to resolve collisions.
+                    // The actual point of contact should be very close to the middle between those
+                    // 2 positions.
+                    let collision_info =
+                        body.point_collision_data(p.position - p.velocity * delta_time * 0.5);
                     let elasticity = 0.1;
                     let impulse =
                         -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
-                    // Let's say that body has mass of 100
-                    let impulse = impulse / (1.0 / p.mass() + 1.0 / 100.0);
+                    let impulse = impulse / (1.0 / p.mass() + 1.0 / body.state().mass());
 
                     p.velocity += collision_info.surface_normal * (impulse / p.mass());
                     p.position = collision_info.surface_point;
@@ -252,10 +254,7 @@ impl Sph {
         });
 
         // Do collision detection and resolution
-        self.resolve_collisions(bodies);
-        self.particles.par_iter_mut().for_each(|p| {
-            p.move_by_velocity(dt);
-        });
+        self.resolve_collisions(bodies, dt);
     }
 
     pub fn get_particles_around_position(

@@ -12,6 +12,7 @@ pub use rb_simulation::RbSimulator;
 
 // Base values for body state properties
 const DEFAULT_ELASTICITY: f32 = 0.4;
+const DEFAULT_STATIC_FRICTION: f32 = 0.1;
 const DEFAULT_DYNAMIC_FRICTION: f32 = 0.1;
 
 /// Describes how does the Body behave in the simulation:
@@ -64,6 +65,8 @@ pub struct BodyState {
     /// The restitution coefficient, aka coefficient of elasticity, aka bounciness.
     /// A value between 0 (no bounce) and 1 (100% bounce).
     pub elasticity: f32,
+    /// A value between 0 and 1. Describes the friction between 2 stationary bodies.
+    pub static_friction: f32,
     /// The dynamic friction coefficient of this body. A value between 0 and 1.
     pub dynamic_friction: f32,
 
@@ -86,6 +89,7 @@ impl BodyState {
             // created
             moment_of_inertia: mass,
             elasticity: DEFAULT_ELASTICITY,
+            static_friction: DEFAULT_STATIC_FRICTION,
             dynamic_friction: DEFAULT_DYNAMIC_FRICTION,
 
             accumulated_force: Vector2::zero(),

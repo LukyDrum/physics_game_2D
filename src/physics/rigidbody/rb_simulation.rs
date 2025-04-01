@@ -3,9 +3,8 @@ use std::collections::LinkedList;
 
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
-use crate::{game::GameBody, math::Vector2};
-
 use super::{BodyBehaviour, BodyCollisionData};
+use crate::{game::GameBody, math::Vector2};
 
 /// Holds `BodyCollisionData` along with indexes of what two bodies collided.
 #[derive(Clone)]
@@ -27,6 +26,12 @@ impl RbSimulator {
     const CORRECTION_STABILIZER: f32 = 0.8;
     /// For stability, we tolerate some very small penetration
     const PENETRATION_TOLERANCE: f32 = 1.0;
+
+    // Friction constants
+    /// Max impulse magnitude for applying static friction
+    const STATIC_FRICTION_LIMIT: f32 = 10.0;
+    /// Coefficient of the dynamic friction
+    const FRICTION_DYNAMIC: f32 = 0.01;
 
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator {
@@ -161,31 +166,58 @@ impl RbSimulator {
                 let radius_a = coll_point - center_a;
                 let radius_b = coll_point - center_b;
 
+                // Relative velocity of the contact point from both bodies
                 let relative_velocity = (velocity_a
                     + scalar_vector_cross(angular_velocity_a, radius_a))
                     - (velocity_b + scalar_vector_cross(angular_velocity_b, radius_b));
 
+                // Formula for calculation of the effective mass in direction. The bottom term in
+                // the impulse calculation.
+                let effective_mass_formula = |dir: Vector2<f32>| {
+                    let inertia_term_a =
+                        scalar_vector_cross(radius_a.cross(dir), radius_a) * inv_inertia_a;
+                    let inertia_term_b =
+                        scalar_vector_cross(radius_b.cross(dir), radius_b) * inv_inertia_b;
+
+                    inv_masses + (inertia_term_a + inertia_term_b).dot(dir)
+                };
+
+                // Normal impulse
                 let top_term = -(1.0 + Self::ELASTICITY) * relative_velocity.dot(normal);
-                let inertia_term_a =
-                    scalar_vector_cross(radius_a.cross(normal), radius_a) * inv_inertia_a;
-                let inertia_term_b =
-                    scalar_vector_cross(radius_b.cross(normal), radius_b) * inv_inertia_b;
-                let impulse =
-                    top_term / (inv_masses + (inertia_term_a + inertia_term_b).dot(normal));
-                let impulse = impulse * multiplier;
+                let impulse_normal = top_term / effective_mass_formula(normal) * multiplier;
+
+                // Tangent impulse - friction
+                let tangent = normal.normal();
+                let mut impulse_tangent =
+                    relative_velocity.dot(tangent) / effective_mass_formula(tangent) * multiplier;
+                if impulse_tangent.abs() > Self::STATIC_FRICTION_LIMIT {
+                    impulse_tangent *= Self::FRICTION_DYNAMIC;
+                }
 
                 // Add impulses to both bodies
                 if a_is_dynamic {
                     let state = bodies[index_a].state_mut();
                     // Apply normal impulse
-                    state.velocity += normal * (impulse / mass_a);
-                    state.angular_velocity += radius_a.cross(normal * impulse) * inv_inertia_a;
+                    state.velocity += normal * (impulse_normal / mass_a);
+                    state.angular_velocity +=
+                        radius_a.cross(normal * impulse_normal) * inv_inertia_a;
+
+                    // Apply tangent impulse - friction
+                    state.velocity -= tangent * (impulse_tangent / mass_a);
+                    state.angular_velocity -=
+                        radius_a.cross(tangent * impulse_tangent) * inv_inertia_a;
                 }
                 if b_is_dynamic {
                     let state = bodies[index_b].state_mut();
                     // Apply normal impulse
-                    state.velocity -= normal * (impulse / mass_b);
-                    state.angular_velocity -= radius_b.cross(normal * impulse) * inv_inertia_b;
+                    state.velocity -= normal * (impulse_normal / mass_b);
+                    state.angular_velocity -=
+                        radius_b.cross(normal * impulse_normal) * inv_inertia_b;
+
+                    // Apply tangent impulse - friction
+                    state.velocity += tangent * (impulse_tangent / mass_b);
+                    state.angular_velocity +=
+                        radius_b.cross(tangent * impulse_tangent) * inv_inertia_b;
                 }
             }
 

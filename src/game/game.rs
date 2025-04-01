@@ -1,7 +1,10 @@
 use std::f32::consts::PI;
 
 use macroquad::{
-    input::{is_key_pressed, is_mouse_button_down, mouse_position, KeyCode, MouseButton},
+    input::{
+        is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, mouse_position, KeyCode,
+        MouseButton,
+    },
     shapes::draw_circle,
     window::clear_background,
 };
@@ -63,7 +66,7 @@ impl Game {
             v2!(225, 250; f32);
             BodyBehaviour::Dynamic
         ));
-        rect2.state_mut().orientation = PI * -0.3;
+        rect2.state_mut().orientation = PI * 0.5;
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
@@ -81,7 +84,7 @@ impl Game {
             Box::new(
                 Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
-            rect,
+            // rect,
             rect2,
         ];
 
@@ -124,6 +127,13 @@ impl Game {
                 .with_color(Color::rgb(255, 0, 0));
             self.fluid_system.add_particle(new_particle);
         }
+        if is_mouse_button_pressed(MouseButton::Middle) {
+            let mouse_pos = mouse_position();
+            let mut rect =
+                Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
+            rect.state_mut().set_mass(0.1);
+            self.bodies.push(Box::new(rect));
+        }
 
         // Pause / Resume
         if is_key_pressed(KeyCode::Space) {
@@ -137,7 +147,13 @@ impl Game {
             let dt = self.time_step / self.step_division as f32;
 
             for _ in 0..self.step_division {
-                self.fluid_system.step(dt, &self.bodies);
+                let fluid_forces_on_bodies = self.fluid_system.step(dt, &self.bodies);
+                for (index, force_accumulation) in fluid_forces_on_bodies {
+                    let state = self.bodies[index].state_mut();
+                    state.add_force_accumulation(force_accumulation);
+                    state.apply_accumulated_forces(dt);
+                }
+
                 self.rb_simulator.step(&mut self.bodies, dt);
             }
         }

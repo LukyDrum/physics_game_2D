@@ -6,6 +6,7 @@ use rayon::iter::{
 
 use crate::game::GameBody;
 use crate::math::{v2, Vector2};
+use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation};
 use crate::{physics::sph::Particle, utility::LookUp};
 
 fn kernel(dist: f32, radius: f32) -> f32 {
@@ -206,25 +207,61 @@ impl Sph {
         });
     }
 
-    fn resolve_collisions(&mut self, bodies: &Vec<Box<dyn GameBody>>, delta_time: f32) {
-        self.particles.par_iter_mut().for_each(|p| {
-            for body in bodies {
-                if body.contains_point(p.position) {
-                    // Use particles position before moving to resolve collisions.
-                    // The actual point of contact should be very close to the middle between those
-                    // 2 positions.
-                    let collision_info =
-                        body.point_collision_data(p.position - p.velocity * delta_time * 0.5);
-                    let elasticity = 0.1;
-                    let impulse =
-                        -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
-                    let impulse = impulse / (1.0 / p.mass() + 1.0 / body.state().mass());
+    /// Resolves collision for the particles and calculates acumulated forces that act on the
+    /// bodies.
+    fn resolve_collisions(
+        &mut self,
+        bodies: &Vec<Box<dyn GameBody>>,
+        delta_time: f32,
+    ) -> Vec<(usize, BodyForceAccumulation)> {
+        let mut body_forces = Vec::with_capacity(bodies.len());
+        for (index, body) in bodies.iter().enumerate() {
+            let force_accumulation = self
+                .particles
+                .par_iter_mut()
+                .filter_map(|p| {
+                    if body.contains_point(p.position) {
+                        // Use particles position before moving to resolve collisions.
+                        // The actual point of contact should be very close to the middle between those
+                        // 2 positions.
+                        let collision_info =
+                            body.point_collision_data(p.position - p.velocity * delta_time * 0.5);
+                        let elasticity = 0.1;
+                        let impulse =
+                            -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
+                        let impulse = impulse / (1.0 / p.mass() + 1.0 / body.state().mass());
 
-                    p.velocity += collision_info.surface_normal * (impulse / p.mass());
-                    p.position = collision_info.surface_point;
-                }
-            }
-        });
+                        p.velocity += collision_info.surface_normal * (impulse / p.mass());
+                        p.position = collision_info.surface_point;
+
+                        // Calculate force on body only for non-static bodies
+                        if body.state().behaviour != BodyBehaviour::Static {
+                            let mut force_accumulation = BodyForceAccumulation::empty();
+                            let radius = collision_info.surface_point - body.state().position;
+                            let magnitude = -impulse;
+                            let force = collision_info.surface_normal * magnitude;
+                            force_accumulation.add_force_at_radius(force, radius);
+
+                            Some(force_accumulation)
+                        } else {
+                            None
+                        }
+                    } else {
+                        None
+                    }
+                })
+                .reduce(
+                    || BodyForceAccumulation::empty(),
+                    |a, b| BodyForceAccumulation {
+                        force: a.force + b.force,
+                        torque: a.torque + b.torque,
+                    },
+                );
+
+            body_forces.push((index, force_accumulation));
+        }
+
+        body_forces
     }
 
     fn setup_lookup(&mut self) {
@@ -235,7 +272,14 @@ impl Sph {
         }
     }
 
-    pub fn step(&mut self, delta_time: f32, bodies: &Vec<Box<dyn GameBody>>) {
+    /// Performs a step of the fluid simulation.
+    /// At the end of the step, it resolves any collisions with the provided bodies and returns the
+    /// forces that the fluid exerts on the bodies.
+    pub fn step(
+        &mut self,
+        delta_time: f32,
+        bodies: &Vec<Box<dyn GameBody>>,
+    ) -> Vec<(usize, BodyForceAccumulation)> {
         self.setup_lookup();
 
         let dt = delta_time;
@@ -254,7 +298,7 @@ impl Sph {
         });
 
         // Do collision detection and resolution
-        self.resolve_collisions(bodies, dt);
+        self.resolve_collisions(bodies, dt)
     }
 
     pub fn get_particles_around_position(

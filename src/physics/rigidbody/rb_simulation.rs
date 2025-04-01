@@ -239,9 +239,9 @@ impl RbSimulator {
                 let tangent = normal.normal();
                 let mut impulse_tangent =
                     relative_velocity.dot(tangent) / effective_mass_formula(tangent) * multiplier;
-                if impulse_tangent.abs() > Self::STATIC_FRICTION_LIMIT {
-                    impulse_tangent *= shared_friction;
-                }
+                //if impulse_tangent.abs() > Self::STATIC_FRICTION_LIMIT {
+                impulse_tangent *= shared_friction;
+                //}
 
                 // Add impulses to both bodies
                 if a_is_dynamic {

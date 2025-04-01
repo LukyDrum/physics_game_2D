@@ -31,7 +31,7 @@ impl Polygon {
         let points_size = points.len();
 
         let mut poly = Polygon {
-            state: BodyState::new(position, 1000.0, behaviour),
+            state: BodyState::new(position, 10.0, behaviour),
             points,
 
             global_points: Vec::with_capacity(points_size),

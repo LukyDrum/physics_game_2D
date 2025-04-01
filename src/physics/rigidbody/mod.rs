@@ -6,6 +6,7 @@ use crate::{game::GameBody, math::Vector2, shapes::Line, utility::runge_kutta};
 mod polygon;
 mod rb_simulation;
 
+use num_traits::Zero;
 pub use polygon::Polygon;
 pub use rb_simulation::RbSimulator;
 
@@ -20,6 +21,27 @@ const DEFAULT_DYNAMIC_FRICTION: f32 = 0.1;
 pub enum BodyBehaviour {
     Dynamic,
     Static,
+}
+
+pub struct BodyForceAccumulation {
+    pub force: Vector2<f32>,
+    pub torque: f32,
+}
+
+impl BodyForceAccumulation {
+    pub fn empty() -> Self {
+        BodyForceAccumulation {
+            force: Vector2::zero(),
+            torque: 0.0,
+        }
+    }
+
+    /// Applies the force to the body affecting both linear force as well as torque.
+    /// The `radius` is the vector from the center of mass of the object to the collision point.
+    pub fn add_force_at_radius(&mut self, force: Vector2<f32>, radius: Vector2<f32>) {
+        self.force += force;
+        self.torque += radius.cross(force);
+    }
 }
 
 /// Contains values that are universal for any Body regardless of it being a polygon or a circle
@@ -71,6 +93,10 @@ impl BodyState {
         }
     }
 
+    pub fn set_mass(&mut self, new_mass: f32) {
+        self.mass = new_mass;
+    }
+
     pub fn mass(&self) -> f32 {
         if self.behaviour == BodyBehaviour::Static {
             f32::INFINITY
@@ -91,14 +117,23 @@ impl BodyState {
         self.accumulated_force += force;
     }
 
-    pub fn apply_accumulated_forces(&mut self, time_step: f32) {
-        let acc = self.accumulated_force / self.mass;
-        self.velocity = runge_kutta(self.velocity, time_step, acc);
-        let angular_acc = self.accumulated_torque / self.mass;
-        self.angular_velocity = runge_kutta(self.angular_velocity, time_step, angular_acc);
+    pub fn add_force_accumulation(&mut self, force_accumulation: BodyForceAccumulation) {
+        self.accumulated_force += force_accumulation.force;
+        self.accumulated_torque += force_accumulation.torque;
+    }
 
-        self.accumulated_torque = 0.0;
-        self.accumulated_force = Vector2::zero();
+    pub fn apply_accumulated_forces(&mut self, time_step: f32) {
+        if !self.accumulated_force.is_zero() {
+            let acc = self.accumulated_force / self.mass;
+            self.velocity = runge_kutta(self.velocity, time_step, acc);
+            self.accumulated_force = Vector2::zero();
+        }
+
+        if !self.accumulated_torque.is_zero() {
+            let angular_acc = self.accumulated_torque / self.moment_of_inertia;
+            self.angular_velocity = runge_kutta(self.angular_velocity, time_step, angular_acc);
+            self.accumulated_torque = 0.0;
+        }
     }
 
     pub fn move_by_velocity(&mut self, time_step: f32) {

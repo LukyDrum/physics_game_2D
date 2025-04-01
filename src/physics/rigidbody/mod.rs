@@ -13,7 +13,7 @@ pub use rb_simulation::RbSimulator;
 // Base values for body state properties
 const DEFAULT_ELASTICITY: f32 = 0.4;
 const DEFAULT_STATIC_FRICTION: f32 = 0.1;
-const DEFAULT_DYNAMIC_FRICTION: f32 = 0.1;
+const DEFAULT_DYNAMIC_FRICTION: f32 = 0.2;
 
 /// Describes how does the Body behave in the simulation:
 ///   - `Dynamic` is a body that is affected by gravity and other forces and collides with other bodies.
@@ -98,6 +98,7 @@ impl BodyState {
     }
 
     pub fn set_mass(&mut self, new_mass: f32) {
+        self.moment_of_inertia = (self.moment_of_inertia / self.mass) * new_mass;
         self.mass = new_mass;
     }
 

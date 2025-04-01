@@ -131,7 +131,7 @@ impl Game {
             let mouse_pos = mouse_position();
             let mut rect =
                 Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
-            rect.state_mut().set_mass(0.1);
+            rect.state_mut().set_mass(100.0);
             self.bodies.push(Box::new(rect));
         }
 

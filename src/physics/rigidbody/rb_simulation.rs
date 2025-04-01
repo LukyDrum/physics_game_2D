@@ -205,7 +205,8 @@ impl RbSimulator {
             let shared_static_friction = {
                 let friction_a = bodies[index_a].state().static_friction;
                 let friction_b = bodies[index_b].state().static_friction;
-                self.friction_selection.select(friction_a, friction_b)
+                self.friction_selection.select(friction_a, friction_b);
+                0.0
             };
 
             let inv_masses = inverse_value(mass_a) + inverse_value(mass_b);
@@ -239,7 +240,7 @@ impl RbSimulator {
                 let tangent = normal.normal();
                 let mut impulse_tangent =
                     relative_velocity.dot(tangent) / effective_mass_formula(tangent) * multiplier;
-                if impulse_tangent.abs() > shared_static_friction {
+                if impulse_tangent.abs() > shared_static_friction * impulse_normal {
                     impulse_tangent *= shared_dynamic_friction;
                 }
 
@@ -252,9 +253,11 @@ impl RbSimulator {
                         radius_a.cross(normal * impulse_normal) * inv_inertia_a;
 
                     // Apply tangent impulse - friction
+                    /*
                     state.velocity -= tangent * (impulse_tangent / mass_a);
                     state.angular_velocity -=
                         radius_a.cross(tangent * impulse_tangent) * inv_inertia_a;
+                    */
                 }
                 if b_is_dynamic {
                     let state = bodies[index_b].state_mut();
@@ -264,9 +267,11 @@ impl RbSimulator {
                         radius_b.cross(normal * impulse_normal) * inv_inertia_b;
 
                     // Apply tangent impulse - friction
+                    /*
                     state.velocity += tangent * (impulse_tangent / mass_b);
                     state.angular_velocity +=
                         radius_b.cross(tangent * impulse_tangent) * inv_inertia_b;
+                    */
                 }
             }
 

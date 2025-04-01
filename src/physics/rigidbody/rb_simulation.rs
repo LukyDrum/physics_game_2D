@@ -1,5 +1,8 @@
 use core::{f32, panic};
-use std::collections::LinkedList;
+use std::{
+    collections::LinkedList,
+    ops::{Add, Mul},
+};
 
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
@@ -14,28 +17,62 @@ struct BodyBodyCollision {
     collision_data: BodyCollisionData,
 }
 
+pub enum SharedPropertySelection {
+    Multiply,
+    Average,
+    Min,
+    Max,
+}
+
+impl SharedPropertySelection {
+    pub fn select<T>(&self, a: T, b: T) -> T
+    where
+        T: PartialOrd + Mul<Output = T> + Mul<f32, Output = T> + Add<Output = T>,
+    {
+        match self {
+            Self::Multiply => a * b,
+            Self::Average => (a + b) * 0.5,
+            Self::Min => {
+                if a < b {
+                    a
+                } else {
+                    b
+                }
+            }
+            Self::Max => {
+                if a > b {
+                    a
+                } else {
+                    b
+                }
+            }
+        }
+    }
+}
+
 pub struct RbSimulator {
     pub gravity: Vector2<f32>,
+    pub elasticity_selection: SharedPropertySelection,
+    pub friction_selection: SharedPropertySelection,
+
     pub current_time_step: f32,
 }
 
 impl RbSimulator {
-    /// Bouncines of the collisions
-    const ELASTICITY: f32 = 0.2;
     /// Only correct the position of the body by this much percent
     const CORRECTION_STABILIZER: f32 = 0.8;
     /// For stability, we tolerate some very small penetration
     const PENETRATION_TOLERANCE: f32 = 1.0;
 
-    // Friction constants
     /// Max impulse magnitude for applying static friction
     const STATIC_FRICTION_LIMIT: f32 = 10.0;
-    /// Coefficient of the dynamic friction
-    const FRICTION_DYNAMIC: f32 = 0.01;
 
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator {
             gravity,
+            elasticity_selection: SharedPropertySelection::Average,
+            friction_selection: SharedPropertySelection::Average,
+
             current_time_step: 0.0,
         }
     }
@@ -159,6 +196,18 @@ impl RbSimulator {
             let inv_inertia_b = inverse_value(inertia_b);
             let center_b = bodies[index_b].center_of_mass();
 
+            // Shared properties
+            let shared_elasticity = {
+                let elasticity_a = bodies[index_a].state().elasticity;
+                let elasticity_b = bodies[index_b].state().elasticity;
+                self.elasticity_selection.select(elasticity_a, elasticity_b)
+            };
+            let shared_friction = {
+                let friction_a = bodies[index_a].state().dynamic_friction;
+                let friction_b = bodies[index_b].state().dynamic_friction;
+                self.friction_selection.select(friction_a, friction_b)
+            };
+
             let inv_masses = inverse_value(mass_a) + inverse_value(mass_b);
             // Apply impulse for each collision point weighted by the number of collision points
             let multiplier = 1.0 / collision_points.len() as f32;
@@ -183,7 +232,7 @@ impl RbSimulator {
                 };
 
                 // Normal impulse
-                let top_term = -(1.0 + Self::ELASTICITY) * relative_velocity.dot(normal);
+                let top_term = -(1.0 + shared_elasticity) * relative_velocity.dot(normal);
                 let impulse_normal = top_term / effective_mass_formula(normal) * multiplier;
 
                 // Tangent impulse - friction
@@ -191,7 +240,7 @@ impl RbSimulator {
                 let mut impulse_tangent =
                     relative_velocity.dot(tangent) / effective_mass_formula(tangent) * multiplier;
                 if impulse_tangent.abs() > Self::STATIC_FRICTION_LIMIT {
-                    impulse_tangent *= Self::FRICTION_DYNAMIC;
+                    impulse_tangent *= shared_friction;
                 }
 
                 // Add impulses to both bodies

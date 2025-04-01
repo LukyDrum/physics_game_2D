@@ -9,7 +9,11 @@ mod rb_simulation;
 pub use polygon::Polygon;
 pub use rb_simulation::RbSimulator;
 
-/// Describes how does the Body behave:
+// Base values for body state properties
+const DEFAULT_ELASTICITY: f32 = 0.4;
+const DEFAULT_DYNAMIC_FRICTION: f32 = 0.1;
+
+/// Describes how does the Body behave in the simulation:
 ///   - `Dynamic` is a body that is affected by gravity and other forces and collides with other bodies.
 ///   - `Static` is a body that is not affected by forces, but still collides with other bodies
 #[derive(Copy, Clone, PartialEq)]
@@ -22,15 +26,26 @@ pub enum BodyBehaviour {
 /// (or someting else).
 #[derive(Clone)]
 pub struct BodyState {
+    // BASIC VALUES for 2D space
     pub position: Vector2<f32>,
-    pub behaviour: BodyBehaviour,
+    /// Linear velocity measured in pixels per second (1 pixel = 1 cm ingame)
     pub velocity: Vector2<f32>,
     /// Angular velocity measured in radians
     pub angular_velocity: f32,
+    /// Rotation of the body measured in radians
     pub orientation: f32,
+
+    // PROPERTIES
+    pub behaviour: BodyBehaviour,
     mass: f32,
     moment_of_inertia: f32,
+    /// The restitution coefficient, aka coefficient of elasticity, aka bounciness.
+    /// A value between 0 (no bounce) and 1 (100% bounce).
+    pub elasticity: f32,
+    /// The dynamic friction coefficient of this body. A value between 0 and 1.
+    pub dynamic_friction: f32,
 
+    // ACCUMULATED FORCES waiting to be applied
     accumulated_force: Vector2<f32>,
     accumulated_torque: f32,
 }
@@ -39,14 +54,17 @@ impl BodyState {
     pub fn new(position: Vector2<f32>, mass: f32, behaviour: BodyBehaviour) -> BodyState {
         BodyState {
             position,
-            behaviour,
             velocity: Vector2::zero(),
             angular_velocity: 0.0,
             orientation: 0.0,
+
+            behaviour,
             mass,
             // Set it to mass just so it is not empty - it will be set by the body when it is
             // created
             moment_of_inertia: mass,
+            elasticity: DEFAULT_ELASTICITY,
+            dynamic_friction: DEFAULT_DYNAMIC_FRICTION,
 
             accumulated_force: Vector2::zero(),
             accumulated_torque: 0.0,

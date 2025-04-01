@@ -61,11 +61,6 @@ pub struct RbSimulator {
 impl RbSimulator {
     /// Only correct the position of the body by this much percent
     const CORRECTION_STABILIZER: f32 = 0.8;
-    /// For stability, we tolerate some very small penetration
-    const PENETRATION_TOLERANCE: f32 = 1.0;
-
-    /// Max impulse magnitude for applying static friction
-    const STATIC_FRICTION_LIMIT: f32 = 10.0;
 
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator {
@@ -283,8 +278,7 @@ impl RbSimulator {
                     // This case should not be possible
                     (false, false) => panic!("This case should not be possible as the loop should have skipped to next iteration."),
             };
-            let correction =
-                (penetration - Self::PENETRATION_TOLERANCE).max(0.0) * Self::CORRECTION_STABILIZER;
+            let correction = penetration * Self::CORRECTION_STABILIZER;
             if a_is_dynamic {
                 let state = bodies[index_a].state_mut();
                 state.position -= normal * correction * a_percent;

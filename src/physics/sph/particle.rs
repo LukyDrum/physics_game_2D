@@ -3,6 +3,7 @@ use crate::rendering::Color;
 use crate::utility::runge_kutta;
 
 const PRESSURE_BASE: f32 = 100_000.0;
+const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
 
 #[derive(Default, Clone)]
 pub struct Particle {
@@ -14,6 +15,9 @@ pub struct Particle {
     pub(super) mass: f32,
     pub(super) target_density: f32,
     pub(super) pressure_multiplier: f32,
+    /// A multiplier of the force on collision with a rigidbody. This is done to simulate a bigger
+    /// ammount of fluid hitting the object instead of only a few particles.
+    pub(super) body_collision_force: f32,
     pub(super) accumulated_force: Vector2<f32>,
     pub color: Color,
     /// Should be set by the simulation when the particle is inserted
@@ -35,6 +39,7 @@ impl Particle {
             mass: 1.0,
             target_density: 1.0,
             pressure_multiplier: PRESSURE_BASE,
+            body_collision_force: BODY_COLLISION_FORCE_BASE,
             accumulated_force: Vector2::zero(),
             color: Color::rgb(0, 0, 255),
             id: 0,
@@ -54,6 +59,7 @@ impl Particle {
         self.mass = new_mass;
         self.target_density = new_mass;
         self.pressure_multiplier = PRESSURE_BASE / self.mass;
+        self.body_collision_force = BODY_COLLISION_FORCE_BASE * self.mass;
     }
 
     /// Adds `force` to the accumulated force.

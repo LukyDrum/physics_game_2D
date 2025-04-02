@@ -226,7 +226,7 @@ impl Sph {
                         // 2 positions.
                         let collision_info =
                             body.point_collision_data(p.position - p.velocity * delta_time * 0.5);
-                        let elasticity = 0.1;
+                        let elasticity = 0.3;
                         let impulse =
                             -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
                         let impulse = impulse / (1.0 / p.mass() + 1.0 / body.state().mass());
@@ -238,7 +238,7 @@ impl Sph {
                         if body.state().behaviour != BodyBehaviour::Static {
                             let mut force_accumulation = BodyForceAccumulation::empty();
                             let radius = collision_info.surface_point - body.state().position;
-                            let magnitude = -impulse;
+                            let magnitude = -impulse * p.body_collision_force;
                             let force = collision_info.surface_normal * magnitude;
                             force_accumulation.add_force_at_radius(force, radius);
 

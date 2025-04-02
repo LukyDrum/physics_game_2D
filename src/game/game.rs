@@ -59,7 +59,7 @@ impl Game {
             BodyBehaviour::Dynamic
         ));
         test_body.state_mut().orientation = PI * 0.5;
-        test_body.state_mut().set_mass(10_000.0);
+        test_body.state_mut().set_mass(100_000.0);
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
@@ -123,7 +123,7 @@ impl Game {
             let mouse_pos = mouse_position();
             let mut rect =
                 Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
-            rect.state_mut().set_mass(100.0);
+            rect.state_mut().set_mass(4_000.0);
             self.bodies.push(Box::new(rect));
         }
 

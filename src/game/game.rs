@@ -51,22 +51,15 @@ impl Game {
 
         // Add recrtangles that act as walls and such
         let wall_thickness = 20.0;
-        let mut rect = Box::new(Rectangle!(
-            v2!(150, 200; f32),
-            v2!(300, 200; f32),
-            v2!(300, 300; f32),
-            v2!(200, 300; f32);
-            BodyBehaviour::Dynamic
-        ));
-        rect.state_mut().orientation = PI * 0.02;
-        let mut rect2 = Box::new(Rectangle!(
+        let mut test_body = Box::new(Rectangle!(
             v2!(225, 200; f32),
             v2!(400, 200; f32),
             v2!(400, 250; f32),
             v2!(225, 250; f32);
             BodyBehaviour::Dynamic
         ));
-        rect2.state_mut().orientation = PI * 0.5;
+        test_body.state_mut().orientation = PI * 0.5;
+        test_body.state_mut().set_mass(10_000.0);
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
@@ -84,8 +77,7 @@ impl Game {
             Box::new(
                 Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
-            // rect,
-            rect2,
+            test_body,
         ];
 
         Game {

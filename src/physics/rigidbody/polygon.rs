@@ -266,7 +266,7 @@ impl Body for Polygon {
         }
 
         // Clip the incident line to find the collision points
-        let collision_points = clip_incident_line(ref_line, inc_line, min_axis, ref_body_proj);
+        let collision_points = find_contact_points(ref_line, inc_line, min_axis, ref_body_proj);
 
         Some(BodyCollisionData {
             normal: min_axis,
@@ -298,10 +298,10 @@ fn calculate_moment_of_inertia(points: &Vec<Vector2<f32>>, mass: f32) -> f32 {
     mass * (sum / (6.0 * sub_sum)) * 10.0
 }
 
-fn clip_incident_line(
+fn find_contact_points(
     ref_line: Line,
     inc_line: Line,
-    normal: Vector2<f32>,
+    seperating_axis: Vector2<f32>,
     ref_body_proj: PointsProjection,
 ) -> Vec<Vector2<f32>> {
     // Projections of the ref_line end points
@@ -309,31 +309,58 @@ fn clip_incident_line(
     let mut ref_proj = PointsProjection::default();
     let mut inc_proj = PointsProjection::default();
 
-    ref_proj.add(ref_vec.dot(ref_line.start));
-    ref_proj.add(ref_vec.dot(ref_line.end));
-    inc_proj.add(ref_vec.dot(inc_line.start));
-    inc_proj.add(ref_vec.dot(inc_line.end));
+    let ref_start_dot = ref_vec.dot(ref_line.start);
+    let ref_end_dot = ref_vec.dot(ref_line.end);
+
+    let inc_start_dot = ref_vec.dot(inc_line.start);
+    let inc_end_dot = ref_vec.dot(inc_line.end);
+    let (inc_start, inc_end) = if inc_start_dot < inc_end_dot {
+        (inc_line.start, inc_line.end)
+    } else {
+        (inc_line.end, inc_line.start)
+    };
+
+    ref_proj.add(ref_start_dot);
+    ref_proj.add(ref_end_dot);
+    inc_proj.add(inc_start_dot);
+    inc_proj.add(inc_end_dot);
+
+    // Clipping of lines:
+    // Our goal is to get end of `inc_line` if it ends before `ref_line` or the point on `inc_line`
+    // that has its projection equal to the projection of the corresponding end of the `ref_line`.
+    //
+    //      -10      -6        -1        4
+    // INC: ##############################
+    // REF:          ############
 
     // Clip incident line to start
     let point_a = if inc_proj.min < ref_proj.min {
-        ref_line.start
+        let inc_proj_length = inc_proj.max - inc_proj.min;
+        let inc_min_to_ref_min = ref_proj.min - inc_proj.min;
+        let proportion = inc_min_to_ref_min / inc_proj_length;
+
+        inc_start + (inc_end - inc_start) * proportion
     } else {
-        inc_line.start
+        inc_start
     };
 
     // Clip incident line to end
     let point_b = if inc_proj.max > ref_proj.max {
-        ref_line.end
+        let inc_proj_length = inc_proj.max - inc_proj.min;
+        let ref_max_to_inc_max = inc_proj.max - ref_proj.max;
+        let proportion = ref_max_to_inc_max / inc_proj_length;
+
+        inc_end + (inc_start - inc_end) * proportion
     } else {
-        inc_line.end
+        inc_end
     };
 
     // Use only points in the correct half - that is inside the reference polygon
     let mut points = Vec::with_capacity(2);
-    if ref_body_proj.contains(normal.dot(point_a)) {
+    if ref_body_proj.contains(seperating_axis.dot(point_a)) {
         points.push(point_a);
     }
-    if ref_body_proj.contains(normal.dot(point_b)) {
+    if ref_body_proj.contains(seperating_axis.dot(point_b)) {
         points.push(point_b);
     }
 

@@ -11,8 +11,8 @@ use macroquad::prelude::*;
 
 use crate::physics::sph::*;
 
-const WIDTH: f32 = 500.0;
-const HEIGHT: f32 = 500.0;
+const WIDTH: f32 = 800.0;
+const HEIGHT: f32 = 600.0;
 
 /// Creates the window configruation for Macroquad
 fn window_conf() -> Conf {
@@ -35,7 +35,7 @@ fn window_conf() -> Conf {
 ///  (0, HEIGHT) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
-    let mut game = Game::new(WIDTH as usize, HEIGHT as usize);
+    let mut game = Game::new(500, 500);
 
     loop {
         game.handle_input();

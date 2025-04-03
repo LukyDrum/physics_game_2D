@@ -17,6 +17,8 @@ use crate::{
     Particle, Sph,
 };
 
+use super::{InGameUI, UIComponent};
+
 pub trait GameBody: Body + Draw {}
 impl GameBody for Polygon {}
 
@@ -39,6 +41,7 @@ pub struct Game {
     gameview_height: f32,
     renderer: Box<dyn Renderer>,
     draw_particles: bool,
+    ingame_ui: InGameUI,
 }
 
 impl Game {
@@ -104,6 +107,7 @@ impl Game {
                 .unwrap(),
             ),
             draw_particles: false,
+            ingame_ui: InGameUI::new(),
         }
     }
 
@@ -124,7 +128,7 @@ impl Game {
             let mouse_pos = mouse_position();
             let mut rect =
                 Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
-            rect.state_mut().set_mass(4_000.0);
+            rect.state_mut().set_mass(1_000.0);
             self.bodies.push(Box::new(rect));
         }
 
@@ -173,6 +177,10 @@ impl Game {
                 );
             }
         }
+
+        // Draw UI
+        self.ingame_ui
+            .draw(Vector2::new(self.gameview_width + 50.0, 40.0));
     }
 
     fn is_in_gameview(&self, position: Vector2<f32>) -> bool {

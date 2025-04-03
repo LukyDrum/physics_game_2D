@@ -2,14 +2,13 @@ use core::panic;
 
 use crate::math::v2;
 use crate::shapes::{triangulate_convex_polygon, Triangle};
-use crate::utility::non_zero_average;
+use crate::utility::{non_zero_average, AsMq};
 use crate::{math::Vector2, Sph};
 
 use macroquad::prelude::*;
 use num_traits::Pow;
 
 use super::renderer::Renderer;
-use super::VectorAsMQ;
 use super::{Color, SamplePoint};
 
 /// Alias for a tuple of 2 Vector2.

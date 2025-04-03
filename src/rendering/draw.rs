@@ -1,14 +1,11 @@
-use macroquad::{
-    color::ORANGE,
-    shapes::{draw_line, draw_triangle},
-};
+use macroquad::shapes::{draw_line, draw_triangle};
 
+use super::Color;
 use crate::{
     physics::rigidbody::Polygon,
     shapes::{Line, Triangle, Triangulation},
+    utility::AsMq,
 };
-
-use super::{Color, VectorAsMQ};
 
 /// Implementors of this trait have the ability to be drawn to the screen.
 pub trait Draw {

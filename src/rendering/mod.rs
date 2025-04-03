@@ -3,11 +3,8 @@ mod marching_squares_render;
 mod renderer;
 
 pub use draw::*;
-use macroquad::math::Vec2;
 pub use marching_squares_render::MarchingSquaresRenderer;
 pub use renderer::Renderer;
-
-use crate::math::Vector2;
 
 #[derive(Default, Clone)]
 struct SamplePoint {
@@ -48,19 +45,5 @@ impl Color {
 
     pub const fn rgb(r: u8, g: u8, b: u8) -> Self {
         Self::rgba(r, g, b, 255)
-    }
-
-    pub const fn as_mq(&self) -> macroquad::color::Color {
-        macroquad::color::Color::new(self.r, self.g, self.b, self.a)
-    }
-}
-
-pub trait VectorAsMQ {
-    fn as_mq(&self) -> Vec2;
-}
-
-impl VectorAsMQ for Vector2<f32> {
-    fn as_mq(&self) -> Vec2 {
-        Vec2::new(self.x, self.y)
     }
 }

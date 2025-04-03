@@ -13,6 +13,7 @@ use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{Body, BodyBehaviour, Polygon, RbSimulator, Rectangle},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
+    utility::AsMq,
     Particle, Sph,
 };
 

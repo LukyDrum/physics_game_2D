@@ -15,6 +15,19 @@ const DEFAULT_ELASTICITY: f32 = 0.4;
 const DEFAULT_STATIC_FRICTION: f32 = 0.2;
 const DEFAULT_DYNAMIC_FRICTION: f32 = 0.1;
 
+#[derive(Clone)]
+pub struct RigidBodiesConfig {
+    pub gravity: Vector2<f32>,
+}
+
+impl Default for RigidBodiesConfig {
+    fn default() -> Self {
+        RigidBodiesConfig {
+            gravity: Vector2::new(0.0, 981.0),
+        }
+    }
+}
+
 /// Describes how does the Body behave in the simulation:
 ///   - `Dynamic` is a body that is affected by gravity and other forces and collides with other bodies.
 ///   - `Static` is a body that is not affected by forces, but still collides with other bodies

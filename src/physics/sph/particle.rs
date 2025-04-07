@@ -2,8 +2,8 @@ use crate::math::Vector2;
 use crate::rendering::Color;
 use crate::utility::runge_kutta;
 
-const PRESSURE_BASE: f32 = 100_000.0;
-const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
+pub(super) const PRESSURE_BASE: f32 = 100_000.0;
+pub(super) const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
 
 #[derive(Default, Clone)]
 pub struct Particle {

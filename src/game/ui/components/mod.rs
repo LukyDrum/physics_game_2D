@@ -1,5 +1,5 @@
-mod fluid_selector;
 mod color_picker;
+mod fluid_selector;
 
-pub use fluid_selector::FluidSelector;
 pub use color_picker::ColorPicker;
+pub use fluid_selector::FluidSelector;

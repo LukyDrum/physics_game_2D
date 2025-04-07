@@ -46,6 +46,11 @@ impl Particle {
         }
     }
 
+    pub fn with_mass(mut self, mass: f32) -> Self {
+        self.set_mass(mass);
+        self
+    }
+
     pub fn with_color(mut self, color: Color) -> Self {
         self.color = color;
         self

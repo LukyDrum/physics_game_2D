@@ -39,8 +39,9 @@ async fn main() {
 
     loop {
         game.handle_input();
-        game.draw();
         game.update();
+        game.draw();
+        game.draw_ui();
 
         next_frame().await
     }

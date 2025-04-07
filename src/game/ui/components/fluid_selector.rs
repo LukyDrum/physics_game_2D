@@ -1,11 +1,40 @@
-use macroquad::text::draw_text;
+use macroquad::{
+    text::draw_text,
+    ui::{root_ui, widgets::Slider},
+};
 
-use crate::{game::UIComponent, math::Vector2, rendering::Color, utility::AsMq};
+use crate::{
+    game::UIComponent,
+    math::{v2, Vector2},
+    rendering::Color,
+    utility::AsMq,
+};
 
-pub struct FluidSelector {}
+use super::ColorPicker;
+
+/// Minimum density for fluids - this is somewhere between the density of Hydrogen and Helium.
+const MIN_DENSITY: f32 = 0.1;
+/// Maximum density for fluids - this is the density of Mercury at room temeprature.
+const MAX_DENSITY: f32 = 13.5;
+/// Default density - water
+const DEFAULT_DENSITY: f32 = 1.0;
+
+pub struct FluidSelector {
+    density: f32,
+    color_picker: ColorPicker,
+}
+
+impl Default for FluidSelector {
+    fn default() -> Self {
+        FluidSelector {
+            density: DEFAULT_DENSITY,
+            color_picker: ColorPicker::new(Color::rgb(10, 24, 189)),
+        }
+    }
+}
 
 impl UIComponent for FluidSelector {
-    fn draw(&self, offset: Vector2<f32>) {
+    fn draw(&mut self, offset: Vector2<f32>) {
         draw_text(
             "Fluid selector",
             offset.x,
@@ -13,5 +42,27 @@ impl UIComponent for FluidSelector {
             35.0,
             Color::rgb(0, 0, 0).as_mq(),
         );
+
+        self.draw_density_selector(offset + v2!(0.0, 20.0));
+        self.color_picker.draw(offset + v2!(0.0, 80.0));
+    }
+}
+
+impl FluidSelector {
+    pub fn density(&self) -> f32 {
+        self.density
+    }
+
+    pub fn color(&self) -> Color {
+        self.color_picker.color()
+    }
+
+    fn draw_density_selector(&mut self, offset: Vector2<f32>) {
+        Slider::new(0, MIN_DENSITY..MAX_DENSITY)
+            .label("Density [g/cm^3]")
+            .position(offset.as_mq())
+            .ui(&mut root_ui(), &mut self.density);
+        // Clamp the density into the range - in case of change using the input box
+        self.density = self.density.clamp(MIN_DENSITY, MAX_DENSITY);
     }
 }

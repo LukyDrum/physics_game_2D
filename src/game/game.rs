@@ -107,22 +107,15 @@ impl Game {
                 .unwrap(),
             ),
             draw_particles: false,
-            ingame_ui: InGameUI::new(),
+            ingame_ui: InGameUI::default(),
         }
     }
 
     pub fn handle_input(&mut self) {
-        if is_mouse_button_down(MouseButton::Left) {
-            let mouse_pos = mouse_position();
-            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1))
-                .with_color(Color::rgb(0, 0, 255));
-            self.fluid_system.add_particle(new_particle);
-        }
-        if is_mouse_button_down(MouseButton::Right) {
-            let mouse_pos = mouse_position();
-            let new_particle = Particle::new(Vector2::new(mouse_pos.0, mouse_pos.1))
-                .with_color(Color::rgb(255, 0, 0));
-            self.fluid_system.add_particle(new_particle);
+        let mouse_pos = mouse_position();
+        let position = Vector2::new(mouse_pos.0, mouse_pos.1);
+        if is_mouse_button_down(MouseButton::Left) && self.is_in_gameview(position) {
+            self.add_fluid(position);
         }
         if is_mouse_button_pressed(MouseButton::Middle) {
             let mouse_pos = mouse_position();
@@ -177,8 +170,9 @@ impl Game {
                 );
             }
         }
+    }
 
-        // Draw UI
+    pub fn draw_ui(&mut self) {
         self.ingame_ui
             .draw(Vector2::new(self.gameview_width + 50.0, 40.0));
     }
@@ -190,5 +184,12 @@ impl Game {
             && relative.x < self.gameview_width
             && relative.y >= 0.0
             && relative.y < self.gameview_height
+    }
+
+    fn add_fluid(&mut self, position: Vector2<f32>) {
+        let particle = Particle::new(position)
+            .with_mass(self.ingame_ui.fluid_selector.density())
+            .with_color(self.ingame_ui.fluid_selector.color());
+        self.fluid_system.add_particle(particle);
     }
 }

@@ -8,5 +8,5 @@ use crate::math::Vector2;
 
 pub trait UIComponent {
     /// Draws this component to the screen at the specified offset.
-    fn draw(&self, offset: Vector2<f32>);
+    fn draw(&mut self, offset: Vector2<f32>);
 }

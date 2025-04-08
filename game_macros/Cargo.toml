@@ -8,3 +8,5 @@ proc-macro = true
 
 [dependencies]
 macroquad = { git = "https://github.com/LukyDrum/macroquad.git" }
+quote = "1.0.40"
+syn = "2.0.100"

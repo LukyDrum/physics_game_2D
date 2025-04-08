@@ -193,6 +193,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "fastrand",
+ "game_macros",
  "macroquad",
  "num-traits",
  "rayon",

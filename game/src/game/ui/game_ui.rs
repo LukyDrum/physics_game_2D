@@ -1,4 +1,7 @@
-use crate::math::{v2, Vector2};
+use crate::{
+    game::config::*,
+    math::{v2, Vector2},
+};
 
 use super::{FluidSelector, UIComponent, UIEdit};
 
@@ -6,14 +9,14 @@ use super::{FluidSelector, UIComponent, UIEdit};
 /// Allows to control simulation parameters, create things, and more.
 pub struct InGameUI {
     pub fluid_selector: FluidSelector,
-    some_num: f32,
+    sph_config: SphConfig,
 }
 
 impl Default for InGameUI {
     fn default() -> Self {
         InGameUI {
             fluid_selector: FluidSelector::default(),
-            some_num: 100.0,
+            sph_config: SphConfig::default(),
         }
     }
 }
@@ -22,8 +25,7 @@ impl UIComponent for InGameUI {
     fn draw(&mut self, offset: Vector2<f32>) {
         self.fluid_selector.draw(offset);
 
-        let offset = offset + v2!(0.0, 400.0);
-        self.some_num
-            .draw_edit(offset, v2!(150.0, 50.0), "Just some number");
+        let offset = offset + v2!(0.0, 300.0);
+        self.sph_config.draw_edit(offset, v2!(100.0, 20.0), "SPH");
     }
 }

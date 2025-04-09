@@ -4,7 +4,7 @@ use macroquad::{
 };
 
 use crate::{
-    game::UIComponent,
+    game::{ui::game_ui::FONT_SIZE_LARGE, UIComponent},
     math::{v2, Vector2},
     rendering::Color,
     utility::AsMq,
@@ -18,6 +18,8 @@ const MIN_DENSITY: f32 = 0.1;
 const MAX_DENSITY: f32 = 13.5;
 /// Default density - water
 const DEFAULT_DENSITY: f32 = 1.0;
+
+const SLIDER_HEIGHT: f32 = 20.0;
 
 pub struct FluidSelector {
     density: f32,
@@ -39,12 +41,13 @@ impl UIComponent for FluidSelector {
             "Fluid selector",
             offset.x,
             offset.y,
-            35.0,
+            FONT_SIZE_LARGE,
             Color::rgb(0, 0, 0).as_mq(),
         );
 
-        self.draw_density_selector(offset + v2!(0.0, 20.0));
-        self.color_picker.draw(offset + v2!(0.0, 80.0));
+        self.draw_density_selector(offset + v2!(0.0, FONT_SIZE_LARGE));
+        self.color_picker
+            .draw(offset + v2!(0.0, FONT_SIZE_LARGE + SLIDER_HEIGHT + 10.0));
     }
 }
 
@@ -61,6 +64,7 @@ impl FluidSelector {
         Slider::new(0, MIN_DENSITY..MAX_DENSITY)
             .label("Density [g/cm^3]")
             .position(offset.as_mq())
+            .size(v2!(350.0, SLIDER_HEIGHT).as_mq())
             .ui(&mut root_ui(), &mut self.density);
         // Clamp the density into the range - in case of change using the input box
         self.density = self.density.clamp(MIN_DENSITY, MAX_DENSITY);

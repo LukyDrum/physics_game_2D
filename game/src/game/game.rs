@@ -17,12 +17,13 @@ use crate::{
     Particle, Sph,
 };
 
-use super::{InGameUI, UIComponent};
+use super::{config::GameConfig, InGameUI};
 
 pub trait GameBody: Body + Draw {}
 impl GameBody for Polygon {}
 
 pub struct Game {
+    game_config: GameConfig,
     // Physics stuff
     time_step: f32,
     /// This will divide the `time_step` into **n** parts and perform **n** steps of the physical simulation
@@ -85,6 +86,8 @@ impl Game {
         ];
 
         Game {
+            game_config: GameConfig::default(),
+
             time_step: 0.01,
             step_division: 2,
             fluid_system: sph,
@@ -173,8 +176,10 @@ impl Game {
     }
 
     pub fn draw_ui(&mut self) {
-        self.ingame_ui
-            .draw(Vector2::new(self.gameview_width + 50.0, 40.0));
+        self.ingame_ui.draw(
+            Vector2::new(self.gameview_width + 50.0, 40.0),
+            &mut self.game_config,
+        );
     }
 
     fn is_in_gameview(&self, position: Vector2<f32>) -> bool {

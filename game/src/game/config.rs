@@ -1,23 +1,32 @@
 use game_macros::UIEditable;
 
-use crate::game::UIEdit;
+use crate::game::{
+    ui::{FONT_SIZE_LARGE, FONT_SIZE_MEDIUM, FONT_SIZE_SMALL},
+    UIEdit,
+};
 use crate::math::Vector2;
+use crate::rendering::Color;
+use crate::utility::AsMq;
 
-#[derive(Clone)]
+use macroquad::text::draw_text;
+
+#[derive(Clone, UIEditable)]
 pub struct GameConfig {
-    pub sph_config: SphConfig,
-    pub rb_config: RigidBodiesConfig,
     pub time_step: f32,
     pub sub_steps: u8,
+    #[display_as("Fluids")]
+    pub sph_config: SphConfig,
+    #[display_as("Rigidbodies")]
+    pub rb_config: RigidBodiesConfig,
 }
 
 impl Default for GameConfig {
     fn default() -> Self {
         GameConfig {
-            sph_config: SphConfig::default(),
-            rb_config: RigidBodiesConfig::default(),
             time_step: 0.01,
             sub_steps: 2,
+            sph_config: SphConfig::default(),
+            rb_config: RigidBodiesConfig::default(),
         }
     }
 }
@@ -44,7 +53,7 @@ impl Default for SphConfig {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, UIEditable)]
 pub struct RigidBodiesConfig {
     pub gravity: Vector2<f32>,
 }

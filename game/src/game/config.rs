@@ -1,9 +1,6 @@
 use game_macros::UIEditable;
 
-use crate::game::{
-    ui::{FONT_SIZE_LARGE, FONT_SIZE_MEDIUM, FONT_SIZE_SMALL},
-    UIEdit,
-};
+use crate::game::{ui::FONT_SIZE_MEDIUM, UIEdit};
 use crate::math::Vector2;
 use crate::rendering::Color;
 use crate::utility::AsMq;

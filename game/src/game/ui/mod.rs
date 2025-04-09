@@ -49,6 +49,8 @@ macro_rules! ui_edit_numbers {
                     .position(position.as_mq())
                     .size(size.as_mq())
                     .label(label)
+                    .label_font_size(FONT_SIZE_SMALL)
+                    .input_font_size(FONT_SIZE_SMALL)
                     .ui(&mut root_ui(), &mut input);
 
                 if let Ok(parsed) = input.parse::<$type>() {

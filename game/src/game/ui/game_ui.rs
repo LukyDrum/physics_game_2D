@@ -9,9 +9,9 @@ use crate::{
 
 use super::{FluidSelector, UIComponent, UIEdit};
 
-pub const FONT_SIZE_LARGE: f32 = 35.0;
-pub const FONT_SIZE_MEDIUM: f32 = 25.0;
-pub const FONT_SIZE_SMALL: f32 = 15.0;
+pub const FONT_SIZE_LARGE: f32 = 36.0;
+pub const FONT_SIZE_MEDIUM: f32 = 26.0;
+pub const FONT_SIZE_SMALL: f32 = 16.0;
 
 /// The UI used to control the game while playing.
 /// Allows to control simulation parameters, create things, and more.

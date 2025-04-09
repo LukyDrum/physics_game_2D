@@ -30,7 +30,7 @@ impl Default for InGameUI {
 impl InGameUI {
     pub fn draw(&mut self, offset: Vector2<f32>, game_config: &mut GameConfig) {
         self.fluid_selector.draw(offset);
-        let offset = offset + v2!(0.0, 200.0);
+        let offset = offset + v2!(0.0, 140.0);
         draw_text(
             "Configuration",
             offset.x,

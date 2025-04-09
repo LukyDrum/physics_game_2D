@@ -4,10 +4,12 @@ use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
 
-use crate::game::GameBody;
+use crate::game::{GameBody, GameConfig};
 use crate::math::{v2, Vector2};
 use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation};
 use crate::{physics::sph::Particle, utility::LookUp};
+
+use super::particle::{BODY_COLLISION_FORCE_BASE, PRESSURE_BASE};
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -78,6 +80,8 @@ pub struct Sph {
     pub lookup: LookUp<usize>,
     pub gravity: Vector2<f32>,
     pub smoothing_radius: f32,
+    pressure_base: f32,
+    body_collision_base: f32,
 
     // Inner helping stuff
     id_counter: u32,
@@ -93,6 +97,8 @@ impl Sph {
             lookup: LookUp::new(width, height, smoothing_radius * 2.0),
             gravity: Vector2::new(0.0, 981.0),
             smoothing_radius,
+            pressure_base: PRESSURE_BASE,
+            body_collision_base: BODY_COLLISION_FORCE_BASE,
 
             id_counter: 0,
             // 1000 chosen as a good starting capacity
@@ -159,7 +165,7 @@ impl Sph {
             .par_iter()
             .map(|p| PressureIntermediateReadOnly {
                 predicted_position: p.predicted_position,
-                pressure: p.pressure(),
+                pressure: p.pressure() * self.pressure_base,
                 near_pressure: p.near_pressure(),
                 mass: p.mass(),
                 sph_density: p.sph_density,
@@ -170,7 +176,7 @@ impl Sph {
 
         self.particles.par_iter_mut().for_each(|p| {
             let pos = p.predicted_position;
-            let pressure = p.pressure();
+            let pressure = p.pressure() * self.pressure_base;
             let near_pressure = p.near_pressure();
 
             let neighbors = self.lookup.get_immediate_neighbors(&pos);
@@ -238,7 +244,9 @@ impl Sph {
                         if body.state().behaviour != BodyBehaviour::Static {
                             let mut force_accumulation = BodyForceAccumulation::empty();
                             let radius = collision_info.surface_point - body.state().position;
-                            let magnitude = -impulse * p.body_collision_force;
+                            let magnitude = -impulse
+                                * p.body_collision_force_multiplier
+                                * self.body_collision_base;
                             let force = collision_info.surface_normal * magnitude;
                             force_accumulation.add_force_at_radius(force, radius);
 
@@ -277,12 +285,15 @@ impl Sph {
     /// forces that the fluid exerts on the bodies.
     pub fn step(
         &mut self,
-        delta_time: f32,
         bodies: &Vec<Box<dyn GameBody>>,
+        config: &GameConfig,
+        dt: f32,
     ) -> Vec<(usize, BodyForceAccumulation)> {
         self.setup_lookup();
 
-        let dt = delta_time;
+        self.gravity = config.sph_config.gravity;
+        self.pressure_base = config.sph_config.base_pressure;
+        self.body_collision_base = config.sph_config.base_body_force;
 
         self.particles
             .par_iter_mut()

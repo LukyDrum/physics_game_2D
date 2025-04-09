@@ -17,7 +17,7 @@ pub struct Particle {
     pub(super) pressure_multiplier: f32,
     /// A multiplier of the force on collision with a rigidbody. This is done to simulate a bigger
     /// ammount of fluid hitting the object instead of only a few particles.
-    pub(super) body_collision_force: f32,
+    pub(super) body_collision_force_multiplier: f32,
     pub(super) accumulated_force: Vector2<f32>,
     pub color: Color,
     /// Should be set by the simulation when the particle is inserted
@@ -38,8 +38,8 @@ impl Particle {
             sph_near_density: 1.0,
             mass: 1.0,
             target_density: 1.0,
-            pressure_multiplier: PRESSURE_BASE,
-            body_collision_force: BODY_COLLISION_FORCE_BASE,
+            pressure_multiplier: 1.0,
+            body_collision_force_multiplier: 1.0,
             accumulated_force: Vector2::zero(),
             color: Color::rgb(0, 0, 255),
             id: 0,
@@ -63,8 +63,8 @@ impl Particle {
     pub fn set_mass(&mut self, new_mass: f32) {
         self.mass = new_mass;
         self.target_density = new_mass;
-        self.pressure_multiplier = PRESSURE_BASE / self.mass;
-        self.body_collision_force = BODY_COLLISION_FORCE_BASE * self.mass;
+        self.pressure_multiplier = 1.0 / self.mass;
+        self.body_collision_force_multiplier = self.mass;
     }
 
     /// Adds `force` to the accumulated force.

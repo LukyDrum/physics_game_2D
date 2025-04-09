@@ -9,7 +9,10 @@ use macroquad::text::draw_text;
 
 #[derive(Clone, UIEditable)]
 pub struct GameConfig {
+    #[display_as("Time Step [s]")]
     pub time_step: f32,
+    /// This will divide the `time_step` into **n** parts and perform **n** steps of the physical simulation
+    /// with those time steps. Leads to better accuracy at cost of performance.
     pub sub_steps: u8,
     #[display_as("Fluids")]
     pub sph_config: SphConfig,
@@ -37,6 +40,7 @@ pub struct SphConfig {
     /// Similiar to `base_pressure` but only affects the particles effect on rigidbodies.
     pub base_body_force: f32,
     /// The force of gravity acting on the fluid.
+    #[display_as("Gravity [cm/s]")]
     pub gravity: Vector2<f32>,
 }
 
@@ -52,6 +56,7 @@ impl Default for SphConfig {
 
 #[derive(Clone, UIEditable)]
 pub struct RigidBodiesConfig {
+    #[display_as("Gravity [cm/s]")]
     pub gravity: Vector2<f32>,
 }
 

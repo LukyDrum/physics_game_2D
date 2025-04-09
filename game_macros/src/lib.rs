@@ -39,7 +39,6 @@ pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
                 for attr in field.attrs {
                     if attr.path().is_ident("display_as") {
                         if let Ok(meta) = attr.meta.require_list() {
-                            println!("{:?}", meta.tokens);
                             display_as = Some(meta.tokens.clone());
                         }
                     }

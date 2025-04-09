@@ -24,11 +24,7 @@ impl GameBody for Polygon {}
 
 pub struct Game {
     game_config: GameConfig,
-    // Physics stuff
-    time_step: f32,
-    /// This will divide the `time_step` into **n** parts and perform **n** steps of the physical simulation
-    /// with those time steps. Leads to better accuracy at cost of performance.
-    step_division: u8,
+
     fluid_system: Sph,
     /// If the physics are currently being simulated or not
     is_simulating: bool,
@@ -88,8 +84,6 @@ impl Game {
         Game {
             game_config: GameConfig::default(),
 
-            time_step: 0.01,
-            step_division: 2,
             fluid_system: sph,
             is_simulating: true,
 
@@ -137,17 +131,19 @@ impl Game {
     /// Performs a single update of the game. Should correspond to a single frame.
     pub fn update(&mut self) {
         if self.is_simulating {
-            let dt = self.time_step / self.step_division as f32;
+            let dt = self.game_config.time_step / self.game_config.sub_steps as f32;
 
-            for _ in 0..self.step_division {
-                let fluid_forces_on_bodies = self.fluid_system.step(dt, &self.bodies);
+            for _ in 0..self.game_config.sub_steps {
+                let fluid_forces_on_bodies =
+                    self.fluid_system.step(&self.bodies, &self.game_config, dt);
                 for (index, force_accumulation) in fluid_forces_on_bodies {
                     let state = self.bodies[index].state_mut();
                     state.add_force_accumulation(force_accumulation);
                     state.apply_accumulated_forces(dt);
                 }
 
-                self.rb_simulator.step(&mut self.bodies, dt);
+                self.rb_simulator
+                    .step(&mut self.bodies, &self.game_config, dt);
             }
         }
 

@@ -7,7 +7,10 @@ use std::{
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 
 use super::{BodyBehaviour, BodyCollisionData};
-use crate::{game::GameBody, math::Vector2};
+use crate::{
+    game::{GameBody, GameConfig},
+    math::Vector2,
+};
 
 /// Holds `BodyCollisionData` along with indexes of what two bodies collided.
 #[derive(Clone)]
@@ -72,13 +75,14 @@ impl RbSimulator {
         }
     }
 
-    pub fn step(&mut self, bodies: &mut Vec<Box<dyn GameBody>>, time_step: f32) {
-        // Set timestep for this step
-        self.current_time_step = time_step;
+    pub fn step(&mut self, bodies: &mut Vec<Box<dyn GameBody>>, config: &GameConfig, dt: f32) {
+        // Set timestep and gravity for this step
+        self.current_time_step = dt;
+        self.gravity = config.rb_config.gravity;
 
         // Apply and move bodies by gravity
-        self.apply_gravity(bodies, time_step);
-        Self::move_bodies_by_velocity(bodies, time_step);
+        self.apply_gravity(bodies, config.time_step);
+        Self::move_bodies_by_velocity(bodies, config.time_step);
 
         // Update inner values to reflect the change due to gravity.
         Self::update_inner_values(bodies);

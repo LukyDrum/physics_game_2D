@@ -1,24 +1,19 @@
-use macroquad::ui::{root_ui, widgets::InputText};
+use crate::{
+    game::UIComponent,
+    math::{v2, Vector2},
+    rendering::Color,
+};
 
-use crate::{game::UIComponent, math::Vector2, rendering::Color, utility::AsMq};
-
-const INPUT_WIDTH: f32 = 100.0;
-const SPACING: f32 = 120.0;
+use super::{draw_slider, SLIDER_HEIGHT};
 
 pub struct ColorPicker {
     color: Color,
-    r_str: String,
-    g_str: String,
-    b_str: String,
 }
 
 impl ColorPicker {
     pub fn new(default_color: Color) -> Self {
         Self {
             color: default_color,
-            r_str: String::new(),
-            g_str: String::new(),
-            b_str: String::new(),
         }
     }
 
@@ -29,35 +24,21 @@ impl ColorPicker {
 
 impl UIComponent for ColorPicker {
     fn draw(&mut self, offset: Vector2<f32>) {
-        InputText::new(1)
-            .label("R")
-            .position(offset.as_mq())
-            .size(Vector2::new(INPUT_WIDTH, 20.0).as_mq())
-            .filter_numbers()
-            .ui(&mut root_ui(), &mut self.r_str);
-        InputText::new(2)
-            .label("G")
-            .position((offset + Vector2::new(SPACING, 0.0)).as_mq())
-            .size(Vector2::new(INPUT_WIDTH, 20.0).as_mq())
-            .filter_numbers()
-            .ui(&mut root_ui(), &mut self.g_str);
-        InputText::new(3)
-            .label("B")
-            .position((offset + Vector2::new(2.0 * SPACING, 0.0)).as_mq())
-            .size(Vector2::new(INPUT_WIDTH, 20.0).as_mq())
-            .filter_numbers()
-            .ui(&mut root_ui(), &mut self.b_str);
+        let (mut r, mut g, mut b) = (
+            self.color.r * 255.0,
+            self.color.g * 255.0,
+            self.color.b * 255.0,
+        );
 
-        for (str, color_channel) in [
-            (&mut self.r_str, &mut self.color.r),
-            (&mut self.g_str, &mut self.color.g),
-            (&mut self.b_str, &mut self.color.b),
-        ] {
-            if let Ok(value) = str.parse::<u8>() {
-                *color_channel = value as f32 / 255.0;
-            } else {
-                *str = ((*color_channel * 255.0) as u8).to_string();
-            }
-        }
+        draw_slider(offset, "R", 350.0, &mut r, 0.0..255.0);
+        self.color.r = r / 255.0;
+
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT);
+        draw_slider(offset, "G", 350.0, &mut g, 0.0..255.0);
+        self.color.g = g / 255.0;
+
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT);
+        draw_slider(offset, "B", 350.0, &mut b, 0.0..255.0);
+        self.color.b = b / 255.0;
     }
 }

@@ -60,16 +60,16 @@ impl InGameUI {
         let offset = offset + v2!(0.0, 50.0);
         // Scope the inner offsets
         {
-            self.draw_tool_button("Info", Tool::Info, offset);
+            self.draw_tool_button("Info [I]", Tool::Info, offset);
 
             let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
-            self.draw_tool_button("Fluids", Tool::Fluid, offset);
+            self.draw_tool_button("Fluids [F]", Tool::Fluid, offset);
 
             let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
-            self.draw_tool_button("Bodies", Tool::Rigidbody, offset);
+            self.draw_tool_button("Bodies [B]", Tool::Rigidbody, offset);
 
             let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
-            self.draw_tool_button("Config", Tool::Configuration, offset);
+            self.draw_tool_button("Config [C]", Tool::Configuration, offset);
         }
 
         let offset = offset + v2!(0.0, 50.0);

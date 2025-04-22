@@ -113,21 +113,30 @@ impl Game {
         let position = Vector2::new(mouse_pos.0, mouse_pos.1);
 
         match self.ingame_ui.selected_tool {
-            Tool::Info | Tool::Configuration => {},
+            Tool::Info | Tool::Configuration => {}
             Tool::Fluid => {
                 if is_mouse_button_down(MouseButton::Left) && self.is_in_gameview(position) {
                     self.add_fluid(position);
                 }
-            },
+            }
             Tool::Rigidbody => {
                 if is_mouse_button_pressed(MouseButton::Left) && self.is_in_gameview(position) {
                     let mouse_pos = mouse_position();
-                    let mut rect =
-                    Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
+                    let mut rect = Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
                     rect.state_mut().set_mass(1_000.0);
                     self.bodies.push(Box::new(rect));
                 }
             }
+        }
+
+        if is_key_pressed(KeyCode::I) {
+            self.ingame_ui.selected_tool = Tool::Info;
+        } else if is_key_pressed(KeyCode::F) {
+            self.ingame_ui.selected_tool = Tool::Fluid;
+        } else if is_key_pressed(KeyCode::B) {
+            self.ingame_ui.selected_tool = Tool::Rigidbody;
+        } else if is_key_pressed(KeyCode::C) {
+            self.ingame_ui.selected_tool = Tool::Configuration;
         }
 
         // Pause / Resume

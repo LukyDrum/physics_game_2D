@@ -1,4 +1,8 @@
-use macroquad::text::draw_text;
+use macroquad::{
+    shapes::draw_rectangle,
+    text::draw_text,
+    ui::{root_ui, widgets::Button},
+};
 
 use crate::{
     game::config::*,
@@ -7,37 +11,95 @@ use crate::{
     utility::AsMq,
 };
 
-use super::{FluidSelector, UIComponent, UIEdit};
+use super::{FluidSelector, InfoPanel, UIComponent, UIEdit};
 
 pub const FONT_SIZE_LARGE: f32 = 36.0;
 pub const FONT_SIZE_MEDIUM: f32 = 26.0;
 pub const FONT_SIZE_SMALL: f32 = 16.0;
 
+const TOOL_BUTTON_WIDTH: f32 = 80.0;
+const TOOL_BUTTON_HEIGHT: f32 = 25.0;
+const TOOL_BUTTON_GAP: f32 = 40.0;
+const TOOL_BUTTON_SELECTED_OUTLINE: f32 = 4.0;
+
+#[derive(Clone, Copy, PartialEq)]
+pub enum Tool {
+    Info,
+    Fluid,
+    Rigidbody,
+    Configuration,
+}
+
 /// The UI used to control the game while playing.
 /// Allows to control simulation parameters, create things, and more.
 pub struct InGameUI {
     pub fluid_selector: FluidSelector,
+    pub info_panel: InfoPanel,
+    pub selected_tool: Tool,
 }
 
 impl Default for InGameUI {
     fn default() -> Self {
         InGameUI {
             fluid_selector: FluidSelector::default(),
+            info_panel: InfoPanel::default(),
+            selected_tool: Tool::Info,
         }
     }
 }
 
 impl InGameUI {
     pub fn draw(&mut self, offset: Vector2<f32>, game_config: &mut GameConfig) {
-        self.fluid_selector.draw(offset);
-        let offset = offset + v2!(0.0, 140.0);
         draw_text(
-            "Configuration",
+            "Tools",
             offset.x,
             offset.y,
             FONT_SIZE_LARGE,
             Color::rgb(0, 0, 0).as_mq(),
         );
-        game_config.draw_edit(offset + v2!(0.0, FONT_SIZE_LARGE), v2!(80.0, 20.0), "");
+        let offset = offset + v2!(0.0, 50.0);
+        // Scope the inner offsets
+        {
+            self.draw_tool_button("Info", Tool::Info, offset);
+
+            let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
+            self.draw_tool_button("Fluids", Tool::Fluid, offset);
+
+            let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
+            self.draw_tool_button("Bodies", Tool::Rigidbody, offset);
+
+            let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
+            self.draw_tool_button("Config", Tool::Configuration, offset);
+        }
+
+        let offset = offset + v2!(0.0, 50.0);
+        match self.selected_tool {
+            Tool::Info => self.info_panel.draw(offset),
+            Tool::Fluid => self.fluid_selector.draw(offset),
+            Tool::Rigidbody => {}
+            Tool::Configuration => {
+                game_config.draw_edit(offset, v2!(80.0, 20.0), "");
+            }
+        };
+    }
+
+    fn draw_tool_button(&mut self, title: &'static str, tool: Tool, offset: Vector2<f32>) {
+        if self.selected_tool == tool {
+            draw_rectangle(
+                offset.x - TOOL_BUTTON_SELECTED_OUTLINE,
+                offset.y - TOOL_BUTTON_SELECTED_OUTLINE,
+                TOOL_BUTTON_WIDTH + TOOL_BUTTON_SELECTED_OUTLINE * 2.0,
+                TOOL_BUTTON_HEIGHT + TOOL_BUTTON_SELECTED_OUTLINE * 2.0,
+                Color::rgb(0, 0, 0).as_mq(),
+            );
+        }
+
+        let info_button_clicked = Button::new(title)
+            .position(offset.as_mq())
+            .size(v2!(TOOL_BUTTON_WIDTH, TOOL_BUTTON_HEIGHT).as_mq())
+            .ui(&mut root_ui());
+        if info_button_clicked {
+            self.selected_tool = tool;
+        }
     }
 }

@@ -17,7 +17,7 @@ use crate::{
     Particle, Sph,
 };
 
-use super::{config::GameConfig, InGameUI};
+use super::{config::GameConfig, EntityInfo, InGameUI};
 
 pub trait GameBody: Body + Draw {}
 impl GameBody for Polygon {}
@@ -149,6 +149,49 @@ impl Game {
 
         // Setup graphics
         self.renderer.setup(&self.fluid_system);
+
+        // Pass infos to InGameUI
+        self.ingame_ui.info_panel.particle_count = self.fluid_system.particle_count();
+        self.ingame_ui.info_panel.body_count = self.bodies.len();
+
+        // Find under mouse entity
+        let mouse_pos = {
+            let (x, y) = mouse_position();
+            v2!(x, y)
+        };
+
+        let mut entity_info = EntityInfo::Nothing {
+            position: mouse_pos,
+        };
+        for body in &self.bodies {
+            if body.contains_point(mouse_pos) {
+                entity_info = EntityInfo::Body {
+                    position: body.state().position,
+                    velocity: body.state().velocity,
+                    mass: body.state().mass(),
+                    color: Color::rgb(0, 0, 0),
+                };
+                break;
+            }
+        }
+        if let EntityInfo::Nothing { .. } = entity_info {
+            if let Some((_, closest_p)) = self
+                .fluid_system
+                .get_particles_around_position(mouse_pos, 10.0)
+                .into_iter()
+                .map(|p| ((p.position - mouse_pos).length_squared(), p))
+                .min_by(|a, b| a.0.total_cmp(&b.0))
+            {
+                entity_info = EntityInfo::Fluid {
+                    position: closest_p.position,
+                    velocity: closest_p.velocity,
+                    density: closest_p.mass(),
+                    color: closest_p.color,
+                };
+            }
+        }
+
+        self.ingame_ui.info_panel.under_mouse_entity = entity_info;
     }
 
     pub fn draw(&self) {

@@ -1,10 +1,7 @@
-use macroquad::{
-    text::draw_text,
-    ui::{root_ui, widgets::Slider},
-};
+use macroquad::ui::{root_ui, widgets::Slider};
 
 use crate::{
-    game::{ui::game_ui::FONT_SIZE_LARGE, UIComponent},
+    game::UIComponent,
     math::{v2, Vector2},
     rendering::Color,
     utility::AsMq,
@@ -37,17 +34,9 @@ impl Default for FluidSelector {
 
 impl UIComponent for FluidSelector {
     fn draw(&mut self, offset: Vector2<f32>) {
-        draw_text(
-            "Fluid selector",
-            offset.x,
-            offset.y,
-            FONT_SIZE_LARGE,
-            Color::rgb(0, 0, 0).as_mq(),
-        );
-
-        self.draw_density_selector(offset + v2!(0.0, FONT_SIZE_LARGE));
+        self.draw_density_selector(offset);
         self.color_picker
-            .draw(offset + v2!(0.0, FONT_SIZE_LARGE + SLIDER_HEIGHT + 10.0));
+            .draw(offset + v2!(0.0, SLIDER_HEIGHT + 10.0));
     }
 }
 

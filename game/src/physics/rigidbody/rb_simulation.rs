@@ -63,7 +63,7 @@ pub struct RbSimulator {
 
 impl RbSimulator {
     /// Only correct the position of the body by this much percent
-    const CORRECTION_STABILIZER: f32 = 0.8;
+    const CORRECTION_STABILIZER: f32 = 1.0;
 
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator {

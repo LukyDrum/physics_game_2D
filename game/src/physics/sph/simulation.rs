@@ -107,6 +107,10 @@ impl Sph {
         }
     }
 
+    pub fn particle_count(&self) -> usize {
+        self.particles.len()
+    }
+
     pub fn add_particle(&mut self, mut particle: Particle) {
         // Add very small offset to particles position
         particle.position += v2!(fastrand::f32() - 0.5, fastrand::f32() - 0.5);

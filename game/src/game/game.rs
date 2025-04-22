@@ -17,7 +17,7 @@ use crate::{
     Particle, Sph,
 };
 
-use super::{config::GameConfig, EntityInfo, InGameUI};
+use super::{config::GameConfig, EntityInfo, InGameUI, Tool};
 
 pub trait GameBody: Body + Draw {}
 impl GameBody for Polygon {}
@@ -111,15 +111,23 @@ impl Game {
     pub fn handle_input(&mut self) {
         let mouse_pos = mouse_position();
         let position = Vector2::new(mouse_pos.0, mouse_pos.1);
-        if is_mouse_button_down(MouseButton::Left) && self.is_in_gameview(position) {
-            self.add_fluid(position);
-        }
-        if is_mouse_button_pressed(MouseButton::Middle) {
-            let mouse_pos = mouse_position();
-            let mut rect =
-                Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
-            rect.state_mut().set_mass(1_000.0);
-            self.bodies.push(Box::new(rect));
+
+        match self.ingame_ui.selected_tool {
+            Tool::Info | Tool::Configuration => {},
+            Tool::Fluid => {
+                if is_mouse_button_down(MouseButton::Left) && self.is_in_gameview(position) {
+                    self.add_fluid(position);
+                }
+            },
+            Tool::Rigidbody => {
+                if is_mouse_button_pressed(MouseButton::Left) && self.is_in_gameview(position) {
+                    let mouse_pos = mouse_position();
+                    let mut rect =
+                    Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
+                    rect.state_mut().set_mass(1_000.0);
+                    self.bodies.push(Box::new(rect));
+                }
+            }
         }
 
         // Pause / Resume

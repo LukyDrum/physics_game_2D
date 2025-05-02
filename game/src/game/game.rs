@@ -17,8 +17,7 @@ use crate::{
     Particle, Sph,
 };
 
-use super::{config::GameConfig, gamebody::GameBody, EntityInfo, InGameUI, Tool};
-
+use super::{config::GameConfig, gamebody::GameBody, EntityInfo, InGameUI, SaveLoadAction, Tool};
 
 pub struct Game {
     game_config: GameConfig,
@@ -57,7 +56,7 @@ impl Game {
         ));
         test_body.state_mut().orientation = PI * 0.5;
         test_body.state_mut().set_mass(100_000.0);
-        
+
         // Add rectangles that act as walls
         let wall_thickness = 20.0;
         let bodies: Vec<Box<dyn GameBody>> = vec![
@@ -112,7 +111,6 @@ impl Game {
         let position = Vector2::new(mouse_pos.0, mouse_pos.1);
 
         match self.ingame_ui.selected_tool {
-            Tool::Info | Tool::Configuration => {}
             Tool::Fluid => {
                 if is_mouse_button_down(MouseButton::Left) && self.is_in_gameview(position) {
                     self.add_fluid(position);
@@ -126,6 +124,7 @@ impl Game {
                     self.bodies.push(Box::new(rect));
                 }
             }
+            _ => {}
         }
 
         if is_key_pressed(KeyCode::I) {
@@ -136,6 +135,8 @@ impl Game {
             self.ingame_ui.selected_tool = Tool::Rigidbody;
         } else if is_key_pressed(KeyCode::C) {
             self.ingame_ui.selected_tool = Tool::Configuration;
+        } else if is_key_pressed(KeyCode::L) {
+            self.ingame_ui.selected_tool = Tool::SaveLoads;
         }
 
         // Pause / Resume
@@ -145,7 +146,7 @@ impl Game {
     }
 
     /// Performs a single update of the game. Should correspond to a single frame.
-    pub fn update(&mut self) {
+    pub fn physics_update(&mut self) {
         if self.is_simulating {
             let dt = self.game_config.time_step / self.game_config.sub_steps as f32;
 
@@ -251,5 +252,21 @@ impl Game {
             .with_mass(self.ingame_ui.fluid_selector.density())
             .with_color(self.ingame_ui.fluid_selector.color());
         self.fluid_system.add_particle(particle);
+    }
+
+    fn handle_save_loads(&mut self) {
+        match &self.ingame_ui.save_loads.action {
+            SaveLoadAction::Nothing => {}
+            SaveLoadAction::Save => println!("Save"),
+            SaveLoadAction::Load(game_serialized_form) => todo!(),
+        }
+    }
+
+    pub fn update(&mut self) {
+        self.handle_input();
+        self.physics_update();
+        self.draw();
+        self.draw_ui();
+        self.handle_save_loads();
     }
 }

@@ -2,7 +2,7 @@ mod draw;
 mod marching_squares_render;
 mod renderer;
 
-use serde::{Serialize, Deserialize};
+use serde_derive::{Deserialize, Serialize};
 
 pub use draw::*;
 pub use marching_squares_render::MarchingSquaresRenderer;

@@ -1,9 +1,9 @@
+mod game;
 mod math;
 mod physics;
 mod rendering;
 mod serialization;
 mod shapes;
-mod game;
 mod utility;
 
 use game::Game;
@@ -11,8 +11,8 @@ use macroquad::prelude::*;
 
 use crate::physics::sph::*;
 
-const WIDTH: f32 = 800.0;
-const HEIGHT: f32 = 600.0;
+const WIDTH: f32 = 1000.0;
+const HEIGHT: f32 = 800.0;
 
 /// Creates the window configruation for Macroquad
 fn window_conf() -> Conf {
@@ -38,10 +38,7 @@ async fn main() {
     let mut game = Game::new(500, 500);
 
     loop {
-        game.handle_input();
         game.update();
-        game.draw();
-        game.draw_ui();
 
         next_frame().await
     }

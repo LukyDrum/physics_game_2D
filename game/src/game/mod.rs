@@ -1,9 +1,9 @@
 mod config;
 mod game;
-mod ui;
 mod gamebody;
+mod ui;
 
 pub use config::*;
 pub use game::*;
-pub use ui::*;
 pub use gamebody::*;
+pub use ui::*;

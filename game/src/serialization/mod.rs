@@ -2,9 +2,8 @@ mod rigidbody;
 mod sph;
 
 use crate::{game::Game, serialization::sph::SphSerializedForm};
-pub use rigidbody::{BodySerializedForm, BodySerializationForm};
-use serde::{Serialize, Deserialize};
-
+pub use rigidbody::{BodySerializationForm, BodySerializedForm};
+use serde_derive::{Deserialize, Serialize};
 
 pub trait SerializationForm {
     type Original;
@@ -25,7 +24,7 @@ pub struct GameSerializedForm {
 
 #[derive(Serialize, Deserialize)]
 pub struct RbSerializedForm {
-    pub bodies: Vec<BodySerializedForm>
+    pub bodies: Vec<BodySerializedForm>,
 }
 
 impl SerializationForm for Game {
@@ -38,14 +37,18 @@ impl SerializationForm for Game {
         let height = self.gameview_height;
 
         let sph = self.fluid_system.to_serialized_form();
-        
-        let bodies = self.bodies.iter().map(|body| body.to_serialized_form()).collect();
+
+        let bodies = self
+            .bodies
+            .iter()
+            .map(|body| body.to_serialized_form())
+            .collect();
 
         GameSerializedForm {
             width,
             height,
             sph,
-            rb: RbSerializedForm { bodies }
+            rb: RbSerializedForm { bodies },
         }
     }
 

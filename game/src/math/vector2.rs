@@ -1,9 +1,9 @@
+use num_traits::{Float, Num, NumAssignOps, NumOps};
+use serde_derive::{Deserialize, Serialize};
 use std::{
     iter::Sum,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-use serde::{Serialize, Deserialize};
-use num_traits::{Float, Num, NumAssignOps, NumOps};
 
 /// A macro for quickly creating a new Vector2 with `x` and `y` components.
 /// If a `type` is given, it will cast the components to that type.

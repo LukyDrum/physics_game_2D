@@ -1,5 +1,5 @@
 use core::f32;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 use std::collections::LinkedList;
 
 use crate::{game::GameBody, math::Vector2, shapes::Line, utility::runge_kutta};

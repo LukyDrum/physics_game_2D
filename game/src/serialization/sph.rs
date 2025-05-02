@@ -1,8 +1,11 @@
-use crate::{math::Vector2, physics::sph::{Particle, Sph}, rendering::Color};
-use serde::{Serialize, Deserialize};
+use crate::{
+    math::Vector2,
+    physics::sph::{Particle, Sph},
+    rendering::Color,
+};
+use serde_derive::{Deserialize, Serialize};
 
 use super::SerializationForm;
-
 
 #[derive(Serialize, Deserialize)]
 pub struct SphSerializedForm {
@@ -18,10 +21,10 @@ impl SerializationForm for Sph {
 
     fn to_serialized_form(&self) -> Self::SerializedForm {
         let ser_form_particles: Vec<ParticleSerializedForm> = self
-        .particles
-        .iter()
-        .map(|p| p.to_serialized_form())
-        .collect();
+            .particles
+            .iter()
+            .map(|p| p.to_serialized_form())
+            .collect();
 
         SphSerializedForm {
             particles: ser_form_particles,
@@ -31,13 +34,17 @@ impl SerializationForm for Sph {
     }
 
     fn from_serialized_form(serialized_form: Self::SerializedForm) -> Self::Original {
-        let SphSerializedForm { particles, width, height } = serialized_form;
+        let SphSerializedForm {
+            particles,
+            width,
+            height,
+        } = serialized_form;
 
         let particles: Vec<Particle> = particles
             .into_iter()
             .map(|ser_p| Particle::from_serialized_form(ser_p))
             .collect();
-        
+
         let mut sph = Sph::new(width, height);
         for p in particles {
             sph.add_particle(p);
@@ -105,4 +112,4 @@ impl SerializationForm for Particle {
             ..Default::default()
         }
     }
-} 
+}

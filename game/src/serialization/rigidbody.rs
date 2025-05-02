@@ -1,7 +1,9 @@
 use crate::serialization::SerializationForm;
-use crate::{math::Vector2, physics::rigidbody::{BodyBehaviour, BodyState, Polygon}};
-use serde::{Deserialize, Serialize};
-
+use crate::{
+    math::Vector2,
+    physics::rigidbody::{BodyBehaviour, BodyState, Polygon},
+};
+use serde_derive::{Deserialize, Serialize};
 
 pub trait BodySerializationForm {
     fn to_serialized_form(&self) -> BodySerializedForm;
@@ -92,12 +94,15 @@ impl BodySerializationForm for Polygon {
         let points = self.points.clone();
         let ser_state = self.state.clone().into();
 
-        BodySerializedForm::Polygon(PolygonSerializedForm { state: ser_state, points })
+        BodySerializedForm::Polygon(PolygonSerializedForm {
+            state: ser_state,
+            points,
+        })
     }
 
     /*
     fn from_serialized_form(serialized_form: BodySerializedForm) -> Self {
-        
+
 
         let points = serialized_form.points;
         let state: BodyState = serialized_form.state.into();

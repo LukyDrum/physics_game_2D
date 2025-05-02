@@ -128,6 +128,7 @@ pub struct InfoPanel {
     pub particle_count: usize,
     pub body_count: usize,
     pub under_mouse_entity: EntityInfo,
+    pub is_simulating: bool,
 }
 
 impl Default for InfoPanel {
@@ -138,6 +139,7 @@ impl Default for InfoPanel {
             under_mouse_entity: EntityInfo::Nothing {
                 position: Vector2::zero(),
             },
+            is_simulating: true,
         }
     }
 }
@@ -145,7 +147,11 @@ impl Default for InfoPanel {
 impl UIComponent for InfoPanel {
     fn draw(&mut self, offset: Vector2<f32>) {
         let offset = offset + v2!(0.0, 20.0);
-        let fps = format!("FPS: {}", get_fps());
+        let fps = if self.is_simulating {
+            format!("FPS: {}", get_fps())
+        } else {
+            format!("FPS: (paused)")
+        };
         let dim = draw_text(
             fps.as_str(),
             offset.x,

@@ -145,6 +145,7 @@ impl Game {
         // Pause / Resume
         if is_key_pressed(KeyCode::Space) {
             self.is_simulating = !self.is_simulating;
+            self.ingame_ui.info_panel.is_simulating = self.is_simulating;
         }
     }
 

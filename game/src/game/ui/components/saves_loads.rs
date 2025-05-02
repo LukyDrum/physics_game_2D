@@ -17,6 +17,7 @@ pub struct SavesLoads {
     pub action: SaveLoadAction,
     saves: LinkedList<String>,
     pub save_file_name: String,
+    pub taken_input: bool,
 }
 
 pub enum SaveLoadAction {
@@ -34,6 +35,7 @@ impl Default for SavesLoads {
                 .filter_map(|s| s.strip_suffix(".json").map(|s| s.to_owned()))
                 .collect(),
             save_file_name: "save-1".to_owned(),
+            taken_input: false,
         }
     }
 }
@@ -50,10 +52,14 @@ impl UIComponent for SavesLoads {
         }
 
         let offset_input = offset + v2!(120.0, 0.0);
+        let old_save_file_name = self.save_file_name.clone();
         InputText::new(42)
             .position(offset_input.as_mq())
             .size(v2!(150.0, 25.0).as_mq())
             .ui(&mut root_ui(), &mut self.save_file_name);
+
+        // Compare old and new
+        self.taken_input = self.save_file_name != old_save_file_name;
 
         let mut offset = offset + v2!(0.0, 80.0);
         draw_text(

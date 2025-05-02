@@ -130,18 +130,6 @@ impl Game {
             _ => {}
         }
 
-        if is_key_pressed(KeyCode::I) {
-            self.ingame_ui.selected_tool = Tool::Info;
-        } else if is_key_pressed(KeyCode::F) {
-            self.ingame_ui.selected_tool = Tool::Fluid;
-        } else if is_key_pressed(KeyCode::B) {
-            self.ingame_ui.selected_tool = Tool::Rigidbody;
-        } else if is_key_pressed(KeyCode::C) {
-            self.ingame_ui.selected_tool = Tool::Configuration;
-        } else if is_key_pressed(KeyCode::L) {
-            self.ingame_ui.selected_tool = Tool::SaveLoads;
-        }
-
         // Pause / Resume
         if is_key_pressed(KeyCode::Space) {
             self.is_simulating = !self.is_simulating;
@@ -279,11 +267,30 @@ impl Game {
         }
     }
 
+    fn handle_tool_change_keys(&mut self) {
+        if self.ingame_ui.save_loads.taken_input {
+            return;
+        }
+
+        if is_key_pressed(KeyCode::I) {
+            self.ingame_ui.selected_tool = Tool::Info;
+        } else if is_key_pressed(KeyCode::F) {
+            self.ingame_ui.selected_tool = Tool::Fluid;
+        } else if is_key_pressed(KeyCode::B) {
+            self.ingame_ui.selected_tool = Tool::Rigidbody;
+        } else if is_key_pressed(KeyCode::C) {
+            self.ingame_ui.selected_tool = Tool::Configuration;
+        } else if is_key_pressed(KeyCode::L) {
+            self.ingame_ui.selected_tool = Tool::SaveLoads;
+        }
+    }
+
     pub fn update(&mut self) {
         self.handle_input();
         self.physics_update();
         self.draw();
         self.draw_ui();
         self.handle_save_loads();
+        self.handle_tool_change_keys();
     }
 }

@@ -24,7 +24,6 @@ pub fn list_saves() -> LinkedList<String> {
 
     paths
         .map(|p| p.unwrap().file_name().to_str().unwrap().to_owned())
-        .inspect(|p| println!("{p:?}"))
         .collect()
 }
 

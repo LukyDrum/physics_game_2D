@@ -8,7 +8,9 @@ use serde_derive::{Deserialize, Serialize};
 pub trait BodySerializationForm {
     fn to_serialized_form(&self) -> BodySerializedForm;
 
-    // fn from_serialized_form(ser_body: BodySerializedForm) -> Self where Self: Sized;
+    fn from_serialized_form(ser_body: BodySerializedForm) -> Self
+    where
+        Self: Sized;
 }
 
 #[derive(Serialize, Deserialize)]
@@ -100,9 +102,11 @@ impl BodySerializationForm for Polygon {
         })
     }
 
-    /*
+    #[allow(irrefutable_let_patterns)]
     fn from_serialized_form(serialized_form: BodySerializedForm) -> Self {
-
+        let BodySerializedForm::Polygon(serialized_form) = serialized_form else {
+            panic!("Passed in invalid serialized form!");
+        };
 
         let points = serialized_form.points;
         let state: BodyState = serialized_form.state.into();
@@ -112,5 +116,4 @@ impl BodySerializationForm for Polygon {
 
         polygon
     }
-    */
 }

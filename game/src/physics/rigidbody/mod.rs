@@ -1,4 +1,5 @@
 use core::f32;
+use serde::{Deserialize, Serialize};
 use std::collections::LinkedList;
 
 use crate::{game::GameBody, math::Vector2, shapes::Line, utility::runge_kutta};
@@ -18,10 +19,16 @@ const DEFAULT_DYNAMIC_FRICTION: f32 = 0.2;
 /// Describes how does the Body behave in the simulation:
 ///   - `Dynamic` is a body that is affected by gravity and other forces and collides with other bodies.
 ///   - `Static` is a body that is not affected by forces, but still collides with other bodies
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Serialize, Deserialize)]
 pub enum BodyBehaviour {
     Dynamic,
     Static,
+}
+
+impl Default for BodyBehaviour {
+    fn default() -> Self {
+        Self::Dynamic
+    }
 }
 
 pub struct BodyForceAccumulation {
@@ -47,7 +54,7 @@ impl BodyForceAccumulation {
 
 /// Contains values that are universal for any Body regardless of it being a polygon or a circle
 /// (or someting else).
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct BodyState {
     // BASIC VALUES for 2D space
     pub position: Vector2<f32>,
@@ -60,8 +67,8 @@ pub struct BodyState {
 
     // PROPERTIES
     pub behaviour: BodyBehaviour,
-    mass: f32,
-    moment_of_inertia: f32,
+    pub(crate) mass: f32,
+    pub(crate) moment_of_inertia: f32,
     /// The restitution coefficient, aka coefficient of elasticity, aka bounciness.
     /// A value between 0 (no bounce) and 1 (100% bounce).
     pub elasticity: f32,
@@ -71,8 +78,8 @@ pub struct BodyState {
     pub dynamic_friction: f32,
 
     // ACCUMULATED FORCES waiting to be applied
-    accumulated_force: Vector2<f32>,
-    accumulated_torque: f32,
+    pub(crate) accumulated_force: Vector2<f32>,
+    pub(crate) accumulated_torque: f32,
 }
 
 impl BodyState {

@@ -12,16 +12,16 @@ pub struct Particle {
     pub velocity: Vector2<f32>,
     pub sph_density: f32,
     pub sph_near_density: f32,
-    pub(super) mass: f32,
-    pub(super) target_density: f32,
-    pub(super) pressure_multiplier: f32,
+    pub(crate) mass: f32,
+    pub(crate) target_density: f32,
+    pub(crate) pressure_multiplier: f32,
     /// A multiplier of the force on collision with a rigidbody. This is done to simulate a bigger
     /// ammount of fluid hitting the object instead of only a few particles.
-    pub(super) body_collision_force_multiplier: f32,
-    pub(super) accumulated_force: Vector2<f32>,
+    pub(crate) body_collision_force_multiplier: f32,
+    pub(crate) accumulated_force: Vector2<f32>,
     pub color: Color,
     /// Should be set by the simulation when the particle is inserted
-    pub(super) id: u32,
+    pub(crate) id: u32,
 }
 
 impl Particle {

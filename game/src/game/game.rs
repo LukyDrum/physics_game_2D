@@ -17,25 +17,23 @@ use crate::{
     Particle, Sph,
 };
 
-use super::{config::GameConfig, EntityInfo, InGameUI, Tool};
+use super::{config::GameConfig, gamebody::GameBody, EntityInfo, InGameUI, Tool};
 
-pub trait GameBody: Body + Draw {}
-impl GameBody for Polygon {}
 
 pub struct Game {
     game_config: GameConfig,
 
-    fluid_system: Sph,
+    pub(crate) fluid_system: Sph,
     /// If the physics are currently being simulated or not
     is_simulating: bool,
 
     rb_simulator: RbSimulator,
-    bodies: Vec<Box<dyn GameBody>>,
+    pub(crate) bodies: Vec<Box<dyn GameBody>>,
 
     // GUI things
     gameview_offset: Vector2<f32>,
-    gameview_width: f32,
-    gameview_height: f32,
+    pub(crate) gameview_width: f32,
+    pub(crate) gameview_height: f32,
     renderer: Box<dyn Renderer>,
     draw_particles: bool,
     ingame_ui: InGameUI,
@@ -50,8 +48,6 @@ impl Game {
         let sph = Sph::new(f_width, f_height);
         let renderer_step_size = f_width / 100.0;
 
-        // Add recrtangles that act as walls and such
-        let wall_thickness = 20.0;
         let mut test_body = Box::new(Rectangle!(
             v2!(225, 200; f32),
             v2!(400, 200; f32),
@@ -61,6 +57,9 @@ impl Game {
         ));
         test_body.state_mut().orientation = PI * 0.5;
         test_body.state_mut().set_mass(100_000.0);
+        
+        // Add rectangles that act as walls
+        let wall_thickness = 20.0;
         let bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(

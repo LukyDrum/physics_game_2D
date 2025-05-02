@@ -2,7 +2,7 @@ use std::{
     iter::Sum,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
-
+use serde::{Serialize, Deserialize};
 use num_traits::{Float, Num, NumAssignOps, NumOps};
 
 /// A macro for quickly creating a new Vector2 with `x` and `y` components.
@@ -18,7 +18,7 @@ macro_rules! v2 {
 
 pub(crate) use v2;
 
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Vector2<T>
 where
     T: Num + NumOps + Copy + Default,

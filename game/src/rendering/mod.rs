@@ -2,6 +2,8 @@ mod draw;
 mod marching_squares_render;
 mod renderer;
 
+use serde::{Serialize, Deserialize};
+
 pub use draw::*;
 pub use marching_squares_render::MarchingSquaresRenderer;
 pub use renderer::Renderer;
@@ -14,7 +16,7 @@ struct SamplePoint {
 
 /// Representation of a RGBA color.
 /// Acts only as a container for the 4 values.
-#[derive(Default, Clone, Copy, Debug)]
+#[derive(Default, Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Color {
     pub r: f32,
     pub g: f32,

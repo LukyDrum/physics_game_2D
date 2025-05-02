@@ -11,6 +11,7 @@ num-traits = "0.2.19"
 rayon = "1.10.0"
 serde = "1.0.218"
 game_macros = { path = "../game_macros" }
+serde_json = "1.0.140"
 
 [dev-dependencies]
 serde_derive = "1.0.218"

@@ -13,11 +13,14 @@ use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{Body, BodyBehaviour, Polygon, RbSimulator, Rectangle},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
+    serialization::SerializationForm,
     utility::AsMq,
     Particle, Sph,
 };
 
-use super::{config::GameConfig, gamebody::GameBody, EntityInfo, InGameUI, SaveLoadAction, Tool};
+use super::{
+    config::GameConfig, gamebody::GameBody, save_load, EntityInfo, InGameUI, SaveLoadAction, Tool,
+};
 
 pub struct Game {
     game_config: GameConfig,
@@ -257,8 +260,10 @@ impl Game {
     fn handle_save_loads(&mut self) {
         match &self.ingame_ui.save_loads.action {
             SaveLoadAction::Nothing => {}
-            SaveLoadAction::Save => println!("Save"),
-            SaveLoadAction::Load(game_serialized_form) => todo!(),
+            SaveLoadAction::Save => {
+                save_load::save(self.to_serialized_form(), "test-save.json".to_owned())
+            }
+            SaveLoadAction::Load(_game_serialized_form) => todo!(),
         }
     }
 

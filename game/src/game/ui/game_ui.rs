@@ -17,7 +17,7 @@ pub const FONT_SIZE_LARGE: f32 = 36.0;
 pub const FONT_SIZE_MEDIUM: f32 = 26.0;
 pub const FONT_SIZE_SMALL: f32 = 16.0;
 
-const TOOL_BUTTON_WIDTH: f32 = 80.0;
+const TOOL_BUTTON_WIDTH: f32 = 110.0;
 const TOOL_BUTTON_HEIGHT: f32 = 25.0;
 const TOOL_BUTTON_GAP: f32 = 40.0;
 const TOOL_BUTTON_SELECTED_OUTLINE: f32 = 4.0;

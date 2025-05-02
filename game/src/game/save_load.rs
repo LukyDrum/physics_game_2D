@@ -11,7 +11,12 @@ pub fn save(game_ser_form: GameSerializedForm, name: &str) {
     let json = serde_json::to_string_pretty(&game_ser_form)
         .expect("Save failed: failed to serialize to JSON.");
 
-    let path = Path::new(ROOT).join(format!("saves/{name}"));
+    let full_name = if name.ends_with(".json") {
+        name.to_owned()
+    } else {
+        format!("{name}.json")
+    };
+    let path = Path::new(ROOT).join(format!("saves/{full_name}"));
 
     let mut file = File::create(path).unwrap();
     file.write_all(&json.into_bytes())

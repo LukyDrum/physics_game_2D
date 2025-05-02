@@ -1,0 +1,188 @@
+{
+  "width": 500.0,
+  "height": 500.0,
+  "sph": {
+    "particles": [],
+    "width": 500.0,
+    "height": 500.0
+  },
+  "rb": {
+    "bodies": [
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 250.0,
+              "y": 490.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": 0.4,
+            "static_friction": 0.3,
+            "dynamic_friction": 0.2
+          },
+          "points": [
+            {
+              "x": -250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": 10.0
+            },
+            {
+              "x": -250.0,
+              "y": 10.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 250.0,
+              "y": 10.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": 0.4,
+            "static_friction": 0.3,
+            "dynamic_friction": 0.2
+          },
+          "points": [
+            {
+              "x": -250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": 10.0
+            },
+            {
+              "x": -250.0,
+              "y": 10.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 10.0,
+              "y": 250.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": 0.4,
+            "static_friction": 0.3,
+            "dynamic_friction": 0.2
+          },
+          "points": [
+            {
+              "x": -10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": 250.0
+            },
+            {
+              "x": -10.0,
+              "y": 250.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 490.0,
+              "y": 250.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": 0.4,
+            "static_friction": 0.3,
+            "dynamic_friction": 0.2
+          },
+          "points": [
+            {
+              "x": -10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": 250.0
+            },
+            {
+              "x": -10.0,
+              "y": 250.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 312.5,
+              "y": 392.5
+            },
+            "orientation": 1.5707964,
+            "behaviour": "Dynamic",
+            "mass": 100000.0,
+            "moment_of_inertia": 2760416300.0,
+            "elasticity": 0.4,
+            "static_friction": 0.3,
+            "dynamic_friction": 0.2
+          },
+          "points": [
+            {
+              "x": -87.5,
+              "y": -25.0
+            },
+            {
+              "x": 87.5,
+              "y": -25.0
+            },
+            {
+              "x": 87.5,
+              "y": 25.0
+            },
+            {
+              "x": -87.5,
+              "y": 25.0
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

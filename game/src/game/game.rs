@@ -258,12 +258,14 @@ impl Game {
     }
 
     fn handle_save_loads(&mut self) {
+        let save_file_name = self.ingame_ui.save_loads.save_file_name.as_str();
         match std::mem::replace(
             &mut self.ingame_ui.save_loads.action,
             SaveLoadAction::Nothing,
         ) {
-            SaveLoadAction::Nothing => {}
-            SaveLoadAction::Save => save_load::save(self.to_serialized_form(), "test-save.json"),
+            SaveLoadAction::Save if !save_file_name.is_empty() => {
+                save_load::save(self.to_serialized_form(), save_file_name)
+            }
             SaveLoadAction::Load(game_serialized_form) => {
                 let mut new_game = Game::from_serialized_form(game_serialized_form);
 
@@ -272,6 +274,7 @@ impl Game {
 
                 *self = new_game;
             }
+            _ => {}
         }
     }
 

@@ -52,7 +52,7 @@ impl UIComponent for SavesLoads {
                 .position(offset.as_mq())
                 .ui(&mut root_ui())
             {
-                println!("Selected {save}");
+                self.action = SaveLoadAction::Load(save_load::load_save(save));
                 return;
             }
 

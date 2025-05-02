@@ -258,13 +258,19 @@ impl Game {
     }
 
     fn handle_save_loads(&mut self) {
-        match &self.ingame_ui.save_loads.action {
+        match std::mem::replace(
+            &mut self.ingame_ui.save_loads.action,
+            SaveLoadAction::Nothing,
+        ) {
             SaveLoadAction::Nothing => {}
-            SaveLoadAction::Save => {
-                save_load::save(self.to_serialized_form(), "test-save.json".to_owned())
-            }
-            SaveLoadAction::Load(_game_serialized_form) => {
-                save_load::list_saves();
+            SaveLoadAction::Save => save_load::save(self.to_serialized_form(), "test-save.json"),
+            SaveLoadAction::Load(game_serialized_form) => {
+                let mut new_game = Game::from_serialized_form(game_serialized_form);
+
+                // Swap things that should not change
+                std::mem::swap(&mut self.ingame_ui, &mut new_game.ingame_ui);
+
+                *self = new_game;
             }
         }
     }

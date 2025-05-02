@@ -7,7 +7,7 @@ use crate::serialization::GameSerializedForm;
 
 static ROOT: &'static str = "./";
 
-pub fn save(game_ser_form: GameSerializedForm, name: String) {
+pub fn save(game_ser_form: GameSerializedForm, name: &str) {
     let json = serde_json::to_string_pretty(&game_ser_form)
         .expect("Save failed: failed to serialize to JSON.");
 
@@ -26,4 +26,14 @@ pub fn list_saves() -> LinkedList<String> {
         .map(|p| p.unwrap().file_name().to_str().unwrap().to_owned())
         .inspect(|p| println!("{p:?}"))
         .collect()
+}
+
+pub fn load_save(save_name: &str) -> GameSerializedForm {
+    let path = Path::new(ROOT).join(format!("saves/{save_name}.json"));
+    let mut file = File::open(path).expect("Load failed: failed to open file.");
+
+    let mut json = String::new();
+    let _ = file.read_to_string(&mut json);
+
+    serde_json::from_str(json.as_str()).expect("Load failed: failed to deserialize from JSON.")
 }

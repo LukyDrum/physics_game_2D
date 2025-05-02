@@ -263,7 +263,9 @@ impl Game {
             SaveLoadAction::Save => {
                 save_load::save(self.to_serialized_form(), "test-save.json".to_owned())
             }
-            SaveLoadAction::Load(_game_serialized_form) => todo!(),
+            SaveLoadAction::Load(_game_serialized_form) => {
+                save_load::list_saves();
+            }
         }
     }
 

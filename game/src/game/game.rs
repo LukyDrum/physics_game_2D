@@ -328,6 +328,7 @@ impl Game {
 
                 // Swap things that should not change
                 std::mem::swap(&mut self.ingame_ui, &mut new_game.ingame_ui);
+                std::mem::swap(&mut self.preview_body, &mut new_game.preview_body);
 
                 *self = new_game;
             }

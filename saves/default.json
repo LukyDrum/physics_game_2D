@@ -1,11 +1,8 @@
 {
+  "name": "",
+  "description": "",
   "width": 500.0,
   "height": 500.0,
-  "sph": {
-    "particles": [],
-    "width": 500.0,
-    "height": 500.0
-  },
   "rb": {
     "bodies": [
       {
@@ -173,5 +170,10 @@
         }
       }
     ]
+  },
+  "sph": {
+    "particles": [],
+    "width": 500.0,
+    "height": 500.0
   }
 }

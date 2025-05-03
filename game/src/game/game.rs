@@ -41,6 +41,8 @@ pub struct Game {
     ingame_ui: InGameUI,
     preview_body: Box<dyn GameBody>,
     mouse_in_gameview: bool,
+    pub(crate) name: String,
+    pub(crate) description: String,
 }
 
 impl Game {
@@ -104,6 +106,8 @@ impl Game {
             ingame_ui,
             preview_body: Box::new(Rectangle!(v2!(50.0, 50.0); 50.0, 50.0; BodyBehaviour::Dynamic)),
             mouse_in_gameview: false,
+            name: String::new(),
+            description: String::new(),
         };
 
         game.preview_body = game.body_from_body_maker(v2!(50.0, 50.0));

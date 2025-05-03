@@ -20,10 +20,12 @@ pub trait SerializationForm {
 
 #[derive(Serialize, Deserialize)]
 pub struct GameSerializedForm {
+    pub name: String,
+    pub description: String,
     pub width: f32,
     pub height: f32,
-    pub sph: SphSerializedForm,
     pub rb: RbSerializedForm,
+    pub sph: SphSerializedForm,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,6 +41,8 @@ impl SerializationForm for Game {
     fn to_serialized_form(&self) -> Self::SerializedForm {
         let width = self.gameview_width;
         let height = self.gameview_height;
+        let name = self.name.clone();
+        let description = self.description.clone();
 
         let sph = self.fluid_system.to_serialized_form();
 
@@ -49,6 +53,8 @@ impl SerializationForm for Game {
             .collect();
 
         GameSerializedForm {
+            name,
+            description,
             width,
             height,
             sph,
@@ -58,6 +64,8 @@ impl SerializationForm for Game {
 
     fn from_serialized_form(serialized_form: Self::SerializedForm) -> Self::Original {
         let GameSerializedForm {
+            name,
+            description,
             width,
             height,
             sph,
@@ -81,6 +89,8 @@ impl SerializationForm for Game {
         let mut game = Game::new(width as usize, height as usize);
         game.fluid_system = sph;
         game.bodies = bodies;
+        game.name = name;
+        game.description = description;
 
         game
     }

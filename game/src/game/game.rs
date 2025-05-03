@@ -131,7 +131,7 @@ impl Game {
         let mut body: Box<dyn GameBody> =
             Box::new(Rectangle!(position; size.x, size.y; BodyBehaviour::Dynamic));
         body.state_mut().orientation = orientation * (PI / 180.0);
-        body.state_mut().mass = mass;
+        body.state_mut().set_mass(mass);
 
         body
     }

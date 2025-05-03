@@ -21,7 +21,13 @@
             "moment_of_inertia": 2086666.5,
             "elasticity": 0.4,
             "static_friction": 0.3,
-            "dynamic_friction": 0.2
+            "dynamic_friction": 0.2,
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
           },
           "points": [
             {
@@ -56,7 +62,13 @@
             "moment_of_inertia": 2086666.5,
             "elasticity": 0.4,
             "static_friction": 0.3,
-            "dynamic_friction": 0.2
+            "dynamic_friction": 0.2,
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
           },
           "points": [
             {
@@ -91,7 +103,13 @@
             "moment_of_inertia": 2086666.5,
             "elasticity": 0.4,
             "static_friction": 0.3,
-            "dynamic_friction": 0.2
+            "dynamic_friction": 0.2,
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
           },
           "points": [
             {
@@ -126,59 +144,30 @@
             "moment_of_inertia": 2086666.5,
             "elasticity": 0.4,
             "static_friction": 0.3,
-            "dynamic_friction": 0.2
-          },
-          "points": [
-            {
-              "x": -10.0,
-              "y": -250.0
-            },
-            {
-              "x": 10.0,
-              "y": -250.0
-            },
-            {
-              "x": 10.0,
-              "y": 250.0
-            },
-            {
-              "x": -10.0,
-              "y": 250.0
+            "dynamic_friction": 0.2,
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
             }
-          ]
-        }
-      },
-      {
-        "Polygon": {
-          "state": {
-            "position": {
-              "x": 312.5,
-              "y": 392.5
-            },
-            "orientation": 1.5707964,
-            "behaviour": "Dynamic",
-            "mass": 100000.0,
-            "moment_of_inertia": 2760416300.0,
-            "elasticity": 0.4,
-            "static_friction": 0.3,
-            "dynamic_friction": 0.2
           },
           "points": [
             {
-              "x": -87.5,
-              "y": -25.0
+              "x": -10.0,
+              "y": -250.0
             },
             {
-              "x": 87.5,
-              "y": -25.0
+              "x": 10.0,
+              "y": -250.0
             },
             {
-              "x": 87.5,
-              "y": 25.0
+              "x": 10.0,
+              "y": 250.0
             },
             {
-              "x": -87.5,
-              "y": 25.0
+              "x": -10.0,
+              "y": 250.0
             }
           ]
         }

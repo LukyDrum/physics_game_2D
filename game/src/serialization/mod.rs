@@ -42,7 +42,10 @@ impl SerializationForm for Game {
         let width = self.gameview_width;
         let height = self.gameview_height;
         let name = self.name.clone();
-        let description = self.description.clone();
+        let description = self
+            .description
+            .iter()
+            .fold(String::new(), |acc, s| acc + s);
 
         let sph = self.fluid_system.to_serialized_form();
 
@@ -90,7 +93,7 @@ impl SerializationForm for Game {
         game.fluid_system = sph;
         game.bodies = bodies;
         game.name = name;
-        game.description = description;
+        game.set_description(description);
 
         game
     }

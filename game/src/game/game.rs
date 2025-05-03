@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{collections::LinkedList, f32::consts::PI};
 
 use macroquad::{
     input::{
@@ -6,6 +6,8 @@ use macroquad::{
         MouseButton,
     },
     shapes::draw_circle,
+    text::draw_text,
+    ui::widgets::Label,
     window::clear_background,
 };
 
@@ -20,6 +22,7 @@ use crate::{
 
 use super::{
     config::GameConfig, gamebody::GameBody, save_load, EntityInfo, InGameUI, SaveLoadAction, Tool,
+    FONT_SIZE_LARGE, FONT_SIZE_SMALL,
 };
 
 pub struct Game {
@@ -42,7 +45,7 @@ pub struct Game {
     preview_body: Box<dyn GameBody>,
     mouse_in_gameview: bool,
     pub(crate) name: String,
-    pub(crate) description: String,
+    pub(crate) description: LinkedList<String>,
 }
 
 impl Game {
@@ -107,12 +110,16 @@ impl Game {
             preview_body: Box::new(Rectangle!(v2!(50.0, 50.0); 50.0, 50.0; BodyBehaviour::Dynamic)),
             mouse_in_gameview: false,
             name: String::new(),
-            description: String::new(),
+            description: LinkedList::new(),
         };
 
         game.preview_body = game.body_from_body_maker(v2!(50.0, 50.0));
 
         game
+    }
+
+    pub(crate) fn set_description(&mut self, description: String) {
+        self.description = description.split("\n").map(|s| s.to_owned()).collect();
     }
 
     fn body_from_body_maker(&self, position: Vector2<f32>) -> Box<dyn GameBody> {
@@ -266,6 +273,28 @@ impl Game {
             if self.mouse_in_gameview {
                 self.preview_body.draw();
             }
+        }
+
+        // Draw name and description text
+        let offset = v2!(30.0, self.gameview_height + 30.0);
+        draw_text(
+            &self.name,
+            offset.x,
+            offset.y,
+            FONT_SIZE_LARGE,
+            Color::rgb(0, 0, 0).as_mq(),
+        );
+
+        let mut offset = offset + v2!(0.0, 30.0);
+        for line in &self.description {
+            draw_text(
+                line,
+                offset.x,
+                offset.y,
+                FONT_SIZE_SMALL,
+                Color::rgb(0, 0, 0).as_mq(),
+            );
+            offset.y += FONT_SIZE_SMALL + 5.0;
         }
     }
 

@@ -1,3 +1,4 @@
+use crate::rendering::Color;
 use crate::serialization::SerializationForm;
 use crate::{
     math::Vector2,
@@ -29,6 +30,8 @@ pub struct BodyStateSerializedForm {
     pub elasticity: f32,
     pub static_friction: f32,
     pub dynamic_friction: f32,
+
+    pub color: Color,
 }
 
 impl From<BodyState> for BodyStateSerializedForm {
@@ -42,6 +45,7 @@ impl From<BodyState> for BodyStateSerializedForm {
             elasticity,
             static_friction,
             dynamic_friction,
+            color,
             ..
         } = body_state;
 
@@ -54,6 +58,7 @@ impl From<BodyState> for BodyStateSerializedForm {
             elasticity,
             static_friction,
             dynamic_friction,
+            color,
         }
     }
 }
@@ -69,6 +74,7 @@ impl From<BodyStateSerializedForm> for BodyState {
             elasticity,
             static_friction,
             dynamic_friction,
+            color,
         } = serialized_from;
 
         BodyState {
@@ -80,6 +86,7 @@ impl From<BodyStateSerializedForm> for BodyState {
             elasticity,
             static_friction,
             dynamic_friction,
+            color,
             ..Default::default()
         }
     }

@@ -52,16 +52,6 @@ impl Game {
         let sph = Sph::new(f_width, f_height);
         let renderer_step_size = f_width / 100.0;
 
-        let mut test_body = Box::new(Rectangle!(
-            v2!(225, 200; f32),
-            v2!(400, 200; f32),
-            v2!(400, 250; f32),
-            v2!(225, 250; f32);
-            BodyBehaviour::Dynamic
-        ));
-        test_body.state_mut().orientation = PI * 0.5;
-        test_body.state_mut().set_mass(100_000.0);
-
         // Add rectangles that act as walls
         let wall_thickness = 20.0;
         let bodies: Vec<Box<dyn GameBody>> = vec![
@@ -81,7 +71,6 @@ impl Game {
             Box::new(
                 Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
-            test_body,
         ];
 
         let mut ingame_ui = InGameUI::default();

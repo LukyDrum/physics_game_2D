@@ -126,13 +126,14 @@ impl Game {
         let size = self.ingame_ui.body_maker.size();
         let orientation = self.ingame_ui.body_maker.orientation();
         let mass = self.ingame_ui.body_maker.mass();
-        let color = self.ingame_ui.body_maker.color();
+        let mut color = self.ingame_ui.body_maker.color();
         let behaviour = self.ingame_ui.body_maker.behaviour();
 
         // Create body and set state values
         let mut body: Box<dyn GameBody> = Box::new(Rectangle!(position; size.x, size.y; behaviour));
         body.state_mut().orientation = orientation * (PI / 180.0);
         body.state_mut().set_mass(mass);
+        color.a = 0.5;
         body.state_mut().color = color;
 
         body
@@ -156,7 +157,11 @@ impl Game {
 
                 if is_mouse_button_pressed(MouseButton::Left) && self.mouse_in_gameview {
                     let new_body = self.body_from_body_maker(position);
-                    let body = std::mem::replace(&mut self.preview_body, new_body);
+
+                    let mut body = std::mem::replace(&mut self.preview_body, new_body);
+                    // Set color alpha to 1.0 - it was lowered for preview
+                    body.state_mut().color.a = 1.0;
+
                     self.bodies.push(body);
                 } else if self.mouse_in_gameview {
                     self.preview_body.set_position(position);

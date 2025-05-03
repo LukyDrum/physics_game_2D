@@ -1,4 +1,10 @@
+use macroquad::shapes::draw_rectangle;
+use macroquad::ui::root_ui;
+use macroquad::ui::widgets::Checkbox;
+
 use crate::game::draw_slider;
+use crate::physics::rigidbody::BodyBehaviour;
+use crate::utility::AsMq;
 use crate::{
     game::UIComponent,
     math::{v2, Vector2},
@@ -19,6 +25,7 @@ pub struct BodyMaker {
     height: f32,
     mass: f32,
     orientation: f32,
+    behaviour: BodyBehaviour,
 
     max_size: f32,
     changed: bool,
@@ -33,6 +40,7 @@ impl Default for BodyMaker {
             height: 30.0,
             mass: 5000.0,
             orientation: 0.0,
+            behaviour: BodyBehaviour::Dynamic,
 
             max_size: DEFAULT_MAX_SIZE,
             changed: false,
@@ -49,6 +57,7 @@ impl UIComponent for BodyMaker {
             height: old_height,
             mass: old_mass,
             orientation: old_orientation,
+            behaviour: old_behaviour,
             ..
         } = *self;
 
@@ -87,6 +96,24 @@ impl UIComponent for BodyMaker {
             MIN_MASS..MAX_MASS,
         );
 
+        let side_offset = offset + v2!(400.0, 0.0);
+        let mut is_static = self.behaviour == BodyBehaviour::Static;
+        Checkbox::new(69)
+            .pos(side_offset.as_mq())
+            .label("Is static?")
+            .size(v2!(SLIDER_HEIGHT, SLIDER_HEIGHT).as_mq())
+            .ui(&mut root_ui(), &mut is_static);
+        self.behaviour = if is_static {
+            let x = side_offset.x + 0.25 * SLIDER_HEIGHT - 19.0;
+            let y = side_offset.y + 0.25 * SLIDER_HEIGHT;
+            let wh = SLIDER_HEIGHT * 0.5;
+            draw_rectangle(x, y, wh, wh, Color::rgb(255, 255, 255).as_mq());
+
+            BodyBehaviour::Static
+        } else {
+            BodyBehaviour::Dynamic
+        };
+
         let old_color = self.color_picker.color();
         self.color_picker
             .draw(offset + v2!(0.0, SLIDER_HEIGHT + 25.0));
@@ -95,7 +122,8 @@ impl UIComponent for BodyMaker {
             || self.height != old_height
             || self.mass != old_mass
             || self.orientation != old_orientation
-            || old_color != self.color_picker.color();
+            || old_color != self.color_picker.color()
+            || self.behaviour != old_behaviour;
     }
 }
 
@@ -122,5 +150,9 @@ impl BodyMaker {
 
     pub fn changed(&self) -> bool {
         self.changed
+    }
+
+    pub fn behaviour(&self) -> BodyBehaviour {
+        self.behaviour
     }
 }

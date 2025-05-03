@@ -7,7 +7,9 @@ mod shapes;
 mod utility;
 
 use game::Game;
-use macroquad::prelude::*;
+use macroquad::{prelude::*, ui::root_ui};
+use rendering::Color;
+use utility::AsMq;
 
 use crate::physics::sph::*;
 
@@ -35,6 +37,17 @@ fn window_conf() -> Conf {
 ///  (0, HEIGHT) --- (WIDTH, HEIGHT)
 #[macroquad::main(window_conf)]
 async fn main() {
+    // Setup styling
+    let checkbox_color_selected = Color::rgb(10, 240, 10).as_mq();
+    let checkbox_style = root_ui()
+        .style_builder()
+        .color_selected(checkbox_color_selected)
+        .color_selected_hovered(checkbox_color_selected)
+        .build();
+    let mut skin = root_ui().default_skin();
+    skin.checkbox_style = checkbox_style;
+    root_ui().push_skin(&skin);
+
     let mut game = Game::new(500, 500);
 
     loop {

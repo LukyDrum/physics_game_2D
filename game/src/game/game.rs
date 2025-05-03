@@ -127,9 +127,9 @@ impl Game {
         let orientation = self.ingame_ui.body_maker.orientation();
         let mass = self.ingame_ui.body_maker.mass();
         let _color = self.ingame_ui.body_maker.color();
+        let behaviour = self.ingame_ui.body_maker.behaviour();
 
-        let mut body: Box<dyn GameBody> =
-            Box::new(Rectangle!(position; size.x, size.y; BodyBehaviour::Dynamic));
+        let mut body: Box<dyn GameBody> = Box::new(Rectangle!(position; size.x, size.y; behaviour));
         body.state_mut().orientation = orientation * (PI / 180.0);
         body.state_mut().set_mass(mass);
 

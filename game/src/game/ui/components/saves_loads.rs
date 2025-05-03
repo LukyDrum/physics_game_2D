@@ -139,6 +139,8 @@ impl UIComponent for SavesLoads {
             .position(offset_input.as_mq())
             .size(v2!(150.0, 25.0).as_mq())
             .ui(&mut root_ui(), &mut self.save_file_name);
+        // Do not allow names containing '_'
+        self.save_file_name = self.save_file_name.replace('_', "");
 
         // Compare old and new
         self.taken_input = self.save_file_name != old_save_file_name;
@@ -158,7 +160,13 @@ impl UIComponent for SavesLoads {
         {
             let read = self.saves.read().unwrap();
             for save in &*read {
-                if Button::new(save.as_str())
+                let display_name = if save.starts_with('_') {
+                    &save[1..]
+                } else {
+                    save.as_str()
+                };
+
+                if Button::new(display_name)
                     .size(v2!(150.0, 25.0).as_mq())
                     .position(offset.as_mq())
                     .ui(&mut root_ui())
@@ -175,12 +183,16 @@ impl UIComponent for SavesLoads {
             offset = og_offset;
             for save in &*read {
                 let side_offset = offset + v2!(180.0, 0.0);
-                if Button::new("Delete")
-                    .size(v2!(60.0, 25.0).as_mq())
-                    .position(side_offset.as_mq())
-                    .ui(&mut root_ui())
-                {
-                    delete_save = Some(save.clone());
+
+                // Do not draw delete button for pretected savefiles - containing '_'
+                if !save.contains('_') {
+                    if Button::new("Delete")
+                        .size(v2!(60.0, 25.0).as_mq())
+                        .position(side_offset.as_mq())
+                        .ui(&mut root_ui())
+                    {
+                        delete_save = Some(save.clone());
+                    }
                 }
 
                 offset += v2!(0.0, 35.0);

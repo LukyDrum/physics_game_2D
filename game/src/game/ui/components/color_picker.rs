@@ -1,7 +1,11 @@
+use chrono::offset;
+use macroquad::text::draw_text;
+
 use crate::{
-    game::UIComponent,
+    game::{UIComponent, FONT_SIZE_MEDIUM},
     math::{v2, Vector2},
     rendering::Color,
+    utility::AsMq,
 };
 
 use super::{draw_slider, SLIDER_HEIGHT};
@@ -30,6 +34,15 @@ impl UIComponent for ColorPicker {
             self.color.b * 255.0,
         );
 
+        draw_text(
+            "Color",
+            offset.x,
+            offset.y,
+            FONT_SIZE_MEDIUM,
+            Color::rgb(0, 0, 0).as_mq(),
+        );
+
+        let offset = offset + v2!(0.0, 20.0);
         draw_slider(offset, "R", 350.0, &mut r, 0.0..255.0);
         self.color.r = r / 255.0;
 

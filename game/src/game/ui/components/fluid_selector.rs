@@ -32,7 +32,7 @@ impl UIComponent for FluidSelector {
     fn draw(&mut self, offset: Vector2<f32>) {
         self.draw_density_selector(offset);
         self.color_picker
-            .draw(offset + v2!(0.0, SLIDER_HEIGHT + 10.0));
+            .draw(offset + v2!(0.0, SLIDER_HEIGHT + 25.0));
     }
 }
 

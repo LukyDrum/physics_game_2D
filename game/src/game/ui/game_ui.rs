@@ -11,7 +11,7 @@ use crate::{
     utility::AsMq,
 };
 
-use super::{FluidSelector, InfoPanel, SavesLoads, UIComponent, UIEdit};
+use super::{BodyMaker, FluidSelector, InfoPanel, SavesLoads, UIComponent, UIEdit};
 
 pub const FONT_SIZE_LARGE: f32 = 36.0;
 pub const FONT_SIZE_MEDIUM: f32 = 26.0;
@@ -37,6 +37,7 @@ pub struct InGameUI {
     pub fluid_selector: FluidSelector,
     pub info_panel: InfoPanel,
     pub save_loads: SavesLoads,
+    pub body_maker: BodyMaker,
 
     pub selected_tool: Tool,
 }
@@ -47,6 +48,7 @@ impl Default for InGameUI {
             fluid_selector: FluidSelector::default(),
             info_panel: InfoPanel::default(),
             save_loads: SavesLoads::default(),
+            body_maker: BodyMaker::default(),
 
             selected_tool: Tool::Info,
         }
@@ -84,7 +86,7 @@ impl InGameUI {
         match self.selected_tool {
             Tool::Info => self.info_panel.draw(offset),
             Tool::Fluid => self.fluid_selector.draw(offset),
-            Tool::Rigidbody => {}
+            Tool::Rigidbody => self.body_maker.draw(offset),
             Tool::Configuration => {
                 game_config.draw_edit(offset, v2!(80.0, 20.0), "");
             }

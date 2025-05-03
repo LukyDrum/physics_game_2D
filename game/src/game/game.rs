@@ -82,6 +82,11 @@ impl Game {
             test_body,
         ];
 
+        let mut ingame_ui = InGameUI::default();
+        ingame_ui
+            .body_maker
+            .set_max_size(f_width.min(f_height) * 0.8);
+
         Game {
             game_config: GameConfig::default(),
 
@@ -105,7 +110,7 @@ impl Game {
                 .unwrap(),
             ),
             draw_particles: false,
-            ingame_ui: InGameUI::default(),
+            ingame_ui,
         }
     }
 

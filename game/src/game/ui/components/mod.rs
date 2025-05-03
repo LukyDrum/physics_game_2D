@@ -1,3 +1,4 @@
+mod body_maker;
 mod color_picker;
 mod fluid_selector;
 mod info;
@@ -5,6 +6,7 @@ mod saves_loads;
 
 use std::ops::Range;
 
+pub use body_maker::BodyMaker;
 pub use color_picker::ColorPicker;
 pub use fluid_selector::FluidSelector;
 pub use info::{EntityInfo, InfoPanel};

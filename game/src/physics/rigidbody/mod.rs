@@ -2,7 +2,7 @@ use core::f32;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::LinkedList;
 
-use crate::{game::GameBody, math::Vector2, shapes::Line, utility::runge_kutta};
+use crate::{game::GameBody, math::Vector2, rendering::Color, shapes::Line, utility::runge_kutta};
 
 mod polygon;
 mod rb_simulation;
@@ -77,6 +77,9 @@ pub struct BodyState {
     /// The dynamic friction coefficient of this body. A value between 0 and 1.
     pub dynamic_friction: f32,
 
+    // OTHER PROPERTIES
+    pub color: Color,
+
     // ACCUMULATED FORCES waiting to be applied
     pub(crate) accumulated_force: Vector2<f32>,
     pub(crate) accumulated_torque: f32,
@@ -98,6 +101,8 @@ impl BodyState {
             elasticity: DEFAULT_ELASTICITY,
             static_friction: DEFAULT_STATIC_FRICTION,
             dynamic_friction: DEFAULT_DYNAMIC_FRICTION,
+
+            color: Color::rgb(0, 0, 0),
 
             accumulated_force: Vector2::zero(),
             accumulated_torque: 0.0,

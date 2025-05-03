@@ -16,7 +16,7 @@ struct SamplePoint {
 
 /// Representation of a RGBA color.
 /// Acts only as a container for the 4 values.
-#[derive(Default, Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Default, Clone, Copy, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Color {
     pub r: f32,
     pub g: f32,

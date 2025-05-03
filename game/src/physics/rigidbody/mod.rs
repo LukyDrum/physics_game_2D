@@ -244,6 +244,11 @@ pub trait Body: Send + Sync {
     /// Checks if this Body collides with the `other` Body and if so returns a `BodyCollisionInfo`.
     /// Otherwise returns `None` (meaning they do not collide).
     fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData>;
+
+    fn set_position(&mut self, new_position: Vector2<f32>) {
+        self.state_mut().position = new_position;
+        self.update_inner_values();
+    }
 }
 
 macro_rules! Rectangle {

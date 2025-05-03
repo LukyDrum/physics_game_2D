@@ -21,6 +21,7 @@ pub struct BodyMaker {
     orientation: f32,
 
     max_size: f32,
+    changed: bool,
 
     color_picker: ColorPicker,
 }
@@ -34,6 +35,7 @@ impl Default for BodyMaker {
             orientation: 0.0,
 
             max_size: DEFAULT_MAX_SIZE,
+            changed: false,
 
             color_picker: ColorPicker::new(Color::rgb(0, 0, 0)),
         }
@@ -42,6 +44,14 @@ impl Default for BodyMaker {
 
 impl UIComponent for BodyMaker {
     fn draw(&mut self, offset: Vector2<f32>) {
+        let BodyMaker {
+            width: old_width,
+            height: old_height,
+            mass: old_mass,
+            orientation: old_orientation,
+            ..
+        } = *self;
+
         draw_slider(
             offset,
             "Width [cm]",
@@ -77,8 +87,15 @@ impl UIComponent for BodyMaker {
             MIN_MASS..MAX_MASS,
         );
 
+        let old_color = self.color_picker.color();
         self.color_picker
             .draw(offset + v2!(0.0, SLIDER_HEIGHT + 25.0));
+
+        self.changed = self.width != old_width
+            || self.height != old_height
+            || self.mass != old_mass
+            || self.orientation != old_orientation
+            || old_color != self.color_picker.color();
     }
 }
 
@@ -101,5 +118,9 @@ impl BodyMaker {
 
     pub fn set_max_size(&mut self, new_max: f32) {
         self.max_size = new_max;
+    }
+
+    pub fn changed(&self) -> bool {
+        self.changed
     }
 }

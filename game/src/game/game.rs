@@ -39,6 +39,8 @@ pub struct Game {
     renderer: Box<dyn Renderer>,
     draw_particles: bool,
     ingame_ui: InGameUI,
+    preview_body: Box<dyn GameBody>,
+    mouse_in_gameview: bool,
 }
 
 impl Game {
@@ -87,7 +89,7 @@ impl Game {
             .body_maker
             .set_max_size(f_width.min(f_height) * 0.8);
 
-        Game {
+        let mut game = Game {
             game_config: GameConfig::default(),
 
             fluid_system: sph,
@@ -111,25 +113,51 @@ impl Game {
             ),
             draw_particles: false,
             ingame_ui,
-        }
+            preview_body: Box::new(Rectangle!(v2!(50.0, 50.0); 50.0, 50.0; BodyBehaviour::Dynamic)),
+            mouse_in_gameview: false,
+        };
+
+        game.preview_body = game.body_from_body_maker(v2!(50.0, 50.0));
+
+        game
+    }
+
+    fn body_from_body_maker(&self, position: Vector2<f32>) -> Box<dyn GameBody> {
+        let size = self.ingame_ui.body_maker.size();
+        let orientation = self.ingame_ui.body_maker.orientation();
+        let mass = self.ingame_ui.body_maker.mass();
+        let _color = self.ingame_ui.body_maker.color();
+
+        let mut body: Box<dyn GameBody> =
+            Box::new(Rectangle!(position; size.x, size.y; BodyBehaviour::Dynamic));
+        body.state_mut().orientation = orientation * (PI / 180.0);
+        body.state_mut().mass = mass;
+
+        body
     }
 
     pub fn handle_input(&mut self) {
         let mouse_pos = mouse_position();
         let position = Vector2::new(mouse_pos.0, mouse_pos.1);
+        self.mouse_in_gameview = self.is_in_gameview(position);
 
         match self.ingame_ui.selected_tool {
             Tool::Fluid => {
-                if is_mouse_button_down(MouseButton::Left) && self.is_in_gameview(position) {
+                if is_mouse_button_down(MouseButton::Left) && self.mouse_in_gameview {
                     self.add_fluid(position);
                 }
             }
             Tool::Rigidbody => {
-                if is_mouse_button_pressed(MouseButton::Left) && self.is_in_gameview(position) {
-                    let mouse_pos = mouse_position();
-                    let mut rect = Rectangle!(v2!(mouse_pos.0, mouse_pos.1); 50.0, 50.0; BodyBehaviour::Dynamic);
-                    rect.state_mut().set_mass(1_000.0);
-                    self.bodies.push(Box::new(rect));
+                if self.ingame_ui.body_maker.changed() {
+                    self.preview_body = self.body_from_body_maker(position);
+                }
+
+                if is_mouse_button_pressed(MouseButton::Left) && self.mouse_in_gameview {
+                    let new_body = self.body_from_body_maker(position);
+                    let body = std::mem::replace(&mut self.preview_body, new_body);
+                    self.bodies.push(body);
+                } else if self.mouse_in_gameview {
+                    self.preview_body.set_position(position);
                 }
             }
             _ => {}
@@ -233,6 +261,12 @@ impl Game {
             Vector2::new(self.gameview_width + 50.0, 40.0),
             &mut self.game_config,
         );
+
+        if let Tool::Rigidbody = self.ingame_ui.selected_tool {
+            if self.mouse_in_gameview {
+                self.preview_body.draw();
+            }
+        }
     }
 
     fn is_in_gameview(&self, position: Vector2<f32>) -> bool {

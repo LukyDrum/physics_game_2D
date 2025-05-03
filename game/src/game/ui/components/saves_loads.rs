@@ -1,14 +1,14 @@
 use std::collections::LinkedList;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Once, RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
 use macroquad::text::draw_text;
 use macroquad::ui::root_ui;
-use macroquad::ui::widgets::{Button, InputText, Label};
+use macroquad::ui::widgets::{Button, InputText};
 
-use crate::game::{save_load, FONT_SIZE_LARGE, FONT_SIZE_MEDIUM};
+use crate::game::{save_load, FONT_SIZE_MEDIUM};
 use crate::rendering::Color;
 use crate::serialization::GameSerializedForm;
 use crate::utility::AsMq;
@@ -26,6 +26,7 @@ pub struct SavesLoads {
     end_of_checks_flag: Arc<AtomicBool>,
     pub save_file_name: String,
     pub taken_input: bool,
+    call_update_next_tick: bool,
 }
 
 pub enum SaveLoadAction {
@@ -36,12 +37,7 @@ pub enum SaveLoadAction {
 
 impl Default for SavesLoads {
     fn default() -> Self {
-        let saves = Arc::new(RwLock::new(
-            save_load::list_saves()
-                .iter()
-                .filter_map(|s| s.strip_suffix(".json").map(|s| s.to_owned()))
-                .collect(),
-        ));
+        let saves = Arc::new(RwLock::new(get_saves()));
 
         let end_of_checks = Arc::new(AtomicBool::new(false));
         let handle = {
@@ -59,6 +55,7 @@ impl Default for SavesLoads {
             end_of_checks_flag: end_of_checks,
             save_file_name: "save-1".to_owned(),
             taken_input: false,
+            call_update_next_tick: false,
         }
     }
 }
@@ -67,6 +64,13 @@ impl Drop for SavesLoads {
     fn drop(&mut self) {
         self.end_of_checks_flag.store(true, Ordering::Relaxed);
     }
+}
+
+fn get_saves() -> LinkedList<String> {
+    save_load::list_saves()
+        .iter()
+        .filter_map(|s| s.strip_suffix(".json").map(|s| s.to_owned()))
+        .collect()
 }
 
 fn periodicly_check_save_files(
@@ -79,21 +83,30 @@ fn periodicly_check_save_files(
         }
 
         thread::sleep(Duration::from_secs(RECHECK_TIME));
-
-        let new_saves = save_load::list_saves();
-        let mut write = saves.write().unwrap();
-        *write = new_saves;
+        update_saves_list(&saves);
     }
+}
+
+fn update_saves_list(saves: &Arc<RwLock<LinkedList<String>>>) {
+    let new_saves = get_saves();
+    let mut write = saves.write().unwrap();
+    *write = new_saves;
 }
 
 impl UIComponent for SavesLoads {
     fn draw(&mut self, offset: Vector2<f32>) {
+        if self.call_update_next_tick {
+            self.call_update_next_tick = false;
+            update_saves_list(&self.saves);
+        }
+
         if Button::new("Save")
             .size(v2!(80.0, 25.0).as_mq())
             .position(offset.as_mq())
             .ui(&mut root_ui())
         {
             self.action = SaveLoadAction::Save;
+            self.call_update_next_tick = true;
             return;
         }
 
@@ -120,7 +133,7 @@ impl UIComponent for SavesLoads {
         let read = self.saves.read().unwrap();
         for save in &*read {
             if Button::new(save.as_str())
-                .size(v2!(100.0, 25.0).as_mq())
+                .size(v2!(150.0, 25.0).as_mq())
                 .position(offset.as_mq())
                 .ui(&mut root_ui())
             {

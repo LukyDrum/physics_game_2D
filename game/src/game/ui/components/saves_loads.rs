@@ -4,9 +4,10 @@ use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
+use chrono::offset;
 use macroquad::text::draw_text;
-use macroquad::ui::root_ui;
 use macroquad::ui::widgets::{Button, InputText};
+use macroquad::ui::{root_ui, Skin};
 
 use crate::game::{save_load, FONT_SIZE_MEDIUM};
 use crate::rendering::Color;
@@ -27,6 +28,7 @@ pub struct SavesLoads {
     pub save_file_name: String,
     pub taken_input: bool,
     call_update_next_tick: bool,
+    red_button_skin: Skin,
 }
 
 pub enum SaveLoadAction {
@@ -48,6 +50,26 @@ impl Default for SavesLoads {
             })
         };
 
+        let red_button_skin = {
+            let red = Color::rgb(255, 10, 10).as_mq();
+            let darker_red = Color::rgb(200, 10, 10).as_mq();
+            let white = Color::rgb(255, 255, 255).as_mq();
+            let button_style = root_ui()
+                .style_builder()
+                .color(red)
+                .color_hovered(darker_red)
+                .color_selected(darker_red)
+                .color_selected_hovered(darker_red)
+                .color_clicked(darker_red)
+                .text_color(white)
+                .text_color_hovered(white)
+                .text_color_clicked(white)
+                .build();
+            let mut skin = root_ui().default_skin();
+            skin.button_style = button_style;
+            skin
+        };
+
         SavesLoads {
             action: SaveLoadAction::Nothing,
             saves,
@@ -56,6 +78,7 @@ impl Default for SavesLoads {
             save_file_name: "save-1".to_owned(),
             taken_input: false,
             call_update_next_tick: false,
+            red_button_skin,
         }
     }
 }
@@ -130,18 +153,44 @@ impl UIComponent for SavesLoads {
         );
 
         offset += v2!(0.0, 50.0);
-        let read = self.saves.read().unwrap();
-        for save in &*read {
-            if Button::new(save.as_str())
-                .size(v2!(150.0, 25.0).as_mq())
-                .position(offset.as_mq())
-                .ui(&mut root_ui())
-            {
-                self.action = SaveLoadAction::Load(save_load::load_save(save));
-                return;
+        let og_offset = offset;
+        let mut delete_save = None;
+        {
+            let read = self.saves.read().unwrap();
+            for save in &*read {
+                if Button::new(save.as_str())
+                    .size(v2!(150.0, 25.0).as_mq())
+                    .position(offset.as_mq())
+                    .ui(&mut root_ui())
+                {
+                    self.action = SaveLoadAction::Load(save_load::load_save(save));
+                    return;
+                }
+
+                offset += v2!(0.0, 35.0);
             }
 
-            offset += v2!(0.0, 35.0);
+            // Draw a second column of button for deleting
+            root_ui().push_skin(&self.red_button_skin);
+            offset = og_offset;
+            for save in &*read {
+                let side_offset = offset + v2!(180.0, 0.0);
+                if Button::new("Delete")
+                    .size(v2!(60.0, 25.0).as_mq())
+                    .position(side_offset.as_mq())
+                    .ui(&mut root_ui())
+                {
+                    delete_save = Some(save.clone());
+                }
+
+                offset += v2!(0.0, 35.0);
+            }
+            root_ui().pop_skin();
+        }
+
+        if let Some(save_name) = delete_save {
+            save_load::delete_save(save_name.as_str());
+            update_saves_list(&self.saves);
         }
 
         self.action = SaveLoadAction::Nothing;

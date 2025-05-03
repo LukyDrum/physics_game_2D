@@ -1,5 +1,5 @@
 use std::collections::LinkedList;
-use std::fs::{read_dir, File};
+use std::fs::{self, read_dir, File};
 use std::io::prelude::*;
 use std::path::Path;
 
@@ -40,4 +40,9 @@ pub fn load_save(save_name: &str) -> GameSerializedForm {
     let _ = file.read_to_string(&mut json);
 
     serde_json::from_str(json.as_str()).expect("Load failed: failed to deserialize from JSON.")
+}
+
+pub fn delete_save(save_name: &str) {
+    let path = Path::new(ROOT).join(format!("saves/{save_name}.json"));
+    let _ = fs::remove_file(path);
 }

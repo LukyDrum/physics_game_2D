@@ -257,6 +257,11 @@ pub trait Body: Send + Sync {
     }
 }
 
+pub struct DraggedBody {
+    pub index: usize,
+    pub drag_offset: Vector2<f32>,
+}
+
 macro_rules! Rectangle {
     ($a:expr, $b:expr, $c:expr, $d:expr; $behaviour:expr) => {{
         let avg_pos: Vector2<f32> = ($a + $b + $c + $d) * 0.25;

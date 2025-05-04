@@ -12,7 +12,7 @@ use macroquad::{
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{Body, BodyBehaviour, Polygon, RbSimulator, Rectangle},
+    physics::rigidbody::{Body, BodyBehaviour, DraggedBody, Polygon, RbSimulator, Rectangle},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     serialization::SerializationForm,
     utility::AsMq,
@@ -47,7 +47,7 @@ pub struct Game {
     pub(crate) description: LinkedList<String>,
 
     mouse_position_last_frame: Vector2<f32>,
-    dragged_body_index: Option<usize>,
+    dragged_body: Option<DraggedBody>,
 }
 
 impl Game {
@@ -115,7 +115,7 @@ impl Game {
             description: LinkedList::new(),
 
             mouse_position_last_frame: Vector2::zero(),
-            dragged_body_index: None,
+            dragged_body: None,
         };
 
         game.preview_body = game.body_from_body_maker(v2!(50.0, 50.0));
@@ -151,8 +151,8 @@ impl Game {
         self.mouse_in_gameview = self.is_in_gameview(position);
 
         // Release dragged body
-        if is_mouse_button_released(MouseButton::Left) && self.dragged_body_index.is_some() {
-            self.dragged_body_index = None;
+        if is_mouse_button_released(MouseButton::Left) && self.dragged_body.is_some() {
+            self.dragged_body = None;
         }
 
         match self.ingame_ui.selected_tool {
@@ -167,26 +167,32 @@ impl Game {
                 }
 
                 // Set dragged body by holding left mouse button on it
-                if is_mouse_button_down(MouseButton::Left) && self.dragged_body_index.is_none() {
-                    if let EntityInfo::Body { index, .. } =
-                        self.ingame_ui.info_panel.under_mouse_entity
+                if is_mouse_button_down(MouseButton::Left) && self.dragged_body.is_none() {
+                    if let EntityInfo::Body {
+                        index,
+                        position: body_position,
+                        ..
+                    } = self.ingame_ui.info_panel.under_mouse_entity
                     {
                         if index >= 4 {
-                            self.dragged_body_index = Some(index);
+                            self.dragged_body = Some(DraggedBody {
+                                index,
+                                drag_offset: position - body_position,
+                            });
                         }
                     }
                 }
                 // Move dragged body
-                if let Some(body_index) = self.dragged_body_index {
-                    let state = self.bodies[body_index].state_mut();
+                if let Some(DraggedBody { index, drag_offset }) = self.dragged_body {
+                    let state = self.bodies[index].state_mut();
                     match state.behaviour {
                         BodyBehaviour::Dynamic => {
-                            let pos_diff = position - state.position;
+                            let pos_diff = position - state.position - drag_offset;
                             state.velocity = pos_diff * 10.0;
                         }
                         BodyBehaviour::Static => {
                             let new_pos = state.position + mouse_diff;
-                            self.bodies[body_index].set_position(new_pos);
+                            self.bodies[index].set_position(new_pos);
                         }
                     }
                 }
@@ -322,7 +328,7 @@ impl Game {
         );
 
         if let Tool::Rigidbody = self.ingame_ui.selected_tool {
-            if self.mouse_in_gameview {
+            if self.mouse_in_gameview && self.dragged_body.is_none() {
                 self.preview_body.draw();
             }
         }

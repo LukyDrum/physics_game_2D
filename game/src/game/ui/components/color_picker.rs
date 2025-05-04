@@ -1,5 +1,7 @@
-use chrono::offset;
 use macroquad::text::draw_text;
+
+const TOP_LABEL_GAP: f32 = 15.0;
+pub static COLOR_PICKER_HEIGHT: f32 = FONT_SIZE_MEDIUM + TOP_LABEL_GAP + 3.0 * SLIDER_HEIGHT;
 
 use crate::{
     game::{UIComponent, FONT_SIZE_MEDIUM},
@@ -42,7 +44,7 @@ impl UIComponent for ColorPicker {
             Color::rgb(0, 0, 0).as_mq(),
         );
 
-        let offset = offset + v2!(0.0, 20.0);
+        let offset = offset + v2!(0.0, TOP_LABEL_GAP);
         draw_slider(offset, "R", 350.0, &mut r, 0.0..255.0);
         self.color.r = r / 255.0;
 

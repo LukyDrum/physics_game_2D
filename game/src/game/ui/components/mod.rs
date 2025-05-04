@@ -22,6 +22,8 @@ use crate::{
 use super::id_from_position;
 
 const SLIDER_HEIGHT: f32 = 20.0;
+const SLIDER_LENGTH: f32 = 360.0;
+const GAP: f32 = 10.0;
 
 pub fn draw_slider(
     offset: Vector2<f32>,

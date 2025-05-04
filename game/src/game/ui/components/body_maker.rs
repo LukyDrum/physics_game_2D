@@ -13,7 +13,7 @@ use crate::{
     rendering::Color,
 };
 
-use super::{ColorPicker, SLIDER_HEIGHT};
+use super::{ColorPicker, GAP, SLIDER_HEIGHT, SLIDER_LENGTH};
 
 const MIN_SIZE: f32 = 5.0;
 const DEFAULT_MAX_SIZE: f32 = 500.0;
@@ -82,29 +82,29 @@ impl UIComponent for BodyMaker {
             MIN_SIZE..self.max_size,
         );
 
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         draw_slider(
             offset,
             "Height [cm]",
-            360.0,
+            SLIDER_LENGTH,
             &mut self.height,
             MIN_SIZE..self.max_size,
         );
 
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         draw_slider(
             offset,
             "Orientation [degrees]",
-            360.0,
+            SLIDER_LENGTH,
             &mut self.orientation,
             MIN_ORIENTATION..MAX_ORIENTATION,
         );
 
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         draw_slider(
             offset,
             "Mass [g]",
-            360.0,
+            SLIDER_LENGTH,
             &mut self.mass,
             MIN_MASS..MAX_MASS,
         );
@@ -127,23 +127,29 @@ impl UIComponent for BodyMaker {
             BodyBehaviour::Dynamic
         };
 
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
-        draw_slider(offset, "Elasticity", 360.0, &mut self.elasticity, 0.0..1.0);
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
+        draw_slider(
+            offset,
+            "Elasticity",
+            SLIDER_LENGTH,
+            &mut self.elasticity,
+            0.0..1.0,
+        );
 
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         draw_slider(
             offset,
             "Static friction",
-            360.0,
+            SLIDER_LENGTH,
             &mut self.static_friction,
             0.0..1.0,
         );
 
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         draw_slider(
             offset,
             "Dynamic friction",
-            360.0,
+            SLIDER_LENGTH,
             &mut self.dynamic_friction,
             0.0..1.0,
         );

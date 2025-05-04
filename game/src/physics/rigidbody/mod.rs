@@ -250,6 +250,7 @@ pub trait Body: Send + Sync {
     /// Otherwise returns `None` (meaning they do not collide).
     fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData>;
 
+    /// Sets new position and updates the needed inner values.
     fn set_position(&mut self, new_position: Vector2<f32>) {
         self.state_mut().position = new_position;
         self.update_inner_values();

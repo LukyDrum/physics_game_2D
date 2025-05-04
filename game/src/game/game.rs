@@ -2,8 +2,8 @@ use std::{collections::LinkedList, f32::consts::PI};
 
 use macroquad::{
     input::{
-        is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, mouse_position, KeyCode,
-        MouseButton,
+        is_key_pressed, is_mouse_button_down, is_mouse_button_pressed, is_mouse_button_released,
+        mouse_position, KeyCode, MouseButton,
     },
     shapes::draw_circle,
     text::draw_text,
@@ -45,6 +45,9 @@ pub struct Game {
     mouse_in_gameview: bool,
     pub(crate) name: String,
     pub(crate) description: LinkedList<String>,
+
+    mouse_position_last_frame: Vector2<f32>,
+    dragged_body_index: Option<usize>,
 }
 
 impl Game {
@@ -110,6 +113,9 @@ impl Game {
             mouse_in_gameview: false,
             name: String::new(),
             description: LinkedList::new(),
+
+            mouse_position_last_frame: Vector2::zero(),
+            dragged_body_index: None,
         };
 
         game.preview_body = game.body_from_body_maker(v2!(50.0, 50.0));
@@ -141,7 +147,13 @@ impl Game {
     pub fn handle_input(&mut self) {
         let mouse_pos = mouse_position();
         let position = Vector2::new(mouse_pos.0, mouse_pos.1);
+        let mouse_diff = position - self.mouse_position_last_frame;
         self.mouse_in_gameview = self.is_in_gameview(position);
+
+        // Release dragged body
+        if is_mouse_button_released(MouseButton::Left) && self.dragged_body_index.is_some() {
+            self.dragged_body_index = None;
+        }
 
         match self.ingame_ui.selected_tool {
             Tool::Fluid => {
@@ -154,7 +166,33 @@ impl Game {
                     self.preview_body = self.body_from_body_maker(position);
                 }
 
-                if is_mouse_button_pressed(MouseButton::Left) && self.mouse_in_gameview {
+                // Set dragged body by holding left mouse button on it
+                if is_mouse_button_down(MouseButton::Left) && self.dragged_body_index.is_none() {
+                    if let EntityInfo::Body { index, .. } =
+                        self.ingame_ui.info_panel.under_mouse_entity
+                    {
+                        if index >= 4 {
+                            self.dragged_body_index = Some(index);
+                        }
+                    }
+                }
+                // Move dragged body
+                if let Some(body_index) = self.dragged_body_index {
+                    let state = self.bodies[body_index].state_mut();
+                    match state.behaviour {
+                        BodyBehaviour::Dynamic => {
+                            let pos_diff = position - state.position;
+                            state.velocity = pos_diff * 10.0;
+                        }
+                        BodyBehaviour::Static => {
+                            let new_pos = state.position + mouse_diff;
+                            self.bodies[body_index].set_position(new_pos);
+                        }
+                    }
+                }
+
+                // Spawn bodies with right click
+                if is_mouse_button_pressed(MouseButton::Right) && self.mouse_in_gameview {
                     let new_body = self.body_from_body_maker(position);
 
                     let mut body = std::mem::replace(&mut self.preview_body, new_body);
@@ -162,7 +200,9 @@ impl Game {
                     body.state_mut().color.a = 1.0;
 
                     self.bodies.push(body);
-                } else if is_mouse_button_pressed(MouseButton::Middle) {
+                }
+                // Delete bodies with middle click
+                else if is_mouse_button_pressed(MouseButton::Middle) {
                     if let EntityInfo::Body { index, .. } =
                         self.ingame_ui.info_panel.under_mouse_entity
                     {
@@ -183,6 +223,9 @@ impl Game {
             self.is_simulating = !self.is_simulating;
             self.ingame_ui.info_panel.is_simulating = self.is_simulating;
         }
+
+        // Set new mouse last pos
+        self.mouse_position_last_frame = position;
     }
 
     /// Performs a single update of the game. Should correspond to a single frame.

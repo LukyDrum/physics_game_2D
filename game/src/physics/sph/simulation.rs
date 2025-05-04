@@ -5,21 +5,21 @@ use rayon::iter::{
 };
 
 use crate::game::{GameBody, GameConfig};
-use crate::math::{v2, Vector2};
+use crate::math::Vector2;
 use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation};
 use crate::{physics::sph::Particle, utility::LookUp};
 
-use super::particle::{BODY_COLLISION_FORCE_BASE, PRESSURE_BASE};
+const PRESSURE_BASE: f32 = 500.0;
+const BODY_COLLISION_FORCE_BASE: f32 = 500.0;
+const NEAR_MAX: f32 = 700.0;
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
         return 0.0;
     }
 
-    (1.0 - dist / radius).max(0.0).powi(2)
+    (1.0 - dist / radius).max(0.0).powi(2) * (3.0 / radius)
 }
-
-const NEAR_MAX: f32 = 10_000.0;
 
 fn near_kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -38,7 +38,7 @@ fn kernel_derivative(dist: f32, radius: f32) -> f32 {
         return 0.0;
     }
 
-    (2.0 * (dist - radius)) / (radius.powi(2))
+    (6.0 * (dist - radius)) / (radius.powi(2))
 }
 
 fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
@@ -112,8 +112,6 @@ impl Sph {
     }
 
     pub fn add_particle(&mut self, mut particle: Particle) {
-        // Add very small offset to particles position
-        particle.position += v2!(fastrand::f32() - 0.5, fastrand::f32() - 0.5);
         let pos = particle.position;
 
         particle.id = self.id_counter;

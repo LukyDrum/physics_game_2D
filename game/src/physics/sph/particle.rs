@@ -2,8 +2,8 @@ use crate::math::Vector2;
 use crate::rendering::Color;
 use crate::utility::runge_kutta;
 
-pub(super) const PRESSURE_BASE: f32 = 100_000.0;
-pub(super) const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
+const MAX_SPEED: f32 = 1000.0;
+const MAX_SPEED_SQUARED: f32 = MAX_SPEED * MAX_SPEED;
 
 #[derive(Default, Clone)]
 pub struct Particle {
@@ -85,6 +85,11 @@ impl Particle {
     }
 
     pub fn move_by_velocity(&mut self, delta_time: f32) {
+        if self.velocity.length_squared() >= MAX_SPEED_SQUARED {
+            let dir = self.velocity.normalized();
+            self.velocity = dir * MAX_SPEED;
+        }
+
         self.position = runge_kutta(self.position, delta_time, self.velocity);
     }
 

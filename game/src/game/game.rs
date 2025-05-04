@@ -137,11 +137,15 @@ impl Game {
     }
 
     fn body_from_body_maker(&self, position: Vector2<f32>) -> Box<dyn GameBody> {
-        let size = self.ingame_ui.body_maker.size();
-        let orientation = self.ingame_ui.body_maker.orientation();
-        let mass = self.ingame_ui.body_maker.mass();
-        let mut color = self.ingame_ui.body_maker.color();
-        let behaviour = self.ingame_ui.body_maker.behaviour();
+        let body_maker = &self.ingame_ui.body_maker;
+        let size = body_maker.size();
+        let orientation = body_maker.orientation;
+        let mass = body_maker.mass;
+        let mut color = body_maker.color();
+        let behaviour = body_maker.behaviour;
+        let elasticity = body_maker.elasticity;
+        let static_friction = body_maker.static_friction;
+        let dynamic_friction = body_maker.dynamic_friction;
 
         // Create body and set state values
         let mut body: Box<dyn GameBody> = Box::new(Rectangle!(position; size.x, size.y; behaviour));
@@ -149,6 +153,9 @@ impl Game {
         body.state_mut().set_mass(mass);
         color.a = 0.5;
         body.state_mut().color = color;
+        body.state_mut().elasticity = SharedProperty::Value(elasticity);
+        body.state_mut().static_friction = SharedProperty::Value(static_friction);
+        body.state_mut().dynamic_friction = SharedProperty::Value(dynamic_friction);
 
         body
     }

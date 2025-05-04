@@ -3,7 +3,9 @@ use macroquad::ui::root_ui;
 use macroquad::ui::widgets::Checkbox;
 
 use crate::game::draw_slider;
-use crate::physics::rigidbody::BodyBehaviour;
+use crate::physics::rigidbody::{
+    BodyBehaviour, DEFAULT_DYNAMIC_FRICTION, DEFAULT_ELASTICITY, DEFAULT_STATIC_FRICTION,
+};
 use crate::utility::AsMq;
 use crate::{
     game::UIComponent,
@@ -23,9 +25,13 @@ const MAX_ORIENTATION: f32 = 360.0;
 pub struct BodyMaker {
     width: f32,
     height: f32,
-    mass: f32,
-    orientation: f32,
-    behaviour: BodyBehaviour,
+    pub mass: f32,
+    pub orientation: f32,
+    pub behaviour: BodyBehaviour,
+
+    pub elasticity: f32,
+    pub static_friction: f32,
+    pub dynamic_friction: f32,
 
     max_size: f32,
     changed: bool,
@@ -41,6 +47,10 @@ impl Default for BodyMaker {
             mass: 5000.0,
             orientation: 0.0,
             behaviour: BodyBehaviour::Dynamic,
+
+            elasticity: DEFAULT_ELASTICITY,
+            static_friction: DEFAULT_STATIC_FRICTION,
+            dynamic_friction: DEFAULT_DYNAMIC_FRICTION,
 
             max_size: DEFAULT_MAX_SIZE,
             changed: false,
@@ -58,6 +68,9 @@ impl UIComponent for BodyMaker {
             mass: old_mass,
             orientation: old_orientation,
             behaviour: old_behaviour,
+            elasticity: old_elasticity,
+            static_friction: old_static_friction,
+            dynamic_friction: old_dynamic_friction,
             ..
         } = *self;
 
@@ -114,6 +127,27 @@ impl UIComponent for BodyMaker {
             BodyBehaviour::Dynamic
         };
 
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        draw_slider(offset, "Elasticity", 360.0, &mut self.elasticity, 0.0..1.0);
+
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        draw_slider(
+            offset,
+            "Static friction",
+            360.0,
+            &mut self.static_friction,
+            0.0..1.0,
+        );
+
+        let offset = offset + v2!(0.0, SLIDER_HEIGHT + 10.0);
+        draw_slider(
+            offset,
+            "Dynamic friction",
+            360.0,
+            &mut self.dynamic_friction,
+            0.0..1.0,
+        );
+
         let old_color = self.color_picker.color();
         self.color_picker
             .draw(offset + v2!(0.0, SLIDER_HEIGHT + 25.0));
@@ -123,7 +157,10 @@ impl UIComponent for BodyMaker {
             || self.mass != old_mass
             || self.orientation != old_orientation
             || old_color != self.color_picker.color()
-            || self.behaviour != old_behaviour;
+            || self.behaviour != old_behaviour
+            || self.elasticity != old_elasticity
+            || self.static_friction != old_static_friction
+            || self.dynamic_friction != old_dynamic_friction;
     }
 }
 
@@ -136,23 +173,11 @@ impl BodyMaker {
         v2!(self.width, self.height)
     }
 
-    pub fn mass(&self) -> f32 {
-        self.mass
-    }
-
-    pub fn orientation(&self) -> f32 {
-        self.orientation
-    }
-
     pub fn set_max_size(&mut self, new_max: f32) {
         self.max_size = new_max;
     }
 
     pub fn changed(&self) -> bool {
         self.changed
-    }
-
-    pub fn behaviour(&self) -> BodyBehaviour {
-        self.behaviour
     }
 }

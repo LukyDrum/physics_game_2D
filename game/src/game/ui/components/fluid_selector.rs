@@ -1,4 +1,9 @@
+use macroquad::ui::root_ui;
+use macroquad::ui::widgets::Button;
+
 use crate::game::draw_slider;
+use crate::game::ui::RED_BUTTON_SKIN;
+use crate::utility::AsMq;
 use crate::{
     game::UIComponent,
     math::{v2, Vector2},
@@ -14,9 +19,16 @@ const MAX_DENSITY: f32 = 13.5;
 /// Default density - water
 const DEFAULT_DENSITY: f32 = 1.0;
 
+#[derive(Clone, Copy)]
+pub enum FluidSelectorAction {
+    Nothing,
+    ClearParticles,
+}
+
 pub struct FluidSelector {
     density: f32,
     color_picker: ColorPicker,
+    action: FluidSelectorAction,
 }
 
 impl Default for FluidSelector {
@@ -24,12 +36,26 @@ impl Default for FluidSelector {
         FluidSelector {
             density: DEFAULT_DENSITY,
             color_picker: ColorPicker::new(Color::rgb(10, 24, 189)),
+            action: FluidSelectorAction::Nothing,
         }
     }
 }
 
 impl UIComponent for FluidSelector {
     fn draw(&mut self, offset: Vector2<f32>) {
+        root_ui().push_skin(RED_BUTTON_SKIN.get().unwrap());
+        if Button::new("Clear fluid")
+            .size(v2!(100.0, 25.0).as_mq())
+            .position(offset.as_mq())
+            .ui(&mut root_ui())
+        {
+            self.action = FluidSelectorAction::ClearParticles;
+        } else {
+            self.action = FluidSelectorAction::Nothing;
+        }
+        root_ui().pop_skin();
+
+        let offset = offset + v2!(0.0, 45.0);
         self.draw_density_selector(offset);
         self.color_picker
             .draw(offset + v2!(0.0, SLIDER_HEIGHT + 25.0));
@@ -53,5 +79,9 @@ impl FluidSelector {
             &mut self.density,
             MIN_DENSITY..MAX_DENSITY,
         );
+    }
+
+    pub fn action(&self) -> FluidSelectorAction {
+        self.action
     }
 }

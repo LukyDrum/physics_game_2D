@@ -8,7 +8,7 @@ use std::ops::Range;
 
 pub use body_maker::BodyMaker;
 pub use color_picker::ColorPicker;
-pub use fluid_selector::FluidSelector;
+pub use fluid_selector::{FluidSelector, FluidSelectorAction};
 pub use info::{EntityInfo, InfoPanel};
 pub use saves_loads::{SaveLoadAction, SavesLoads};
 

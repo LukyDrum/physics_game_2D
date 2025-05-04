@@ -1,17 +1,43 @@
 mod components;
 mod game_ui;
 
+use std::sync::OnceLock;
+
 pub use components::*;
 pub use game_ui::*;
 use macroquad::ui::{
     root_ui,
     widgets::{InputText, Label},
+    Skin,
 };
 
 use crate::{
     math::{v2, Vector2},
+    rendering::Color,
     utility::AsMq,
 };
+
+static RED_BUTTON_SKIN: OnceLock<Skin> = OnceLock::new();
+
+pub fn red_button_skin() -> Skin {
+    let red = Color::rgb(255, 10, 10).as_mq();
+    let darker_red = Color::rgb(200, 10, 10).as_mq();
+    let white = Color::rgb(255, 255, 255).as_mq();
+    let button_style = root_ui()
+        .style_builder()
+        .color(red)
+        .color_hovered(darker_red)
+        .color_selected(darker_red)
+        .color_selected_hovered(darker_red)
+        .color_clicked(darker_red)
+        .text_color(white)
+        .text_color_hovered(white)
+        .text_color_clicked(white)
+        .build();
+    let mut skin = root_ui().default_skin();
+    skin.button_style = button_style;
+    skin
+}
 
 pub trait UIComponent {
     /// Draws this component to the screen at the specified offset.

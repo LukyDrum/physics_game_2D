@@ -328,4 +328,11 @@ impl Sph {
             .map(|index| &self.particles[*index])
             .collect()
     }
+
+    /// Clears all particles = deletes all fluid in simulation
+    pub fn clear_all_particles(&mut self) {
+        self.particles.clear();
+        self.lookup.clear();
+        self.id_counter = 0;
+    }
 }

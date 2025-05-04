@@ -7,7 +7,6 @@ use macroquad::{
     },
     shapes::draw_circle,
     text::draw_text,
-    ui::widgets::Label,
     window::clear_background,
 };
 
@@ -21,8 +20,8 @@ use crate::{
 };
 
 use super::{
-    config::GameConfig, gamebody::GameBody, save_load, EntityInfo, InGameUI, SaveLoadAction, Tool,
-    FONT_SIZE_LARGE, FONT_SIZE_SMALL,
+    config::GameConfig, gamebody::GameBody, save_load, EntityInfo, FluidSelectorAction, InGameUI,
+    SaveLoadAction, Tool, FONT_SIZE_LARGE, FONT_SIZE_SMALL,
 };
 
 pub struct Game {
@@ -272,6 +271,12 @@ impl Game {
         if let Tool::Rigidbody = self.ingame_ui.selected_tool {
             if self.mouse_in_gameview {
                 self.preview_body.draw();
+            }
+        }
+
+        if let Tool::Fluid = self.ingame_ui.selected_tool {
+            if let FluidSelectorAction::ClearParticles = self.ingame_ui.fluid_selector.action() {
+                self.fluid_system.clear_all_particles();
             }
         }
 

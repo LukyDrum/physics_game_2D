@@ -11,7 +11,10 @@ use crate::{
     utility::AsMq,
 };
 
-use super::{BodyMaker, FluidSelector, InfoPanel, SavesLoads, UIComponent, UIEdit};
+use super::{
+    red_button_skin, BodyMaker, FluidSelector, InfoPanel, SavesLoads, UIComponent, UIEdit,
+    RED_BUTTON_SKIN,
+};
 
 pub const FONT_SIZE_LARGE: f32 = 36.0;
 pub const FONT_SIZE_MEDIUM: f32 = 26.0;
@@ -44,6 +47,8 @@ pub struct InGameUI {
 
 impl Default for InGameUI {
     fn default() -> Self {
+        let _ = RED_BUTTON_SKIN.set(red_button_skin());
+
         InGameUI {
             fluid_selector: FluidSelector::default(),
             info_panel: InfoPanel::default(),

@@ -31,6 +31,7 @@ pub enum EntityInfo {
         position: Vector2<f32>,
     },
     Body {
+        index: usize,
         position: Vector2<f32>,
         velocity: Vector2<f32>,
         mass: f32,
@@ -51,6 +52,7 @@ impl EntityInfo {
                 draw_vector2(*position, offset, "Mouse position:");
             }
             EntityInfo::Body {
+                index: _,
                 position,
                 velocity,
                 mass,

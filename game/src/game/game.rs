@@ -162,6 +162,15 @@ impl Game {
                     body.state_mut().color.a = 1.0;
 
                     self.bodies.push(body);
+                } else if is_mouse_button_pressed(MouseButton::Middle) {
+                    if let EntityInfo::Body { index, .. } =
+                        self.ingame_ui.info_panel.under_mouse_entity
+                    {
+                        // Do not remove the first 4 bodies - those are walls
+                        if index >= 4 {
+                            self.bodies.swap_remove(index);
+                        }
+                    }
                 } else if self.mouse_in_gameview {
                     self.preview_body.set_position(position);
                 }
@@ -211,13 +220,14 @@ impl Game {
         let mut entity_info = EntityInfo::Nothing {
             position: mouse_pos,
         };
-        for body in &self.bodies {
+        for (index, body) in self.bodies.iter().enumerate() {
             if body.contains_point(mouse_pos) {
                 entity_info = EntityInfo::Body {
+                    index,
                     position: body.state().position,
                     velocity: body.state().velocity,
                     mass: body.state().mass(),
-                    color: Color::rgb(0, 0, 0),
+                    color: body.state().color,
                 };
                 break;
             }

@@ -11,7 +11,6 @@ pub struct Particle {
     pub predicted_position: Vector2<f32>,
     pub velocity: Vector2<f32>,
     pub sph_density: f32,
-    pub sph_near_density: f32,
     pub(crate) mass: f32,
     pub(crate) target_density: f32,
     pub(crate) pressure_multiplier: f32,
@@ -34,8 +33,7 @@ impl Particle {
             position,
             predicted_position: position,
             velocity,
-            sph_density: 1.0,
-            sph_near_density: 1.0,
+            sph_density: 0.0,
             mass: 1.0,
             target_density: 1.0,
             pressure_multiplier: 1.0,
@@ -99,9 +97,5 @@ impl Particle {
 
     pub fn pressure(&self) -> f32 {
         self.pressure_multiplier * (self.sph_density - self.target_density)
-    }
-
-    pub fn near_pressure(&self) -> f32 {
-        self.sph_near_density
     }
 }

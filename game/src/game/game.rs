@@ -389,19 +389,16 @@ impl Game {
 
     fn add_fluid(&mut self, position: Vector2<f32>) {
         let fluid_tool = &self.ingame_ui.fluid_selector;
-        let radius = fluid_tool.radius;
         let droplet_count = fluid_tool.droplet_count;
-        let (min_x, max_x) = (position.x - radius, position.x + radius);
-        let (min_y, max_y) = (position.y - radius, position.y + radius);
+        let mass = fluid_tool.density;
+        let color = fluid_tool.color();
 
         for _ in 0..droplet_count {
-            let x = fastrand::f32() * (max_x - min_x) + min_x;
-            let y = fastrand::f32() * (max_y - min_y) + min_y;
-            let position = v2!(x, y);
+            let x_off = 2.0 * fastrand::f32() - 1.0;
+            let y_off = 2.0 * fastrand::f32() - 1.0;
+            let position = position + v2!(x_off, y_off);
 
-            let particle = Particle::new(position)
-                .with_mass(self.ingame_ui.fluid_selector.density)
-                .with_color(self.ingame_ui.fluid_selector.color());
+            let particle = Particle::new(position).with_mass(mass).with_color(color);
             self.fluid_system.add_particle(particle);
         }
     }

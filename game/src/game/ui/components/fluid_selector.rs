@@ -29,7 +29,6 @@ pub struct FluidSelector {
     pub density: f32,
     color_picker: ColorPicker,
     pub action: FluidSelectorAction,
-    pub radius: f32,
     pub droplet_count: u32,
 }
 
@@ -39,7 +38,6 @@ impl Default for FluidSelector {
             density: DEFAULT_DENSITY,
             color_picker: ColorPicker::new(Color::rgb(10, 24, 189)),
             action: FluidSelectorAction::Nothing,
-            radius: 10.0,
             droplet_count: 4,
         }
     }
@@ -61,15 +59,6 @@ impl UIComponent for FluidSelector {
 
         let offset = offset + v2!(0.0, 45.0);
         self.draw_density_selector(offset);
-
-        let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
-        draw_slider(
-            offset,
-            "Radius [px]",
-            SLIDER_LENGTH,
-            &mut self.radius,
-            5.0..30.0,
-        );
 
         let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         let mut f_count = self.droplet_count as f32;

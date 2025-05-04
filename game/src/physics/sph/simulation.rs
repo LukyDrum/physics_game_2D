@@ -9,9 +9,8 @@ use crate::math::Vector2;
 use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation};
 use crate::{physics::sph::Particle, utility::LookUp};
 
-const PRESSURE_BASE: f32 = 500.0;
+const PRESSURE_BASE: f32 = 300.0;
 const BODY_COLLISION_FORCE_BASE: f32 = 500.0;
-const NEAR_MAX: f32 = 700.0;
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -21,35 +20,12 @@ fn kernel(dist: f32, radius: f32) -> f32 {
     (1.0 - dist / radius).max(0.0).powi(2) * (3.0 / radius)
 }
 
-fn near_kernel(dist: f32, radius: f32) -> f32 {
-    if dist > radius {
-        return 0.0;
-    }
-    if dist == 0.0 {
-        return NEAR_MAX;
-    }
-
-    let radius_inv = 1.0 / radius;
-    (radius_inv / dist - radius_inv).max(NEAR_MAX)
-}
-
 fn kernel_derivative(dist: f32, radius: f32) -> f32 {
     if dist > radius {
         return 0.0;
     }
 
-    (6.0 * (dist - radius)) / (radius.powi(2))
-}
-
-fn near_kernel_derivative(dist: f32, radius: f32) -> f32 {
-    if dist > radius {
-        return 0.0;
-    }
-    if dist == 0.0 {
-        return -NEAR_MAX;
-    }
-
-    (-1.0 / radius * dist.powi(2)).max(-NEAR_MAX)
+    (6.0 * (dist - radius)) / radius.powi(2)
 }
 
 /// This a helper structure which references fields from the `Particle` struct.
@@ -68,10 +44,8 @@ struct DensityIntermediateReadOnly {
 struct PressureIntermediateReadOnly {
     predicted_position: Vector2<f32>,
     pressure: f32,
-    near_pressure: f32,
     mass: f32,
     sph_density: f32,
-    sph_near_density: f32,
     id: u32,
 }
 
@@ -143,22 +117,21 @@ impl Sph {
         self.particles.par_iter_mut().for_each(|p| {
             let neighbors = self.lookup.get_immediate_neighbors(&p.predicted_position);
 
-            (p.sph_density, p.sph_near_density) = neighbors
+            p.sph_density = neighbors
                 .iter()
                 .map(|index| {
                     let other_inter = &self.density_intermediates[*index];
                     if p.id == other_inter.id {
-                        (0.0, 0.0)
+                        0.0
                     } else {
                         let (other_pos, other_mass) =
                             (other_inter.predicted_position, other_inter.mass);
                         let dist = (p.predicted_position - other_pos).length();
                         let density = other_mass * kernel(dist, self.smoothing_radius);
-                        let near_density = other_mass * near_kernel(dist, self.smoothing_radius);
-                        (density, near_density)
+                        density
                     }
                 })
-                .fold((0.0, 0.0), |acc, e| (acc.0 + e.0, acc.1 + e.1));
+                .sum();
         });
     }
 
@@ -168,10 +141,8 @@ impl Sph {
             .map(|p| PressureIntermediateReadOnly {
                 predicted_position: p.predicted_position,
                 pressure: p.pressure() * self.pressure_base,
-                near_pressure: p.near_pressure(),
                 mass: p.mass(),
                 sph_density: p.sph_density,
-                sph_near_density: p.sph_near_density,
                 id: p.id,
             })
             .collect_into_vec(&mut self.pressure_intermediates);
@@ -179,7 +150,6 @@ impl Sph {
         self.particles.par_iter_mut().for_each(|p| {
             let pos = p.predicted_position;
             let pressure = p.pressure() * self.pressure_base;
-            let near_pressure = p.near_pressure();
 
             let neighbors = self.lookup.get_immediate_neighbors(&pos);
             let pressure_force: Vector2<f32> = neighbors
@@ -191,7 +161,6 @@ impl Sph {
                         Vector2::zero()
                     } else {
                         let other_pressure = other_inter.pressure;
-                        let other_near_pressure = other_inter.near_pressure;
                         let pos_diff = other_inter.predicted_position - pos;
 
                         let dir = if pos_diff.is_zero() {
@@ -203,10 +172,7 @@ impl Sph {
                         let shared_pressure = (pressure + other_pressure)
                             / (2.0 * other_inter.sph_density)
                             * kernel_derivative(dist, self.smoothing_radius);
-                        let shared_near_pressure = (near_pressure + other_near_pressure)
-                            / (2.0 * other_inter.sph_near_density)
-                            * near_kernel_derivative(dist, self.smoothing_radius);
-                        dir * other_inter.mass * (shared_pressure + shared_near_pressure)
+                        dir * other_inter.mass * shared_pressure
                     }
                 })
                 .sum();

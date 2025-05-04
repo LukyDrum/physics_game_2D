@@ -9,7 +9,7 @@ mod rb_simulation;
 
 use num_traits::Zero;
 pub use polygon::Polygon;
-pub use rb_simulation::RbSimulator;
+pub use rb_simulation::{RbSimulator, SharedProperty};
 
 // Base values for body state properties
 const DEFAULT_ELASTICITY: f32 = 0.4;
@@ -71,11 +71,11 @@ pub struct BodyState {
     pub(crate) moment_of_inertia: f32,
     /// The restitution coefficient, aka coefficient of elasticity, aka bounciness.
     /// A value between 0 (no bounce) and 1 (100% bounce).
-    pub elasticity: f32,
+    pub elasticity: SharedProperty<f32>,
     /// A value between 0 and 1. Describes the friction between 2 stationary bodies.
-    pub static_friction: f32,
+    pub static_friction: SharedProperty<f32>,
     /// The dynamic friction coefficient of this body. A value between 0 and 1.
-    pub dynamic_friction: f32,
+    pub dynamic_friction: SharedProperty<f32>,
 
     // OTHER PROPERTIES
     pub color: Color,
@@ -98,10 +98,9 @@ impl BodyState {
             // Set it to mass just so it is not empty - it will be set by the body when it is
             // created
             moment_of_inertia: mass,
-            elasticity: DEFAULT_ELASTICITY,
-            static_friction: DEFAULT_STATIC_FRICTION,
-            dynamic_friction: DEFAULT_DYNAMIC_FRICTION,
-
+            elasticity: SharedProperty::Value(DEFAULT_ELASTICITY),
+            static_friction: SharedProperty::Value(DEFAULT_STATIC_FRICTION),
+            dynamic_friction: SharedProperty::Value(DEFAULT_DYNAMIC_FRICTION),
             color: Color::rgb(0, 0, 0),
 
             accumulated_force: Vector2::zero(),

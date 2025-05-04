@@ -1,3 +1,4 @@
+use crate::physics::rigidbody::SharedProperty;
 use crate::rendering::Color;
 use crate::serialization::SerializationForm;
 use crate::{
@@ -27,9 +28,9 @@ pub struct BodyStateSerializedForm {
     pub behaviour: BodyBehaviour,
     pub mass: f32,
     pub moment_of_inertia: f32,
-    pub elasticity: f32,
-    pub static_friction: f32,
-    pub dynamic_friction: f32,
+    pub elasticity: SharedProperty<f32>,
+    pub static_friction: SharedProperty<f32>,
+    pub dynamic_friction: SharedProperty<f32>,
 
     pub color: Color,
 }

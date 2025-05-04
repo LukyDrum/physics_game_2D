@@ -12,7 +12,9 @@ use macroquad::{
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{Body, BodyBehaviour, DraggedBody, Polygon, RbSimulator, Rectangle},
+    physics::rigidbody::{
+        Body, BodyBehaviour, DraggedBody, Polygon, RbSimulator, Rectangle, SharedProperty,
+    },
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     serialization::SerializationForm,
     utility::AsMq,
@@ -61,7 +63,7 @@ impl Game {
 
         // Add rectangles that act as walls
         let wall_thickness = 20.0;
-        let bodies: Vec<Box<dyn GameBody>> = vec![
+        let mut bodies: Vec<Box<dyn GameBody>> = vec![
             // Floor
             Box::new(
                 Rectangle!(v2!(f_width * 0.5, f_height - wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
@@ -79,6 +81,13 @@ impl Game {
                 Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             ),
         ];
+        // Set shared properties to pass
+        for body in &mut bodies {
+            let state = body.state_mut();
+            state.elasticity = SharedProperty::Pass;
+            state.static_friction = SharedProperty::Pass;
+            state.dynamic_friction = SharedProperty::Pass;
+        }
 
         let mut ingame_ui = InGameUI::default();
         ingame_ui

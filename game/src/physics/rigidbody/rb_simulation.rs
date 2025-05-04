@@ -5,6 +5,7 @@ use std::{
 };
 
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use serde_derive::{Deserialize, Serialize};
 
 use super::{BodyBehaviour, BodyCollisionData};
 use crate::{
@@ -20,6 +21,36 @@ struct BodyBodyCollision {
     collision_data: BodyCollisionData,
 }
 
+#[derive(Clone, Copy, Serialize, Deserialize)]
+pub enum SharedProperty<T>
+where
+    T: Clone
+        + Copy
+        + Default
+        + PartialOrd
+        + Mul<Output = T>
+        + Mul<f32, Output = T>
+        + Add<Output = T>,
+{
+    Value(T),
+    Pass,
+}
+
+impl<T> Default for SharedProperty<T>
+where
+    T: Clone
+        + Copy
+        + Default
+        + PartialOrd
+        + Mul<Output = T>
+        + Mul<f32, Output = T>
+        + Add<Output = T>,
+{
+    fn default() -> Self {
+        SharedProperty::Value(T::default())
+    }
+}
+
 pub enum SharedPropertySelection {
     Multiply,
     Average,
@@ -28,10 +59,23 @@ pub enum SharedPropertySelection {
 }
 
 impl SharedPropertySelection {
-    pub fn select<T>(&self, a: T, b: T) -> T
+    pub fn select<T>(&self, a: SharedProperty<T>, b: SharedProperty<T>) -> T
     where
-        T: PartialOrd + Mul<Output = T> + Mul<f32, Output = T> + Add<Output = T>,
+        T: Clone
+            + Copy
+            + Default
+            + PartialOrd
+            + Mul<Output = T>
+            + Mul<f32, Output = T>
+            + Add<Output = T>,
     {
+        let (a, b) = match (a, b) {
+            (SharedProperty::Value(a), SharedProperty::Value(b)) => (a, b),
+            (SharedProperty::Value(val), SharedProperty::Pass)
+            | (SharedProperty::Pass, SharedProperty::Value(val)) => return val,
+            _ => return T::default(),
+        };
+
         match self {
             Self::Multiply => a * b,
             Self::Average => (a + b) * 0.5,

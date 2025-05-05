@@ -9,7 +9,7 @@ mod rb_simulation;
 
 use num_traits::Zero;
 pub use polygon::Polygon;
-pub use rb_simulation::{RbSimulator, SharedProperty};
+pub use rb_simulation::{RbSimulator, SharedProperty, SharedPropertySelection};
 
 // Base values for body state properties
 pub const DEFAULT_ELASTICITY: f32 = 0.4;

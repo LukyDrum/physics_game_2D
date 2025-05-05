@@ -1,8 +1,9 @@
 use macroquad::shapes::draw_rectangle;
+use macroquad::text::draw_text;
 use macroquad::ui::root_ui;
 use macroquad::ui::widgets::Checkbox;
 
-use crate::game::draw_slider;
+use crate::game::{draw_slider, FONT_SIZE_SMALL};
 use crate::physics::rigidbody::{
     BodyBehaviour, DEFAULT_DYNAMIC_FRICTION, DEFAULT_ELASTICITY, DEFAULT_STATIC_FRICTION,
 };
@@ -21,6 +22,12 @@ const MIN_MASS: f32 = 500.0;
 const MAX_MASS: f32 = 50_000.0;
 const MIN_ORIENTATION: f32 = 0.0;
 const MAX_ORIENTATION: f32 = 360.0;
+
+const TUTORIAL_LINES: [&str; 3] = [
+    "[Left MB] - Drag rigidbodies",
+    "[Right MB] - Spawn new rigidbody",
+    "[Middle MB] - Delete rigidbody under cursor",
+];
 
 pub struct BodyMaker {
     width: f32,
@@ -73,6 +80,18 @@ impl UIComponent for BodyMaker {
             dynamic_friction: old_dynamic_friction,
             ..
         } = *self;
+
+        let mut offset = offset;
+        for line in TUTORIAL_LINES {
+            draw_text(
+                line,
+                offset.x,
+                offset.y,
+                FONT_SIZE_SMALL,
+                Color::rgb(0, 0, 0).as_mq(),
+            );
+            offset += v2!(0.0, FONT_SIZE_SMALL + 10.0);
+        }
 
         draw_slider(
             offset,

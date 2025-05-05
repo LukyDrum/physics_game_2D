@@ -7,7 +7,7 @@ pub use components::*;
 pub use game_ui::*;
 use macroquad::ui::{
     root_ui,
-    widgets::{InputText, Label},
+    widgets::{ComboBox, InputText, Label},
     Skin,
 };
 
@@ -37,6 +37,28 @@ pub fn red_button_skin() -> Skin {
     let mut skin = root_ui().default_skin();
     skin.button_style = button_style;
     skin
+}
+
+/// A selection from preset amount of options together with their names (labels).
+#[derive(Clone)]
+pub struct Selection<T, const C: usize> {
+    values: [T; C],
+    names: [&'static str; C],
+    selected: usize,
+}
+
+impl<T, const C: usize> Selection<T, C> {
+    pub const fn new(values: [T; C], names: [&'static str; C]) -> Self {
+        Selection {
+            values,
+            names,
+            selected: 0,
+        }
+    }
+
+    pub fn get_value(&self) -> &T {
+        &self.values[self.selected]
+    }
 }
 
 pub trait UIComponent {
@@ -112,5 +134,22 @@ impl UIEdit for Vector2<f32> {
 
         // Y * C for the label above
         v2!(size.x * 2.2, size.y * 1.1)
+    }
+}
+
+impl<T, const C: usize> UIEdit for Selection<T, C> {
+    fn draw_edit(
+        &mut self,
+        position: Vector2<f32>,
+        input_size: Vector2<f32>,
+        label: &str,
+    ) -> Vector2<f32> {
+        ComboBox::new(id_from_position(position), &self.names[..])
+            .label(label)
+            .size(input_size.as_mq())
+            .position(position.as_mq())
+            .ui(&mut root_ui(), &mut self.selected);
+
+        input_size
     }
 }

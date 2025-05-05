@@ -9,8 +9,8 @@ use crate::math::Vector2;
 use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation};
 use crate::{physics::sph::Particle, utility::LookUp};
 
-const PRESSURE_BASE: f32 = 300.0;
-const BODY_COLLISION_FORCE_BASE: f32 = 500.0;
+const PRESSURE_BASE: f32 = 100_000.0;
+const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
@@ -259,7 +259,7 @@ impl Sph {
     ) -> Vec<(usize, BodyForceAccumulation)> {
         self.setup_lookup();
 
-        self.gravity = config.sph_config.gravity;
+        self.gravity = config.gravity;
         self.pressure_base = config.sph_config.base_pressure;
         self.body_collision_base = config.sph_config.base_body_force;
 

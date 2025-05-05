@@ -2,10 +2,23 @@ use game_macros::UIEditable;
 
 use crate::game::{ui::FONT_SIZE_MEDIUM, UIEdit};
 use crate::math::Vector2;
+use crate::physics::rigidbody::SharedPropertySelection;
 use crate::rendering::Color;
 use crate::utility::AsMq;
 
 use macroquad::text::draw_text;
+
+use super::Selection;
+
+const SELECTION_VALUES: [SharedPropertySelection; 4] = [
+    SharedPropertySelection::Average,
+    SharedPropertySelection::Min,
+    SharedPropertySelection::Max,
+    SharedPropertySelection::Multiply,
+];
+const SELECTION_NAMES: [&str; 4] = ["Average", "Min", "Max", "Multiply"];
+const SELECTION_BOX: Selection<SharedPropertySelection, 4> =
+    Selection::new(SELECTION_VALUES, SELECTION_NAMES);
 
 #[derive(Clone, UIEditable)]
 pub struct GameConfig {
@@ -14,6 +27,9 @@ pub struct GameConfig {
     /// This will divide the `time_step` into **n** parts and perform **n** steps of the physical simulation
     /// with those time steps. Leads to better accuracy at cost of performance.
     pub sub_steps: u8,
+    /// The force of gravity acting on the fluid.
+    #[display_as("Gravity [cm/s]")]
+    pub gravity: Vector2<f32>,
     #[display_as("Fluids")]
     pub sph_config: SphConfig,
     #[display_as("Rigidbodies")]
@@ -25,6 +41,7 @@ impl Default for GameConfig {
         GameConfig {
             time_step: 0.01,
             sub_steps: 2,
+            gravity: Vector2::new(0.0, 981.0),
             sph_config: SphConfig::default(),
             rb_config: RigidBodiesConfig::default(),
         }
@@ -39,9 +56,6 @@ pub struct SphConfig {
     pub base_pressure: f32,
     /// Similiar to `base_pressure` but only affects the particles effect on rigidbodies.
     pub base_body_force: f32,
-    /// The force of gravity acting on the fluid.
-    #[display_as("Gravity [cm/s]")]
-    pub gravity: Vector2<f32>,
 }
 
 impl Default for SphConfig {
@@ -49,21 +63,21 @@ impl Default for SphConfig {
         SphConfig {
             base_pressure: 100_000.0,
             base_body_force: 10_000.0,
-            gravity: Vector2::new(0.0, 981.0),
         }
     }
 }
 
 #[derive(Clone, UIEditable)]
 pub struct RigidBodiesConfig {
-    #[display_as("Gravity [cm/s]")]
-    pub gravity: Vector2<f32>,
+    pub elasticity_selection: Selection<SharedPropertySelection, 4>,
+    pub friction_selection: Selection<SharedPropertySelection, 4>,
 }
 
 impl Default for RigidBodiesConfig {
     fn default() -> Self {
         RigidBodiesConfig {
-            gravity: Vector2::new(0.0, 981.0),
+            elasticity_selection: SELECTION_BOX,
+            friction_selection: SELECTION_BOX,
         }
     }
 }

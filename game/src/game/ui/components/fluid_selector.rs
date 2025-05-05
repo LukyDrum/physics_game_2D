@@ -1,8 +1,9 @@
+use macroquad::text::draw_text;
 use macroquad::ui::root_ui;
 use macroquad::ui::widgets::Button;
 
-use crate::game::draw_slider;
 use crate::game::ui::RED_BUTTON_SKIN;
+use crate::game::{draw_slider, FONT_SIZE_SMALL};
 use crate::utility::AsMq;
 use crate::{
     game::UIComponent,
@@ -18,6 +19,8 @@ const MIN_DENSITY: f32 = 0.1;
 const MAX_DENSITY: f32 = 13.5;
 /// Default density - water
 const DEFAULT_DENSITY: f32 = 1.0;
+
+const TUTORIAL_LINES: [&str; 1] = ["[Left MB] - Spawn fluid"];
 
 #[derive(Clone, Copy)]
 pub enum FluidSelectorAction {
@@ -45,6 +48,18 @@ impl Default for FluidSelector {
 
 impl UIComponent for FluidSelector {
     fn draw(&mut self, offset: Vector2<f32>) {
+        let mut offset = offset;
+        for line in TUTORIAL_LINES {
+            draw_text(
+                line,
+                offset.x,
+                offset.y,
+                FONT_SIZE_SMALL,
+                Color::rgb(0, 0, 0).as_mq(),
+            );
+            offset += v2!(0.0, FONT_SIZE_SMALL + 10.0);
+        }
+
         root_ui().push_skin(RED_BUTTON_SKIN.get().unwrap());
         if Button::new("Clear fluid")
             .size(v2!(100.0, 25.0).as_mq())

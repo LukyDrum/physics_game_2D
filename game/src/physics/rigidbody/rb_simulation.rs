@@ -51,6 +51,7 @@ where
     }
 }
 
+#[derive(Clone, Copy)]
 pub enum SharedPropertySelection {
     Multiply,
     Average,
@@ -120,9 +121,12 @@ impl RbSimulator {
     }
 
     pub fn step(&mut self, bodies: &mut Vec<Box<dyn GameBody>>, config: &GameConfig, dt: f32) {
-        // Set timestep and gravity for this step
+        // Set time step
         self.current_time_step = dt;
-        self.gravity = config.rb_config.gravity;
+        // Set values from config
+        self.gravity = config.gravity;
+        self.elasticity_selection = *config.rb_config.elasticity_selection.get_value();
+        self.friction_selection = *config.rb_config.friction_selection.get_value();
 
         // Apply and move bodies by gravity
         self.apply_gravity(bodies, config.time_step);

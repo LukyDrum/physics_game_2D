@@ -1,7 +1,7 @@
 use game_macros::UIEditable;
 
 use crate::game::{ui::FONT_SIZE_MEDIUM, UIEdit};
-use crate::math::Vector2;
+use crate::math::{v2, Vector2};
 use crate::physics::rigidbody::SharedPropertySelection;
 use crate::rendering::Color;
 use crate::utility::AsMq;
@@ -22,6 +22,7 @@ const SELECTION_BOX: Selection<SharedPropertySelection, 4> =
 
 #[derive(Clone, UIEditable)]
 pub struct GameConfig {
+    pub description: &'static str,
     #[display_as("Time Step [s]")]
     pub time_step: f32,
     /// This will divide the `time_step` into **n** parts and perform **n** steps of the physical simulation
@@ -29,6 +30,7 @@ pub struct GameConfig {
     pub sub_steps: u8,
     /// The force of gravity acting on the fluid.
     #[display_as("Gravity [cm/s]")]
+    #[gap_after(v2!(0.0, 30.0))]
     pub gravity: Vector2<f32>,
     #[display_as("Fluids")]
     pub sph_config: SphConfig,
@@ -39,6 +41,7 @@ pub struct GameConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         GameConfig {
+            description: "These are the values to configure the underlaying physics simulation.",
             time_step: 0.01,
             sub_steps: 2,
             gravity: Vector2::new(0.0, 981.0),

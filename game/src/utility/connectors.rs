@@ -18,3 +18,15 @@ impl AsMq<macroquad::color::Color> for Color {
         macroquad::color::Color::new(self.r, self.g, self.b, self.a)
     }
 }
+
+macro_rules! all_as_mq {
+    ($id:ident) => {
+        let $id = $id.as_mq();
+    };
+    ($id:ident, $($ids:ident),+) => {
+        all_as_mq!($id);
+        all_as_mq!($($ids),+)
+    };
+}
+
+pub(crate) use all_as_mq;

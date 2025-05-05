@@ -28,7 +28,7 @@ fn prettify_ident(ident: &Ident) -> String {
     string
 }
 
-#[proc_macro_derive(UIEditable, attributes(display_as))]
+#[proc_macro_derive(UIEditable, attributes(display_as, gap_after))]
 pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
     let input = parse_macro_input!(tokens as DeriveInput);
     let name = input.ident;
@@ -36,15 +36,22 @@ pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
         Data::Struct(data) => data.fields.into_iter().filter_map(|field| match field.vis {
             Visibility::Public(_) => {
                 let mut display_as = None;
+                let mut gap_after = None;
                 for attr in field.attrs {
                     if attr.path().is_ident("display_as") {
                         if let Ok(meta) = attr.meta.require_list() {
                             display_as = Some(meta.tokens.clone());
                         }
                     }
+                    if attr.path().is_ident("gap_after") {
+                        if let Ok(meta) = attr.meta.require_list() {
+                            gap_after = Some(meta.tokens.clone());
+                        }
+                    }
                 }
+
                 if let Some(ident) = field.ident {
-                    Some((ident, display_as))
+                    Some((ident, display_as, gap_after))
                 } else {
                     None
                 }
@@ -69,16 +76,19 @@ pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
             Vector2::new(0.0, 0.0)
         };
     };
-    for (ident, display_as) in fields {
+    for (ident, display_as, gap_after) in fields {
         let label = if let Some(display_as) = display_as {
             display_as.to_string().replace("\"", "")
         } else {
             prettify_ident(&ident)
         };
+
+        let gap_after = gap_after.unwrap_or(quote! {Vector2::new(0.0, 0.0)});
+
         let this = quote! {
             let this_position = position + total_size;
             total_size.y += self.#ident.draw_edit(this_position, input_size, #label).y;
-            total_size += Vector2::new(0.0, input_size.y * 0.2);
+            total_size += Vector2::new(0.0, input_size.y * 0.2) + #gap_after;
         };
 
         implementation = quote! {

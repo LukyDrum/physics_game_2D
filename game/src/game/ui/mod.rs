@@ -5,37 +5,58 @@ use std::sync::OnceLock;
 
 pub use components::*;
 pub use game_ui::*;
-use macroquad::ui::{
-    root_ui,
-    widgets::{ComboBox, InputText, Label},
-    Skin,
+use macroquad::{
+    text::draw_text,
+    ui::{
+        root_ui,
+        widgets::{ComboBox, InputText, Label},
+        Skin, Style,
+    },
 };
 
 use crate::{
     math::{v2, Vector2},
     rendering::Color,
-    utility::AsMq,
+    utility::{all_as_mq, AsMq},
 };
 
 static RED_BUTTON_SKIN: OnceLock<Skin> = OnceLock::new();
 
-pub fn red_button_skin() -> Skin {
-    let red = Color::rgb(255, 10, 10).as_mq();
-    let darker_red = Color::rgb(200, 10, 10).as_mq();
-    let white = Color::rgb(255, 255, 255).as_mq();
-    let button_style = root_ui()
+pub fn color_style(bg_color: Color, text_color: Color, interact_color: Color) -> Style {
+    all_as_mq!(bg_color, text_color, interact_color);
+
+    root_ui()
         .style_builder()
-        .color(red)
-        .color_hovered(darker_red)
-        .color_selected(darker_red)
-        .color_selected_hovered(darker_red)
-        .color_clicked(darker_red)
-        .text_color(white)
-        .text_color_hovered(white)
-        .text_color_clicked(white)
-        .build();
+        .color(bg_color)
+        .color_hovered(interact_color)
+        .color_selected(interact_color)
+        .color_selected_hovered(interact_color)
+        .color_clicked(interact_color)
+        .text_color(text_color)
+        .text_color_hovered(text_color)
+        .text_color_clicked(text_color)
+        .build()
+}
+
+pub fn red_button_skin() -> Skin {
+    let red = Color::rgb(255, 10, 10);
+    let darker_red = Color::rgb(200, 10, 10);
+    let white = Color::rgb(255, 255, 255);
+    let button_style = color_style(red, white, darker_red);
+
     let mut skin = root_ui().default_skin();
     skin.button_style = button_style;
+    skin
+}
+
+pub fn combobox_skin() -> Skin {
+    let white = Color::rgb(255, 255, 255);
+    let grey = Color::rgb(200, 200, 200);
+    let black = Color::rgb(0, 0, 0);
+    let style = color_style(white, black, grey);
+
+    let mut skin = root_ui().default_skin();
+    skin.combobox_style = style;
     skin
 }
 
@@ -144,12 +165,34 @@ impl<T, const C: usize> UIEdit for Selection<T, C> {
         input_size: Vector2<f32>,
         label: &str,
     ) -> Vector2<f32> {
+        let skin = combobox_skin();
+        root_ui().push_skin(&skin);
         ComboBox::new(id_from_position(position), &self.names[..])
             .label(label)
             .size(input_size.as_mq())
             .position(position.as_mq())
             .ui(&mut root_ui(), &mut self.selected);
+        root_ui().pop_skin();
 
         input_size
+    }
+}
+
+impl UIEdit for &str {
+    fn draw_edit(
+        &mut self,
+        position: Vector2<f32>,
+        _input_size: Vector2<f32>,
+        _label: &str,
+    ) -> Vector2<f32> {
+        draw_text(
+            &self,
+            position.x,
+            position.y,
+            FONT_SIZE_SMALL,
+            Color::rgb(0, 0, 0).as_mq(),
+        );
+
+        v2!(0.0, FONT_SIZE_SMALL + 5.0)
     }
 }

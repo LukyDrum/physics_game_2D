@@ -1,0 +1,320 @@
+{
+  "name": "Communicating Vessels",
+  "description": "Try filling one side of the pipe with fluid.\nCan you tell what will happen on the other side?\n\nOnce the fluid settles down both sides should have fluid in the same height.\nThis effect also works in more complicated situations then this one.\nVisit \"Communicating_Vessels_2\" to see one.",
+  "width": 500.0,
+  "height": 500.0,
+  "rb": {
+    "bodies": [
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 250.0,
+              "y": 490.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": 10.0
+            },
+            {
+              "x": -250.0,
+              "y": 10.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 250.0,
+              "y": 10.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": 10.0
+            },
+            {
+              "x": -250.0,
+              "y": 10.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 10.0,
+              "y": 250.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": 250.0
+            },
+            {
+              "x": -10.0,
+              "y": 250.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 490.0,
+              "y": 250.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": 250.0
+            },
+            {
+              "x": -10.0,
+              "y": 250.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 70.0,
+              "y": 330.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 5000.0,
+            "moment_of_inertia": 416666660.0,
+            "elasticity": {
+              "Value": 0.4
+            },
+            "static_friction": {
+              "Value": 0.3
+            },
+            "dynamic_friction": {
+              "Value": 0.2
+            },
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -50.0,
+              "y": -150.0
+            },
+            {
+              "x": 50.0,
+              "y": -150.0
+            },
+            {
+              "x": 50.0,
+              "y": 150.0
+            },
+            {
+              "x": -50.0,
+              "y": 150.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 430.0,
+              "y": 331.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 5000.0,
+            "moment_of_inertia": 416666660.0,
+            "elasticity": {
+              "Value": 0.4
+            },
+            "static_friction": {
+              "Value": 0.3
+            },
+            "dynamic_friction": {
+              "Value": 0.2
+            },
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -50.0,
+              "y": -150.0
+            },
+            {
+              "x": 50.0,
+              "y": -150.0
+            },
+            {
+              "x": 50.0,
+              "y": 150.0
+            },
+            {
+              "x": -50.0,
+              "y": 150.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 254.0,
+              "y": 215.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 5000.0,
+            "moment_of_inertia": 708333400.0,
+            "elasticity": {
+              "Value": 0.4
+            },
+            "static_friction": {
+              "Value": 0.3
+            },
+            "dynamic_friction": {
+              "Value": 0.2
+            },
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -50.0,
+              "y": -200.0
+            },
+            {
+              "x": 50.0,
+              "y": -200.0
+            },
+            {
+              "x": 50.0,
+              "y": 200.0
+            },
+            {
+              "x": -50.0,
+              "y": 200.0
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "sph": {
+    "particles": [],
+    "width": 500.0,
+    "height": 500.0
+  }
+}

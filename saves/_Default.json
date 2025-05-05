@@ -1,0 +1,179 @@
+{
+  "name": "",
+  "description": "",
+  "width": 500.0,
+  "height": 500.0,
+  "rb": {
+    "bodies": [
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 250.0,
+              "y": 490.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": 10.0
+            },
+            {
+              "x": -250.0,
+              "y": 10.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 250.0,
+              "y": 10.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": -10.0
+            },
+            {
+              "x": 250.0,
+              "y": 10.0
+            },
+            {
+              "x": -250.0,
+              "y": 10.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 10.0,
+              "y": 250.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": 250.0
+            },
+            {
+              "x": -10.0,
+              "y": 250.0
+            }
+          ]
+        }
+      },
+      {
+        "Polygon": {
+          "state": {
+            "position": {
+              "x": 490.0,
+              "y": 250.0
+            },
+            "orientation": 0.0,
+            "behaviour": "Static",
+            "mass": 10.0,
+            "moment_of_inertia": 2086666.5,
+            "elasticity": "Pass",
+            "static_friction": "Pass",
+            "dynamic_friction": "Pass",
+            "color": {
+              "r": 0.0,
+              "g": 0.0,
+              "b": 0.0,
+              "a": 1.0
+            }
+          },
+          "points": [
+            {
+              "x": -10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": -250.0
+            },
+            {
+              "x": 10.0,
+              "y": 250.0
+            },
+            {
+              "x": -10.0,
+              "y": 250.0
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "sph": {
+    "particles": [],
+    "width": 500.0,
+    "height": 500.0
+  }
+}

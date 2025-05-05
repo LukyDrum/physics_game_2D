@@ -118,8 +118,8 @@ impl UIComponent for SavesLoads {
             .position(offset_input.as_mq())
             .size(v2!(150.0, 25.0).as_mq())
             .ui(&mut root_ui(), &mut self.save_file_name);
-        // Do not allow names containing '_'
-        self.save_file_name = self.save_file_name.replace('_', "");
+        // Do not allow names starting with '_'
+        self.save_file_name = self.save_file_name.trim_start_matches('_').to_owned();
 
         // Compare old and new
         self.taken_input = self.save_file_name != old_save_file_name;
@@ -164,7 +164,7 @@ impl UIComponent for SavesLoads {
                 let side_offset = offset + v2!(180.0, 0.0);
 
                 // Do not draw delete button for pretected savefiles - containing '_'
-                if !save.contains('_') {
+                if !save.starts_with('_') {
                     if Button::new("Delete")
                         .size(v2!(60.0, 25.0).as_mq())
                         .position(side_offset.as_mq())

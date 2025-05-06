@@ -1,6 +1,6 @@
 use crate::math::Vector2;
 
-use super::{polygon::PolygonInner, BodyCollisionData};
+use super::{circle::CircleInner, polygon::PolygonInner, BodyCollisionData};
 
 pub fn polygon_polygon_collision(
     this: &PolygonInner,
@@ -95,5 +95,40 @@ pub fn polygon_polygon_collision(
         normal: min_axis,
         penetration: min_penetration,
         collision_points,
+    })
+}
+
+pub fn circle_circle_collision(
+    this: &CircleInner,
+    other: &CircleInner,
+) -> Option<BodyCollisionData> {
+    let this_position = this.state.position;
+    let other_position = other.state.position;
+    let this_to_other = other_position - this_position;
+
+    let radius_sum = this.radius + other.radius;
+    let radius_sum_squared = radius_sum.powi(2);
+
+    // Distance of centers is bigger than their summed radiuses -> they do not collide
+    if radius_sum_squared < this_to_other.length_squared() {
+        return None;
+    }
+
+    // Collision normal is the vector from this center to other center
+    let normal = this_to_other.normalized();
+    // The collision point will be the point where they first touched, that must surely be
+    // this.radius away along the normal
+    let collision_point = this_position + normal * this.radius;
+
+    // Penetration depth whill be given using the following equality:
+    // dist = this.radius + other.radius - penetration
+    // => penetration = this.radius + other.radius - dist
+    let dist = this_to_other.length();
+    let penetration = this.radius + other.radius - dist;
+
+    Some(BodyCollisionData {
+        normal,
+        penetration,
+        collision_points: vec![collision_point],
     })
 }

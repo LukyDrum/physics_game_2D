@@ -17,6 +17,7 @@ pub trait BodySerializationForm {
 #[derive(Serialize, Deserialize)]
 pub enum BodySerializedForm {
     Polygon(PolygonSerializedForm),
+    Circle(CircleSerializedForm),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -98,6 +99,12 @@ pub struct PolygonSerializedForm {
     pub points: Vec<Vector2<f32>>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct CircleSerializedForm {
+    pub state: BodyStateSerializedForm,
+    pub radius: f32,
+}
+
 impl BodySerializationForm for RigidBody {
     fn to_serialized_form(&self) -> BodySerializedForm {
         match self {
@@ -110,6 +117,10 @@ impl BodySerializationForm for RigidBody {
                     points,
                 })
             }
+            Self::Circle(inner) => BodySerializedForm::Circle(CircleSerializedForm {
+                state: self.state().clone().into(),
+                radius: inner.radius,
+            }),
         }
     }
 
@@ -124,6 +135,15 @@ impl BodySerializationForm for RigidBody {
                 *polygon.state_mut() = state;
 
                 polygon
+            }
+            BodySerializedForm::Circle(serialized_form) => {
+                let radius = serialized_form.radius;
+                let state: BodyState = serialized_form.state.into();
+
+                let mut circle = RigidBody::new_circle(state.position, radius, state.behaviour);
+                *circle.state_mut() = state;
+
+                circle
             }
         }
     }

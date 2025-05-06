@@ -1,19 +1,30 @@
 use crate::math::Vector2;
 
 use super::{
-    collisions::polygon_polygon_collision, polygon::PolygonInner, BodyBehaviour, BodyCollisionData,
-    BodyState, PointCollisionData,
+    circle::CircleInner,
+    collisions::{circle_circle_collision, polygon_polygon_collision},
+    polygon::PolygonInner,
+    BodyBehaviour, BodyCollisionData, BodyState, PointCollisionData,
 };
 
 pub enum RigidBody {
     Polygon(PolygonInner),
+    Circle(CircleInner),
 }
 
 impl RigidBody {
     pub fn check_collision(first: &RigidBody, second: &RigidBody) -> Option<BodyCollisionData> {
         match (first, second) {
+            // Polygon - Polygon
             (Self::Polygon(first), Self::Polygon(second)) => {
                 polygon_polygon_collision(first, second)
+            }
+            // Circle - Circle
+            (Self::Circle(first), Self::Circle(second)) => circle_circle_collision(first, second),
+            // Polygon - Circle / Circle - Polygon
+            (Self::Polygon(polygon), Self::Circle(circle))
+            | (Self::Circle(circle), Self::Polygon(polygon)) => {
+                todo!()
             }
         }
     }
@@ -42,15 +53,26 @@ impl RigidBody {
         RigidBody::Polygon(poly)
     }
 
+    pub fn new_circle(position: Vector2<f32>, radius: f32, behaviour: BodyBehaviour) -> RigidBody {
+        let mut state = BodyState::new(position, 10.0, behaviour);
+        state.moment_of_inertia = CircleInner::calculate_moment_of_inertia(state.mass, radius);
+
+        let circle = CircleInner { state, radius };
+
+        RigidBody::Circle(circle)
+    }
+
     pub fn state(&self) -> &BodyState {
         match self {
             Self::Polygon(inner) => &inner.state,
+            Self::Circle(inner) => &inner.state,
         }
     }
 
     pub fn state_mut(&mut self) -> &mut BodyState {
         match self {
             Self::Polygon(inner) => &mut inner.state,
+            Self::Circle(inner) => &mut inner.state,
         }
     }
 
@@ -61,30 +83,35 @@ impl RigidBody {
                 inner.state.position = position;
                 inner.update_inner_values();
             }
+            Self::Circle(inner) => inner.state.position = position,
         }
     }
 
     pub fn contains_point(&self, point: Vector2<f32>) -> bool {
         match self {
             Self::Polygon(inner) => inner.contains_point(point),
+            Self::Circle(inner) => inner.contains_point(point),
         }
     }
 
     pub fn update_inner_values(&mut self) {
         match self {
             Self::Polygon(inner) => inner.update_inner_values(),
+            Self::Circle(_) => {}
         }
     }
 
     pub fn center_of_mass(&self) -> Vector2<f32> {
         match self {
             Self::Polygon(inner) => inner.center_of_mass(),
+            Self::Circle(inner) => inner.state.position,
         }
     }
 
     pub fn point_collision_data(&self, point: Vector2<f32>) -> PointCollisionData {
         match self {
             Self::Polygon(inner) => inner.point_collision_data(point),
+            Self::Circle(inner) => inner.point_collision_data(point),
         }
     }
 }

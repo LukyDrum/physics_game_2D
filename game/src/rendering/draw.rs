@@ -1,4 +1,4 @@
-use macroquad::shapes::{draw_line, draw_triangle};
+use macroquad::shapes::{draw_circle, draw_line, draw_triangle};
 
 use super::Color;
 use crate::{
@@ -45,12 +45,21 @@ impl Draw for RigidBody {
             Self::Polygon(inner) => {
                 draw_triangulation(inner.global_triangulation(), self.state().color)
             }
+            Self::Circle(inner) => {
+                let position = self.state().position;
+                let color = self.state().color;
+                draw_circle(position.x, position.y, inner.radius, color.as_mq());
+            }
         }
     }
 
     fn draw_with_color(&self, color: Color) {
         match self {
             Self::Polygon(inner) => draw_triangulation(inner.global_triangulation(), color),
+            Self::Circle(inner) => {
+                let position = self.state().position;
+                draw_circle(position.x, position.y, inner.radius, color.as_mq());
+            }
         }
     }
 }

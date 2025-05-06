@@ -7,6 +7,7 @@ use crate::{
     utility::runge_kutta,
 };
 
+mod circle;
 mod collisions;
 mod polygon;
 mod rb_simulation;
@@ -114,6 +115,7 @@ impl BodyState {
     }
 
     pub fn set_mass(&mut self, new_mass: f32) {
+        // Should generaly work
         self.moment_of_inertia = (self.moment_of_inertia / self.mass) * new_mass;
         self.mass = new_mass;
     }

@@ -7,11 +7,8 @@ use std::{
 use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
-use super::{BodyBehaviour, BodyCollisionData};
-use crate::{
-    game::{GameBody, GameConfig},
-    math::Vector2,
-};
+use super::{BodyBehaviour, BodyCollisionData, RigidBody};
+use crate::{game::GameConfig, math::Vector2};
 
 /// Holds `BodyCollisionData` along with indexes of what two bodies collided.
 #[derive(Clone)]
@@ -120,7 +117,7 @@ impl RbSimulator {
         }
     }
 
-    pub fn step(&mut self, bodies: &mut Vec<Box<dyn GameBody>>, config: &GameConfig, dt: f32) {
+    pub fn step(&mut self, bodies: &mut Vec<RigidBody>, config: &GameConfig, dt: f32) {
         // Set time step
         self.current_time_step = dt;
         // Set values from config
@@ -142,14 +139,14 @@ impl RbSimulator {
     }
 
     /// Update the inner stored values of each body, such as global vertices or lines.
-    fn update_inner_values(bodies: &mut Vec<Box<dyn GameBody>>) {
+    fn update_inner_values(bodies: &mut Vec<RigidBody>) {
         bodies
             .par_iter_mut()
             .for_each(|body| body.update_inner_values());
     }
 
     /// Applies gravity force to bodies with behaviour set to `BodyBehaviour::Dynamic`.
-    fn apply_gravity(&self, bodies: &mut Vec<Box<dyn GameBody>>, time_step: f32) {
+    fn apply_gravity(&self, bodies: &mut Vec<RigidBody>, time_step: f32) {
         bodies
             .par_iter_mut()
             .filter(|body| body.state().behaviour == BodyBehaviour::Dynamic)
@@ -161,7 +158,7 @@ impl RbSimulator {
             });
     }
 
-    fn move_bodies_by_velocity(bodies: &mut Vec<Box<dyn GameBody>>, time_step: f32) {
+    fn move_bodies_by_velocity(bodies: &mut Vec<RigidBody>, time_step: f32) {
         bodies
             .par_iter_mut()
             .for_each(|body| body.state_mut().move_by_velocity(time_step));
@@ -169,7 +166,7 @@ impl RbSimulator {
 
     /// Checks for possible collisions and returns a `LinkedList` of `BodyBodyCollision` where each
     /// record represents a collison between 2 bodies.
-    fn check_collisions(bodies: &Vec<Box<dyn GameBody>>) -> LinkedList<BodyBodyCollision> {
+    fn check_collisions(bodies: &Vec<RigidBody>) -> LinkedList<BodyBodyCollision> {
         let mut index_pairs = LinkedList::new();
         for i in 1..bodies.len() {
             for j in 0..i {
@@ -186,7 +183,7 @@ impl RbSimulator {
                 {
                     None
                 } else if let Some(collision_data) =
-                    bodies[index_a].check_collision_against(&bodies[index_b])
+                    RigidBody::check_collision(&bodies[index_a], &bodies[index_b])
                 {
                     Some(BodyBodyCollision {
                         index_a,
@@ -203,7 +200,7 @@ impl RbSimulator {
     /// Applies appropriate forces to bodies in order to resolve all collisions.
     fn resolve_collisions(
         &self,
-        bodies: &mut Vec<Box<dyn GameBody>>,
+        bodies: &mut Vec<RigidBody>,
         collisions: LinkedList<BodyBodyCollision>,
     ) {
         for coll in &collisions {

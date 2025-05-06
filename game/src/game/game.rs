@@ -12,9 +12,7 @@ use macroquad::{
 
 use crate::{
     math::{v2, Vector2},
-    physics::rigidbody::{
-        Body, BodyBehaviour, DraggedBody, Polygon, RbSimulator, Rectangle, SharedProperty,
-    },
+    physics::rigidbody::{BodyBehaviour, RbSimulator, Rectangle, RigidBody, SharedProperty},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
     serialization::SerializationForm,
     utility::AsMq,
@@ -22,9 +20,14 @@ use crate::{
 };
 
 use super::{
-    config::GameConfig, gamebody::GameBody, save_load, EntityInfo, FluidSelectorAction, InGameUI,
-    SaveLoadAction, Tool, FONT_SIZE_LARGE, FONT_SIZE_SMALL,
+    config::GameConfig, save_load, EntityInfo, FluidSelectorAction, InGameUI, SaveLoadAction, Tool,
+    FONT_SIZE_LARGE, FONT_SIZE_SMALL,
 };
+
+struct DraggedBody {
+    pub index: usize,
+    pub drag_offset: Vector2<f32>,
+}
 
 pub struct Game {
     game_config: GameConfig,
@@ -34,7 +37,7 @@ pub struct Game {
     is_simulating: bool,
 
     rb_simulator: RbSimulator,
-    pub(crate) bodies: Vec<Box<dyn GameBody>>,
+    pub(crate) bodies: Vec<RigidBody>,
 
     // GUI things
     gameview_offset: Vector2<f32>,
@@ -43,7 +46,7 @@ pub struct Game {
     renderer: Box<dyn Renderer>,
     draw_particles: bool,
     ingame_ui: InGameUI,
-    preview_body: Box<dyn GameBody>,
+    preview_body: RigidBody,
     mouse_in_gameview: bool,
     pub(crate) name: String,
     pub(crate) description: LinkedList<String>,
@@ -63,23 +66,15 @@ impl Game {
 
         // Add rectangles that act as walls
         let wall_thickness = 20.0;
-        let mut bodies: Vec<Box<dyn GameBody>> = vec![
+        let mut bodies = vec![
             // Floor
-            Box::new(
-                Rectangle!(v2!(f_width * 0.5, f_height - wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
-            ),
+            Rectangle!(v2!(f_width * 0.5, f_height - wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
             // Ceiling
-            Box::new(
-                Rectangle!(v2!(f_width * 0.5, wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
-            ),
+            Rectangle!(v2!(f_width * 0.5, wall_thickness * 0.5); f_width, wall_thickness; BodyBehaviour::Static),
             // Left wall
-            Box::new(
-                Rectangle!(v2!(wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
-            ),
+            Rectangle!(v2!(wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             // Right wall
-            Box::new(
-                Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
-            ),
+            Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
         ];
         // Set shared properties to pass
         for body in &mut bodies {
@@ -118,7 +113,7 @@ impl Game {
             ),
             draw_particles: false,
             ingame_ui,
-            preview_body: Box::new(Rectangle!(v2!(50.0, 50.0); 50.0, 50.0; BodyBehaviour::Dynamic)),
+            preview_body: Rectangle!(v2!(50.0, 50.0); 50.0, 50.0; BodyBehaviour::Dynamic),
             mouse_in_gameview: false,
             name: String::new(),
             description: LinkedList::new(),
@@ -136,7 +131,7 @@ impl Game {
         self.description = description.split("\n").map(|s| s.to_owned()).collect();
     }
 
-    fn body_from_body_maker(&self, position: Vector2<f32>) -> Box<dyn GameBody> {
+    fn body_from_body_maker(&self, position: Vector2<f32>) -> RigidBody {
         let body_maker = &self.ingame_ui.body_maker;
         let size = body_maker.size();
         let orientation = body_maker.orientation;
@@ -148,7 +143,7 @@ impl Game {
         let dynamic_friction = body_maker.dynamic_friction;
 
         // Create body and set state values
-        let mut body: Box<dyn GameBody> = Box::new(Rectangle!(position; size.x, size.y; behaviour));
+        let mut body = Rectangle!(position; size.x, size.y; behaviour);
         body.state_mut().orientation = orientation * (PI / 180.0);
         body.state_mut().set_mass(mass);
         color.a = 0.5;

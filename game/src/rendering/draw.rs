@@ -2,7 +2,7 @@ use macroquad::shapes::{draw_line, draw_triangle};
 
 use super::Color;
 use crate::{
-    physics::rigidbody::Polygon,
+    physics::rigidbody::RigidBody,
     shapes::{Line, Triangle, Triangulation},
     utility::AsMq,
 };
@@ -22,16 +22,6 @@ pub fn draw_triangulation(triangulation: &Triangulation, color: Color) {
     }
 }
 
-impl Draw for Polygon {
-    fn draw(&self) {
-        draw_triangulation(self.global_triangulation(), self.state.color)
-    }
-
-    fn draw_with_color(&self, color: Color) {
-        draw_triangulation(self.global_triangulation(), color);
-    }
-}
-
 impl Draw for Line {
     fn draw(&self) {
         self.draw_with_color(BLACK);
@@ -46,5 +36,21 @@ impl Draw for Line {
             2.0,
             color.as_mq(),
         );
+    }
+}
+
+impl Draw for RigidBody {
+    fn draw(&self) {
+        match self {
+            Self::Polygon(inner) => {
+                draw_triangulation(inner.global_triangulation(), self.state().color)
+            }
+        }
+    }
+
+    fn draw_with_color(&self, color: Color) {
+        match self {
+            Self::Polygon(inner) => draw_triangulation(inner.global_triangulation(), color),
+        }
     }
 }

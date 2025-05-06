@@ -4,9 +4,9 @@ use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
 
-use crate::game::{GameBody, GameConfig};
+use crate::game::GameConfig;
 use crate::math::Vector2;
-use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation};
+use crate::physics::rigidbody::{BodyBehaviour, BodyForceAccumulation, RigidBody};
 use crate::{physics::sph::Particle, utility::LookUp};
 
 const PRESSURE_BASE: f32 = 100_000.0;
@@ -185,7 +185,7 @@ impl Sph {
     /// bodies.
     fn resolve_collisions(
         &mut self,
-        bodies: &Vec<Box<dyn GameBody>>,
+        bodies: &Vec<RigidBody>,
         delta_time: f32,
     ) -> Vec<(usize, BodyForceAccumulation)> {
         let mut body_forces = Vec::with_capacity(bodies.len());
@@ -253,7 +253,7 @@ impl Sph {
     /// forces that the fluid exerts on the bodies.
     pub fn step(
         &mut self,
-        bodies: &Vec<Box<dyn GameBody>>,
+        bodies: &Vec<RigidBody>,
         config: &GameConfig,
         dt: f32,
     ) -> Vec<(usize, BodyForceAccumulation)> {

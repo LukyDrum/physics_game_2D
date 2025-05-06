@@ -1,9 +1,8 @@
-use crate::physics::rigidbody::SharedProperty;
+use crate::physics::rigidbody::{RigidBody, SharedProperty};
 use crate::rendering::Color;
-use crate::serialization::SerializationForm;
 use crate::{
     math::Vector2,
-    physics::rigidbody::{BodyBehaviour, BodyState, Polygon},
+    physics::rigidbody::{BodyBehaviour, BodyState},
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -99,29 +98,33 @@ pub struct PolygonSerializedForm {
     pub points: Vec<Vector2<f32>>,
 }
 
-impl BodySerializationForm for Polygon {
+impl BodySerializationForm for RigidBody {
     fn to_serialized_form(&self) -> BodySerializedForm {
-        let points = self.points.clone();
-        let ser_state = self.state.clone().into();
+        match self {
+            Self::Polygon(inner) => {
+                let points = inner.points.clone();
+                let ser_state = self.state().clone().into();
 
-        BodySerializedForm::Polygon(PolygonSerializedForm {
-            state: ser_state,
-            points,
-        })
+                BodySerializedForm::Polygon(PolygonSerializedForm {
+                    state: ser_state,
+                    points,
+                })
+            }
+        }
     }
 
     #[allow(irrefutable_let_patterns)]
     fn from_serialized_form(serialized_form: BodySerializedForm) -> Self {
-        let BodySerializedForm::Polygon(serialized_form) = serialized_form else {
-            panic!("Passed in invalid serialized form!");
-        };
+        match serialized_form {
+            BodySerializedForm::Polygon(serialized_form) => {
+                let points = serialized_form.points;
+                let state: BodyState = serialized_form.state.into();
 
-        let points = serialized_form.points;
-        let state: BodyState = serialized_form.state.into();
+                let mut polygon = RigidBody::new_polygon(state.position, points, state.behaviour);
+                *polygon.state_mut() = state;
 
-        let mut polygon = Polygon::new(state.position, points, state.behaviour);
-        polygon.state = state;
-
-        polygon
+                polygon
+            }
+        }
     }
 }

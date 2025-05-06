@@ -2,8 +2,8 @@ mod rigidbody;
 mod sph;
 
 use crate::{
-    game::{Game, GameBody},
-    physics::{rigidbody::Polygon, sph::Sph},
+    game::Game,
+    physics::{rigidbody::RigidBody, sph::Sph},
     serialization::sph::SphSerializedForm,
 };
 pub use rigidbody::{BodySerializationForm, BodySerializedForm};
@@ -79,14 +79,7 @@ impl SerializationForm for Game {
         let bodies = rb
             .bodies
             .into_iter()
-            .map(|ser_body| {
-                let body: Box<dyn GameBody> = match &ser_body {
-                    BodySerializedForm::Polygon(_) => {
-                        Box::new(Polygon::from_serialized_form(ser_body))
-                    }
-                };
-                body
-            })
+            .map(RigidBody::from_serialized_form)
             .collect();
 
         let mut game = Game::new(width as usize, height as usize);

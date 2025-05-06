@@ -1,15 +1,20 @@
 use core::f32;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::LinkedList;
 
-use crate::{game::GameBody, math::Vector2, rendering::Color, shapes::Line, utility::runge_kutta};
+use crate::{
+    math::{v2, Matrix, Vector2},
+    rendering::Color,
+    utility::runge_kutta,
+};
 
+mod collisions;
 mod polygon;
 mod rb_simulation;
+mod rigidbody;
 
 use num_traits::Zero;
-pub use polygon::Polygon;
 pub use rb_simulation::{RbSimulator, SharedProperty, SharedPropertySelection};
+pub use rigidbody::RigidBody;
 
 // Base values for body state properties
 pub const DEFAULT_ELASTICITY: f32 = 0.4;
@@ -215,58 +220,12 @@ pub struct BodyCollisionData {
     pub collision_points: Vec<Vector2<f32>>,
 }
 
-/// A physical object that can be simulated in the game world
-pub trait Body: Send + Sync {
-    /// Updates inner stored values such as global points or lines.
-    fn update_inner_values(&mut self);
-
-    fn state(&self) -> &BodyState;
-
-    fn state_mut(&mut self) -> &mut BodyState;
-
-    /// Returns a collision info about the collision of this Body and a point.
-    /// The returned info will only properly make sense if the point is inside the Body. That can
-    /// be checked using `Self::contains_point`.
-    fn point_collision_data(&self, point: Vector2<f32>) -> PointCollisionData;
-
-    /// Returns `true` if the point is inside this Body.
-    fn contains_point(&self, point: Vector2<f32>) -> bool;
-
-    /// Returns the center of mass of this Body in the global coordinates.
-    fn center_of_mass(&self) -> Vector2<f32>;
-
-    /// Returns the projection of this Body onto the provided `axis`.
-    fn project_onto_axis(&self, axis: Vector2<f32>) -> PointsProjection;
-
-    /// Returns a list of projection axis from this Body. That is a list of normals of the lines
-    /// this body consist of. They will always be pointing away from the body.
-    fn projection_axes(&self) -> LinkedList<Vector2<f32>>;
-
-    /// Returns the colliding line based on the collision normal.
-    fn find_colliding_line(&self, normal: Vector2<f32>) -> Line;
-
-    /// Checks if this Body collides with the `other` Body and if so returns a `BodyCollisionInfo`.
-    /// Otherwise returns `None` (meaning they do not collide).
-    fn check_collision_against(&self, other: &Box<dyn GameBody>) -> Option<BodyCollisionData>;
-
-    /// Sets new position and updates the needed inner values.
-    fn set_position(&mut self, new_position: Vector2<f32>) {
-        self.state_mut().position = new_position;
-        self.update_inner_values();
-    }
-}
-
-pub struct DraggedBody {
-    pub index: usize,
-    pub drag_offset: Vector2<f32>,
-}
-
 macro_rules! Rectangle {
     ($a:expr, $b:expr, $c:expr, $d:expr; $behaviour:expr) => {{
         let avg_pos: Vector2<f32> = ($a + $b + $c + $d) * 0.25;
         let points = vec![$a - avg_pos, $b - avg_pos, $c - avg_pos, $d - avg_pos];
 
-        Polygon::new(avg_pos, points, $behaviour)
+        RigidBody::new_polygon(avg_pos, points, $behaviour)
     }};
     ($pos:expr; $width:expr, $height:expr; $behaviour:expr) => {{
         let half_w: f32 = $width * 0.5;
@@ -278,8 +237,22 @@ macro_rules! Rectangle {
             v2!(-half_w, half_h),
         ];
 
-        Polygon::new($pos, points, $behaviour)
+        RigidBody::new_polygon($pos, points, $behaviour)
     }};
 }
 
 pub(crate) use Rectangle;
+
+fn local_point_to_global(state: &BodyState, point: Vector2<f32>) -> Vector2<f32> {
+    let sin = state.orientation.sin();
+    let cos = state.orientation.cos();
+
+    let rot_mat = Matrix::new([[cos, -sin], [sin, cos]]);
+    let local = Matrix::new([[point.x], [point.y]]);
+    let position = Matrix::new([[state.position.x], [state.position.y]]);
+
+    let global = rot_mat * local + position;
+    let x = *global.get(0, 0);
+    let y = *global.get(1, 0);
+    v2!(x, y)
+}

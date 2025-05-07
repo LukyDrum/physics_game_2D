@@ -42,7 +42,7 @@ impl RigidBody {
         behaviour: BodyBehaviour,
     ) -> RigidBody {
         let points_size = points.len();
-        let state = BodyState::new(position, 10.0, behaviour);
+        let state = BodyState::new(position, 1_000.0, behaviour);
 
         let mut poly = PolygonInner {
             state,
@@ -61,7 +61,7 @@ impl RigidBody {
     }
 
     pub fn new_circle(position: Vector2<f32>, radius: f32, behaviour: BodyBehaviour) -> RigidBody {
-        let mut state = BodyState::new(position, 10.0, behaviour);
+        let mut state = BodyState::new(position, 1_000.0, behaviour);
         state.moment_of_inertia = CircleInner::calculate_moment_of_inertia(state.mass, radius);
 
         let circle = CircleInner { state, radius };

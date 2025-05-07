@@ -75,12 +75,6 @@ impl Game {
             Rectangle!(v2!(wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
             // Right wall
             Rectangle!(v2!(f_width - wall_thickness * 0.5, f_height * 0.5); wall_thickness, f_height; BodyBehaviour::Static),
-            // Test ball
-            RigidBody::new_circle(
-                v2!(f_width * 0.5, f_height * 0.5),
-                25.0,
-                BodyBehaviour::Dynamic,
-            ),
         ];
         // Set shared properties to pass
         for body in &mut bodies {
@@ -89,6 +83,13 @@ impl Game {
             state.static_friction = SharedProperty::Pass;
             state.dynamic_friction = SharedProperty::Pass;
         }
+
+        // Test ball
+        bodies.push(RigidBody::new_circle(
+            v2!(f_width * 0.5, f_height * 0.5),
+            25.0,
+            BodyBehaviour::Dynamic,
+        ));
 
         let mut ingame_ui = InGameUI::default();
         ingame_ui

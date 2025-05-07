@@ -101,11 +101,12 @@ pub struct RbSimulator {
     pub friction_selection: SharedPropertySelection,
 
     pub current_time_step: f32,
+    pub iterations: u32,
 }
 
 impl RbSimulator {
-    /// Only correct the position of the body by this much percent
-    const CORRECTION_STABILIZER: f32 = 1.0;
+    const CORRECTION_FACTOR: f32 = 0.2;
+    const SLOP: f32 = 1.0;
 
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator {
@@ -114,6 +115,7 @@ impl RbSimulator {
             friction_selection: SharedPropertySelection::Average,
 
             current_time_step: 0.0,
+            iterations: 5,
         }
     }
 
@@ -125,16 +127,16 @@ impl RbSimulator {
         self.elasticity_selection = *config.rb_config.elasticity_selection.get_value();
         self.friction_selection = *config.rb_config.friction_selection.get_value();
 
-        // Apply and move bodies by gravity
+        // Apply gravity force
         self.apply_gravity(bodies, config.time_step);
-        Self::move_bodies_by_velocity(bodies, config.time_step);
-
-        // Update inner values to reflect the change due to gravity.
-        Self::update_inner_values(bodies);
 
         let collisions = Self::check_collisions(bodies);
-        self.resolve_collisions(bodies, collisions);
+        // Iteratively resolve collisions
+        for _ in 0..self.iterations {
+            self.resolve_collisions(bodies, &collisions);
+        }
 
+        Self::move_bodies_by_velocity(bodies, config.time_step);
         Self::update_inner_values(bodies);
     }
 
@@ -201,9 +203,9 @@ impl RbSimulator {
     fn resolve_collisions(
         &self,
         bodies: &mut Vec<RigidBody>,
-        collisions: LinkedList<BodyBodyCollision>,
+        collisions: &LinkedList<BodyBodyCollision>,
     ) {
-        for coll in &collisions {
+        for coll in collisions {
             let BodyBodyCollision {
                 index_a,
                 index_b,
@@ -261,6 +263,8 @@ impl RbSimulator {
             let inv_masses = inverse_value(mass_a) + inverse_value(mass_b);
             // Apply impulse for each collision point weighted by the number of collision points
             let multiplier = 1.0 / collision_points.len() as f32;
+            let correction = Self::CORRECTION_FACTOR * (penetration - Self::SLOP).max(0.0)
+                / self.current_time_step;
             for coll_point in collision_points {
                 let radius_a = coll_point - center_a;
                 let radius_b = coll_point - center_b;
@@ -269,6 +273,11 @@ impl RbSimulator {
                 let relative_velocity = (velocity_a
                     + scalar_vector_cross(angular_velocity_a, radius_a))
                     - (velocity_b + scalar_vector_cross(angular_velocity_b, radius_b));
+
+                // Their are movign away from each other -> no need to do anything
+                if relative_velocity.dot(normal) < 0.0 {
+                    continue;
+                }
 
                 // Formula for calculation of the effective mass in direction. The bottom term in
                 // the impulse calculation.
@@ -282,7 +291,8 @@ impl RbSimulator {
                 };
 
                 // Normal impulse
-                let top_term = -(1.0 + shared_elasticity) * relative_velocity.dot(normal);
+                let top_term =
+                    -(1.0 + shared_elasticity) * (relative_velocity.dot(normal) + correction);
                 let impulse_normal = top_term / effective_mass_formula(normal) * multiplier;
 
                 // Tangent impulse - friction
@@ -294,7 +304,16 @@ impl RbSimulator {
                 }
 
                 // Add impulses to both bodies
+                let (a_mul, b_mul) = match (a_is_dynamic, b_is_dynamic) {
+                    (true, true) => (0.5, 0.5),
+                    (true, false) => (1.0, 0.0),
+                    (false, true) => (0.0, 1.0),
+                    (false, false) => (0.0, 0.0),
+                };
+
                 if a_is_dynamic {
+                    let impulse_normal = impulse_normal * a_mul;
+                    let impulse_tangent = impulse_tangent * a_mul;
                     let state = bodies[index_a].state_mut();
                     // Apply normal impulse
                     state.velocity += normal * (impulse_normal / mass_a);
@@ -307,6 +326,8 @@ impl RbSimulator {
                         radius_a.cross(tangent * impulse_tangent) * inv_inertia_a;
                 }
                 if b_is_dynamic {
+                    let impulse_normal = impulse_normal * b_mul;
+                    let impulse_tangent = impulse_tangent * b_mul;
                     let state = bodies[index_b].state_mut();
                     // Apply normal impulse
                     state.velocity -= normal * (impulse_normal / mass_b);
@@ -318,24 +339,6 @@ impl RbSimulator {
                     state.angular_velocity +=
                         radius_b.cross(tangent * impulse_tangent) * inv_inertia_b;
                 }
-            }
-
-            // Offset the bodies positions by the penetration
-            let (a_percent, b_percent) = match (a_is_dynamic, b_is_dynamic) {
-                    (true, true) => (0.5 * (mass_a / (mass_a + mass_b)), 0.5 * (mass_b / (mass_a + mass_b))),
-                    (true, false) => (1.0, 0.0),
-                    (false, true) => (0.0, 1.0),
-                    // This case should not be possible
-                    (false, false) => panic!("This case should not be possible as the loop should have skipped to next iteration."),
-            };
-            let correction = penetration * Self::CORRECTION_STABILIZER;
-            if a_is_dynamic {
-                let state = bodies[index_a].state_mut();
-                state.position -= normal * correction * a_percent;
-            }
-            if b_is_dynamic {
-                let state = bodies[index_b].state_mut();
-                state.position += normal * correction * b_percent;
             }
         }
     }

@@ -74,6 +74,7 @@ impl Default for SphConfig {
 pub struct RigidBodiesConfig {
     pub elasticity_selection: Selection<SharedPropertySelection, 4>,
     pub friction_selection: Selection<SharedPropertySelection, 4>,
+    pub iterations: u32,
 }
 
 impl Default for RigidBodiesConfig {
@@ -81,6 +82,7 @@ impl Default for RigidBodiesConfig {
         RigidBodiesConfig {
             elasticity_selection: SELECTION_BOX,
             friction_selection: SELECTION_BOX,
+            iterations: 6,
         }
     }
 }

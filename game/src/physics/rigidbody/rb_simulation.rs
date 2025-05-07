@@ -126,6 +126,7 @@ impl RbSimulator {
         self.gravity = config.gravity;
         self.elasticity_selection = *config.rb_config.elasticity_selection.get_value();
         self.friction_selection = *config.rb_config.friction_selection.get_value();
+        self.iterations = config.rb_config.iterations.min(1);
 
         // Apply gravity force
         self.apply_gravity(bodies, config.time_step);

@@ -45,7 +45,7 @@ impl SerializationForm for Game {
         let description = self
             .description
             .iter()
-            .fold(String::new(), |acc, s| acc + s);
+            .fold(String::new(), |acc, s| acc + "\n" + s);
 
         let sph = self.fluid_system.to_serialized_form();
 

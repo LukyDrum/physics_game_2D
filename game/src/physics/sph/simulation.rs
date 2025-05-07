@@ -12,7 +12,7 @@ use crate::{physics::sph::Particle, utility::LookUp};
 const PRESSURE_BASE: f32 = 100_000.0;
 const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
 
-const PARTICLE_COLLIDER_RADIUS: f32 = 2.0;
+const PARTICLE_COLLIDER_RADIUS: f32 = 5.0;
 
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {

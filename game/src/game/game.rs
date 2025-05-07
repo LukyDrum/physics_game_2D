@@ -92,9 +92,7 @@ impl Game {
         ));
 
         let mut ingame_ui = InGameUI::default();
-        ingame_ui
-            .body_maker
-            .set_max_size(f_width.min(f_height) * 0.8);
+        ingame_ui.body_maker.set_max_size(f_width.min(f_height));
 
         let mut game = Game {
             game_config: GameConfig::default(),

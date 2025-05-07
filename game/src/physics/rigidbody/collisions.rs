@@ -1,10 +1,4 @@
-use macroquad::shapes::draw_circle;
-
-use crate::{
-    math::{v2, Vector2},
-    rendering::Color,
-    utility::AsMq,
-};
+use crate::math::Vector2;
 
 use super::{circle::CircleInner, polygon::PolygonInner, BodyCollisionData};
 

@@ -12,6 +12,8 @@ use crate::{physics::sph::Particle, utility::LookUp};
 const PRESSURE_BASE: f32 = 100_000.0;
 const BODY_COLLISION_FORCE_BASE: f32 = 10_000.0;
 
+const PARTICLE_COLLIDER_RADIUS: f32 = 2.0;
+
 fn kernel(dist: f32, radius: f32) -> f32 {
     if dist > radius {
         return 0.0;
@@ -194,28 +196,28 @@ impl Sph {
                 .particles
                 .par_iter_mut()
                 .filter_map(|p| {
-                    if body.contains_point(p.position) {
-                        // Use particles position before moving to resolve collisions.
-                        // The actual point of contact should be very close to the middle between those
-                        // 2 positions.
-                        let collision_info =
-                            body.point_collision_data(p.position - p.velocity * delta_time * 0.5);
+                    let circle = RigidBody::new_circle(
+                        p.position,
+                        PARTICLE_COLLIDER_RADIUS,
+                        BodyBehaviour::Dynamic,
+                    );
+
+                    if let Some(collision_data) = RigidBody::check_collision(body, &circle) {
                         let elasticity = 0.3;
-                        let impulse =
-                            -(1.0 + elasticity) * p.velocity.dot(collision_info.surface_normal);
+                        let impulse = -(1.0 + elasticity) * p.velocity.dot(collision_data.normal);
                         let impulse = impulse / (1.0 / p.mass() + 1.0 / body.state().mass());
 
-                        p.velocity += collision_info.surface_normal * (impulse / p.mass());
-                        p.position = collision_info.surface_point;
+                        p.velocity += collision_data.normal * (impulse / p.mass());
+                        p.position += collision_data.normal * collision_data.penetration;
 
                         // Calculate force on body only for non-static bodies
                         if body.state().behaviour != BodyBehaviour::Static {
                             let mut force_accumulation = BodyForceAccumulation::empty();
-                            let radius = collision_info.surface_point - body.state().position;
+                            let radius = collision_data.collision_points[0] - body.state().position;
                             let magnitude = -impulse
                                 * p.body_collision_force_multiplier
                                 * self.body_collision_base;
-                            let force = collision_info.surface_normal * magnitude;
+                            let force = collision_data.normal * magnitude;
                             force_accumulation.add_force_at_radius(force, radius);
 
                             Some(force_accumulation)

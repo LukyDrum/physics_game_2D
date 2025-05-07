@@ -121,11 +121,10 @@ macro_rules! ui_edit_numbers {
                     .label_font_size(FONT_SIZE_SMALL)
                     .input_font_size(FONT_SIZE_SMALL)
                     .ui(&mut root_ui(), &mut input);
-                
+
                 if input.is_empty() {
                     *self = 0 as $type;
-                }
-                else if let Ok(parsed) = input.parse::<$type>() {
+                } else if let Ok(parsed) = input.parse::<$type>() {
                     *self = parsed;
                 }
 

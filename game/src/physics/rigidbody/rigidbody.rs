@@ -2,7 +2,7 @@ use crate::math::Vector2;
 
 use super::{
     circle::CircleInner,
-    collisions::{circle_circle_collision, polygon_polygon_collision},
+    collisions::{circle_circle_collision, polygon_circle_collision, polygon_polygon_collision},
     polygon::PolygonInner,
     BodyBehaviour, BodyCollisionData, BodyState, PointCollisionData,
 };
@@ -22,9 +22,16 @@ impl RigidBody {
             // Circle - Circle
             (Self::Circle(first), Self::Circle(second)) => circle_circle_collision(first, second),
             // Polygon - Circle / Circle - Polygon
-            (Self::Polygon(polygon), Self::Circle(circle))
-            | (Self::Circle(circle), Self::Polygon(polygon)) => {
-                todo!()
+            (Self::Polygon(polygon), Self::Circle(circle)) => {
+                polygon_circle_collision(polygon, circle)
+            }
+            (Self::Circle(circle), Self::Polygon(polygon)) => {
+                let mut data = polygon_circle_collision(polygon, circle);
+                // Flip the sign of the normal
+                if let Some(data) = &mut data {
+                    data.normal *= -1.0;
+                }
+                data
             }
         }
     }

@@ -47,7 +47,7 @@ impl PolygonInner {
 
     /// Returns a normal vector of the provided line that is pointing away from the center of this
     /// polygon.
-    fn lines_normal_pointing_outside(&self, line: &Line) -> Vector2<f32> {
+    pub(super) fn lines_normal_pointing_outside(&self, line: &Line) -> Vector2<f32> {
         let normal = line.normal();
         let line_to_pos = self.state.position - line.middle();
         // Make the normal point away from this body - away from this center/position

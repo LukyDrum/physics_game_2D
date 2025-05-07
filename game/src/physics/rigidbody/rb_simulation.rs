@@ -175,7 +175,7 @@ impl RbSimulator {
         }
 
         index_pairs
-            .into_par_iter()
+            .into_iter()
             .filter_map(|(index_a, index_b)| {
                 // Skip over pairs where both bodies are `Static`
                 if bodies[index_a].state().behaviour == BodyBehaviour::Static

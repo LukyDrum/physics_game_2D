@@ -1,4 +1,10 @@
-use crate::math::Vector2;
+use macroquad::shapes::draw_circle;
+
+use crate::{
+    math::{v2, Vector2},
+    rendering::Color,
+    utility::AsMq,
+};
 
 use super::{circle::CircleInner, polygon::PolygonInner, BodyCollisionData};
 
@@ -26,7 +32,7 @@ pub fn polygon_polygon_collision(
     let mut min_penetration = f32::MAX;
     let mut min_axis = Vector2::zero();
 
-    // Test projection axes of this body
+    // Test projection axes of this body - SAT
     for axis in this_projection_axes {
         let proj_a = this.project_onto_axis(axis);
         let proj_b = other.project_onto_axis(axis);
@@ -116,15 +122,53 @@ pub fn circle_circle_collision(
 
     // Collision normal is the vector from this center to other center
     let normal = this_to_other.normalized();
-    // The collision point will be the point where they first touched, that must surely be
-    // this.radius away along the normal
-    let collision_point = this_position + normal * this.radius;
 
     // Penetration depth whill be given using the following equality:
     // dist = this.radius + other.radius - penetration
     // => penetration = this.radius + other.radius - dist
     let dist = this_to_other.length();
     let penetration = this.radius + other.radius - dist;
+
+    // The collision point will be the middle point between the edges of the circles along the
+    // normal
+    let collision_point = this_position + normal * (this.radius - penetration * 0.5);
+
+    Some(BodyCollisionData {
+        normal,
+        penetration,
+        collision_points: vec![collision_point],
+    })
+}
+
+pub fn polygon_circle_collision(
+    polygon: &PolygonInner,
+    circle: &CircleInner,
+) -> Option<BodyCollisionData> {
+    let circle_center = circle.state.position;
+
+    let (mut min_distance_sq, mut min_point, mut normal) =
+        (f32::MAX, Vector2::zero(), Vector2::zero());
+
+    for line in &polygon.global_lines {
+        let point = line.closest_point(circle_center);
+        let dist_sq = (point - circle_center).length_squared();
+
+        if dist_sq < min_distance_sq {
+            min_distance_sq = dist_sq;
+            min_point = point;
+            normal = polygon.lines_normal_pointing_outside(line);
+        }
+    }
+
+    if min_distance_sq > circle.radius.powi(2) {
+        return None;
+    }
+
+    let collision_point = min_point;
+
+    // Penetration
+    let point_to_center_dist = (collision_point - circle_center).length();
+    let penetration = circle.radius - point_to_center_dist;
 
     Some(BodyCollisionData {
         normal,

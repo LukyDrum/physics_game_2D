@@ -1,5 +1,9 @@
 use std::ops::{Add, AddAssign, Mul};
 
+use num_traits::Num;
+
+use super::Vector2;
+
 #[derive(Clone, PartialEq, Debug)]
 pub struct Matrix<T, const R: usize, const C: usize>
 where
@@ -24,6 +28,24 @@ where
 
     pub fn get(&self, row: usize, col: usize) -> &T {
         &self.inner[row][col]
+    }
+}
+
+impl Matrix<f32, 2, 2> {
+    pub fn rotation_matrix(radians: f32) -> Self {
+        let sin = radians.sin();
+        let cos = radians.cos();
+
+        Matrix::new([[cos, -sin], [sin, cos]])
+    }
+}
+
+impl<T> From<Vector2<T>> for Matrix<T, 2, 1>
+where
+    T: Copy + Clone + Num + Default,
+{
+    fn from(vector: Vector2<T>) -> Self {
+        Matrix::new([[vector.x], [vector.y]])
     }
 }
 

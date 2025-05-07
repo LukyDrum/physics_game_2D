@@ -246,12 +246,9 @@ macro_rules! Rectangle {
 pub(crate) use Rectangle;
 
 fn local_point_to_global(state: &BodyState, point: Vector2<f32>) -> Vector2<f32> {
-    let sin = state.orientation.sin();
-    let cos = state.orientation.cos();
-
-    let rot_mat = Matrix::new([[cos, -sin], [sin, cos]]);
-    let local = Matrix::new([[point.x], [point.y]]);
-    let position = Matrix::new([[state.position.x], [state.position.y]]);
+    let rot_mat = Matrix::rotation_matrix(state.orientation);
+    let local = Matrix::from(point);
+    let position = Matrix::from(state.position);
 
     let global = rot_mat * local + position;
     let x = *global.get(0, 0);

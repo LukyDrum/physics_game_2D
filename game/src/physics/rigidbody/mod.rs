@@ -165,11 +165,6 @@ impl BodyState {
     }
 }
 
-pub struct PointCollisionData {
-    pub surface_point: Vector2<f32>,
-    pub surface_normal: Vector2<f32>,
-}
-
 #[derive(Debug)]
 pub struct PointsProjection {
     min: f32,

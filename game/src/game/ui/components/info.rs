@@ -1,9 +1,6 @@
-use std::fmt::Display;
-
 use macroquad::{
     text::{draw_text, TextDimensions},
     time::get_fps,
-    ui::{root_ui, widgets::Slider},
 };
 
 use crate::{

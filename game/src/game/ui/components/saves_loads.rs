@@ -4,10 +4,9 @@ use std::sync::{Arc, RwLock};
 use std::thread::{self, JoinHandle};
 use std::time::Duration;
 
-use chrono::offset;
 use macroquad::text::draw_text;
+use macroquad::ui::root_ui;
 use macroquad::ui::widgets::{Button, InputText};
-use macroquad::ui::{root_ui, Skin};
 
 use crate::game::ui::RED_BUTTON_SKIN;
 use crate::game::{save_load, FONT_SIZE_MEDIUM};

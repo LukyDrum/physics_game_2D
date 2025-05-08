@@ -1,10 +1,10 @@
-use core::{f32, panic};
+use core::f32;
 use std::{
     collections::LinkedList,
     ops::{Add, Mul},
 };
 
-use rayon::iter::{IntoParallelIterator, IntoParallelRefMutIterator, ParallelIterator};
+use rayon::iter::{IntoParallelRefMutIterator, ParallelIterator};
 use serde_derive::{Deserialize, Serialize};
 
 use super::{BodyBehaviour, BodyCollisionData, RigidBody};

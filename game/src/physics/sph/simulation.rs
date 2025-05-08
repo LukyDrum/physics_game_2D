@@ -188,7 +188,6 @@ impl Sph {
     fn resolve_collisions(
         &mut self,
         bodies: &Vec<RigidBody>,
-        delta_time: f32,
     ) -> Vec<(usize, BodyForceAccumulation)> {
         let mut body_forces = Vec::with_capacity(bodies.len());
         for (index, body) in bodies.iter().enumerate() {
@@ -279,7 +278,7 @@ impl Sph {
         });
 
         // Do collision detection and resolution
-        self.resolve_collisions(bodies, dt)
+        self.resolve_collisions(bodies)
     }
 
     pub fn get_particles_around_position(

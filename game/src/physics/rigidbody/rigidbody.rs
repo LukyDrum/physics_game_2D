@@ -4,7 +4,7 @@ use super::{
     circle::CircleInner,
     collisions::{circle_circle_collision, polygon_circle_collision, polygon_polygon_collision},
     polygon::PolygonInner,
-    BodyBehaviour, BodyCollisionData, BodyState, PointCollisionData,
+    BodyBehaviour, BodyCollisionData, BodyState,
 };
 
 pub enum RigidBody {
@@ -112,13 +112,6 @@ impl RigidBody {
         match self {
             Self::Polygon(inner) => inner.center_of_mass(),
             Self::Circle(inner) => inner.state.position,
-        }
-    }
-
-    pub fn point_collision_data(&self, point: Vector2<f32>) -> PointCollisionData {
-        match self {
-            Self::Polygon(inner) => inner.point_collision_data(point),
-            Self::Circle(inner) => inner.point_collision_data(point),
         }
     }
 }

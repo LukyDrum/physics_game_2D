@@ -4,7 +4,7 @@ use std::collections::LinkedList;
 use crate::math::Vector2;
 use crate::shapes::{triangulate_convex_polygon, Line, Triangulation};
 
-use super::{local_point_to_global, BodyState, PointCollisionData, PointsProjection};
+use super::{local_point_to_global, BodyState, PointsProjection};
 
 pub struct PolygonInner {
     pub(super) state: BodyState,
@@ -55,28 +55,6 @@ impl PolygonInner {
             normal
         } else {
             normal * -1.0
-        }
-    }
-
-    pub(super) fn point_collision_data(&self, point: Vector2<f32>) -> PointCollisionData {
-        let mut closest_line = &self.global_lines[0];
-        let mut surface_point = closest_line.closest_point(point);
-        let mut dist_sq = (surface_point - point).length_squared();
-
-        for i in 1..self.global_lines.len() {
-            let cur_line = &self.global_lines[i];
-            let cur_surface_point = cur_line.closest_point(point);
-            let cur_dist_sq = (cur_surface_point - point).length_squared();
-            if cur_dist_sq < dist_sq {
-                closest_line = cur_line;
-                surface_point = cur_surface_point;
-                dist_sq = cur_dist_sq;
-            }
-        }
-
-        PointCollisionData {
-            surface_point,
-            surface_normal: self.lines_normal_pointing_outside(closest_line),
         }
     }
 

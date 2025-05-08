@@ -1,7 +1,6 @@
 use macroquad::text::draw_text;
 
 const TOP_LABEL_GAP: f32 = 15.0;
-pub static COLOR_PICKER_HEIGHT: f32 = FONT_SIZE_MEDIUM + TOP_LABEL_GAP + 3.0 * SLIDER_HEIGHT;
 
 use crate::{
     game::{UIComponent, FONT_SIZE_MEDIUM},

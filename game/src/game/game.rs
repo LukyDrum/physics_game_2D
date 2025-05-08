@@ -7,7 +7,7 @@ use macroquad::{
     },
     shapes::draw_circle,
     text::draw_text,
-    window::{clear_background, set_fullscreen},
+    window::clear_background,
 };
 
 use crate::{
@@ -87,13 +87,6 @@ impl Game {
             state.static_friction = SharedProperty::Pass;
             state.dynamic_friction = SharedProperty::Pass;
         }
-
-        // Test ball
-        bodies.push(RigidBody::new_circle(
-            v2!(f_width * 0.5, f_height * 0.5),
-            25.0,
-            BodyBehaviour::Dynamic,
-        ));
 
         let mut ingame_ui = InGameUI::default();
         ingame_ui.body_maker.set_max_size(f_width.min(f_height));

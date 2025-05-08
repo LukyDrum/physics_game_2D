@@ -23,6 +23,7 @@ fn window_conf() -> Conf {
         window_width: WIDTH as i32,
         window_height: HEIGHT as i32,
         window_resizable: true,
+        fullscreen: true,
         ..Default::default()
     }
 }
@@ -50,7 +51,7 @@ async fn main() {
 
     let mut game = Game::new(500, 500);
 
-    loop {
+    while !game.quit_flag {
         game.update();
 
         next_frame().await

@@ -1,4 +1,5 @@
 {
+  "save_name": "_Long_Shot",
   "name": "Long Shot",
   "description": "At each point in the fluid the pressure there is based on the height of the fluid above it.\nWhen you open one of the lids at the side the water will shoot out.\nTry guessing where each lid will shoot.\nAfter you've made your guess try it out.\n\nHint: Restart the level after each try to keep the height of the fluid the same for each lid.",
   "width": 500.0,

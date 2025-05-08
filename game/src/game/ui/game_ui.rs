@@ -12,13 +12,15 @@ use crate::{
 };
 
 use super::{
-    red_button_skin, BodyMaker, FluidSelector, InfoPanel, SavesLoads, UIComponent, UIEdit,
-    RED_BUTTON_SKIN,
+    red_button_skin, BodyMaker, FluidSelector, InfoPanel, QuickMenu, SavesLoads, UIComponent,
+    UIEdit, RED_BUTTON_SKIN,
 };
 
 pub const FONT_SIZE_LARGE: f32 = 36.0;
 pub const FONT_SIZE_MEDIUM: f32 = 26.0;
 pub const FONT_SIZE_SMALL: f32 = 16.0;
+
+pub(super) const HEADER_TOOL_GAP: f32 = 30.0;
 
 const TOOL_BUTTON_WIDTH: f32 = 110.0;
 const TOOL_BUTTON_HEIGHT: f32 = 25.0;
@@ -41,6 +43,7 @@ pub struct InGameUI {
     pub info_panel: InfoPanel,
     pub save_loads: SavesLoads,
     pub body_maker: BodyMaker,
+    pub quick_menu: QuickMenu,
 
     pub selected_tool: Tool,
 }
@@ -54,6 +57,7 @@ impl Default for InGameUI {
             info_panel: InfoPanel::default(),
             save_loads: SavesLoads::default(),
             body_maker: BodyMaker::default(),
+            quick_menu: QuickMenu::default(),
 
             selected_tool: Tool::Info,
         }
@@ -69,7 +73,7 @@ impl InGameUI {
             FONT_SIZE_LARGE,
             Color::rgb(0, 0, 0).as_mq(),
         );
-        let offset = offset + v2!(0.0, 50.0);
+        let offset = offset + v2!(0.0, HEADER_TOOL_GAP);
         // Scope the inner offsets
         {
             self.draw_tool_button("Info [I]", Tool::Info, offset);
@@ -85,6 +89,10 @@ impl InGameUI {
 
             let offset = offset + v2!(TOOL_BUTTON_WIDTH + TOOL_BUTTON_GAP, 0.0);
             self.draw_tool_button("Saves/Loads [L]", Tool::SaveLoads, offset);
+
+            // Draw quick menu - go back to level with header
+            let offset = offset + v2!(TOOL_BUTTON_WIDTH + 2.0 * TOOL_BUTTON_GAP, -HEADER_TOOL_GAP);
+            self.quick_menu.draw(offset);
         }
 
         let offset = offset + v2!(0.0, 50.0);

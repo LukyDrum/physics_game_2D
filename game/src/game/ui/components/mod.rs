@@ -2,6 +2,7 @@ mod body_maker;
 mod color_picker;
 mod fluid_selector;
 mod info;
+mod quick_menu;
 mod saves_loads;
 
 use std::ops::Range;
@@ -10,6 +11,7 @@ pub use body_maker::BodyMaker;
 pub use color_picker::ColorPicker;
 pub use fluid_selector::{FluidSelector, FluidSelectorAction};
 pub use info::{EntityInfo, InfoPanel};
+pub use quick_menu::{QuickAction, QuickMenu};
 pub use saves_loads::{SaveLoadAction, SavesLoads};
 
 use macroquad::ui::{root_ui, widgets::Slider};

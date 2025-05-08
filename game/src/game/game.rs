@@ -7,21 +7,21 @@ use macroquad::{
     },
     shapes::draw_circle,
     text::draw_text,
-    window::clear_background,
+    window::{clear_background, set_fullscreen},
 };
 
 use crate::{
     math::{v2, Vector2},
     physics::rigidbody::{BodyBehaviour, RbSimulator, Rectangle, RigidBody, SharedProperty},
     rendering::{Color, Draw, MarchingSquaresRenderer, Renderer},
-    serialization::SerializationForm,
+    serialization::{GameSerializedForm, SerializationForm},
     utility::AsMq,
     Particle, Sph,
 };
 
 use super::{
-    config::GameConfig, save_load, EntityInfo, FluidSelectorAction, InGameUI, SaveLoadAction, Tool,
-    FONT_SIZE_LARGE, FONT_SIZE_SMALL,
+    config::GameConfig, save_load, EntityInfo, FluidSelectorAction, InGameUI, QuickAction,
+    SaveLoadAction, Tool, FONT_SIZE_LARGE, FONT_SIZE_SMALL,
 };
 
 struct DraggedBody {
@@ -31,6 +31,10 @@ struct DraggedBody {
 
 pub struct Game {
     game_config: GameConfig,
+
+    pub quit_flag: bool,
+    is_fullscreen: bool,
+    pub(crate) save_name: String,
 
     pub(crate) fluid_system: Sph,
     /// If the physics are currently being simulated or not
@@ -96,6 +100,10 @@ impl Game {
 
         let mut game = Game {
             game_config: GameConfig::default(),
+
+            quit_flag: false,
+            is_fullscreen: true,
+            save_name: "_Default".to_string(),
 
             fluid_system: sph,
             is_simulating: true,
@@ -242,12 +250,16 @@ impl Game {
 
         // Pause / Resume
         if is_key_pressed(KeyCode::Space) {
-            self.is_simulating = !self.is_simulating;
-            self.ingame_ui.info_panel.is_simulating = self.is_simulating;
+            self.toggle_pause();
         }
 
         // Set new mouse last pos
         self.mouse_position_last_frame = position;
+    }
+
+    fn toggle_pause(&mut self) {
+        self.is_simulating = !self.is_simulating;
+        self.ingame_ui.info_panel.is_simulating = self.is_simulating;
     }
 
     /// Performs a single update of the game. Should correspond to a single frame.
@@ -404,25 +416,33 @@ impl Game {
     }
 
     fn handle_save_loads(&mut self) {
-        let save_file_name = self.ingame_ui.save_loads.save_file_name.as_str();
+        let save_file_name = self.ingame_ui.save_loads.save_file_name.clone();
         match std::mem::replace(
             &mut self.ingame_ui.save_loads.action,
             SaveLoadAction::Nothing,
         ) {
             SaveLoadAction::Save if !save_file_name.is_empty() => {
-                save_load::save(self.to_serialized_form(), save_file_name)
+                save_load::save(self.to_serialized_form(), save_file_name.as_str());
+                self.save_name = save_file_name.to_string();
             }
             SaveLoadAction::Load(game_serialized_form) => {
-                let mut new_game = Game::from_serialized_form(game_serialized_form);
-
-                // Swap things that should not change
-                std::mem::swap(&mut self.ingame_ui, &mut new_game.ingame_ui);
-                std::mem::swap(&mut self.preview_body, &mut new_game.preview_body);
-
-                *self = new_game;
+                *self = self.prepared_load_game(game_serialized_form);
             }
             _ => {}
         }
+    }
+
+    fn prepared_load_game(&mut self, ser_form: GameSerializedForm) -> Game {
+        let mut new_game = Game::from_serialized_form(ser_form);
+
+        // Swap things that should not change
+        std::mem::swap(&mut self.ingame_ui, &mut new_game.ingame_ui);
+        std::mem::swap(&mut self.preview_body, &mut new_game.preview_body);
+
+        new_game.is_fullscreen = self.is_fullscreen;
+        new_game.is_simulating = self.is_simulating;
+
+        new_game
     }
 
     fn handle_tool_change_keys(&mut self) {
@@ -443,11 +463,25 @@ impl Game {
         }
     }
 
+    fn handle_quick_menu_actions(&mut self) {
+        match self.ingame_ui.quick_menu.action {
+            QuickAction::Quit => self.quit_flag = true,
+            QuickAction::Restart => {
+                *self = self.prepared_load_game(save_load::load_save(self.save_name.as_str()));
+            }
+            QuickAction::TogglePause => self.toggle_pause(),
+            QuickAction::Nothing => {}
+        }
+    }
+
     pub fn update(&mut self) {
         self.handle_input();
         self.physics_update();
         self.draw();
         self.draw_ui();
+
+        // Handle UI events
+        self.handle_quick_menu_actions();
         self.handle_save_loads();
         self.handle_tool_change_keys();
     }

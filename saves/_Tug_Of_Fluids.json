@@ -1,4 +1,5 @@
 {
+  "save_name": "_Tug_Of_Fluids",
   "name": "Tug Of Fluids",
   "description": "Fluids exert forces onto objects they touch.\nThe box in the middle is free to move.\nTry pouring fluids on both sides of the box and watch as they push the as to remain both the same height.\nWhat would happen if one of the fluids was denser than the other?\nThink about it and then experiment!",
   "width": 500.0,

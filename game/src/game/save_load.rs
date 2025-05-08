@@ -34,6 +34,7 @@ pub fn list_saves() -> LinkedList<String> {
 
 pub fn load_save(save_name: &str) -> GameSerializedForm {
     let path = Path::new(ROOT).join(format!("saves/{save_name}.json"));
+
     let mut file = File::open(path).expect("Load failed: failed to open file.");
 
     let mut json = String::new();

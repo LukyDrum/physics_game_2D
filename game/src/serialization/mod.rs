@@ -20,6 +20,7 @@ pub trait SerializationForm {
 
 #[derive(Serialize, Deserialize)]
 pub struct GameSerializedForm {
+    pub save_name: String,
     pub name: String,
     pub description: String,
     pub width: f32,
@@ -56,6 +57,7 @@ impl SerializationForm for Game {
             .collect();
 
         GameSerializedForm {
+            save_name: self.save_name.clone(),
             name,
             description,
             width,
@@ -67,6 +69,7 @@ impl SerializationForm for Game {
 
     fn from_serialized_form(serialized_form: Self::SerializedForm) -> Self::Original {
         let GameSerializedForm {
+            save_name,
             name,
             description,
             width,
@@ -87,6 +90,7 @@ impl SerializationForm for Game {
         game.bodies = bodies;
         game.name = name;
         game.set_description(description);
+        game.save_name = save_name;
 
         game
     }

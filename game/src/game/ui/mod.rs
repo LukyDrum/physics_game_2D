@@ -9,7 +9,7 @@ use macroquad::{
     text::draw_text,
     ui::{
         root_ui,
-        widgets::{ComboBox, InputText, Label},
+        widgets::{Button, ComboBox, InputText, Label},
         Skin, Style,
     },
 };
@@ -196,5 +196,27 @@ impl UIEdit for &str {
         );
 
         v2!(0.0, FONT_SIZE_SMALL + 5.0)
+    }
+}
+
+impl<F> UIEdit for F
+where
+    F: Fn() -> (),
+{
+    fn draw_edit(
+        &mut self,
+        position: Vector2<f32>,
+        input_size: Vector2<f32>,
+        label: &str,
+    ) -> Vector2<f32> {
+        if Button::new(label)
+            .size(input_size.as_mq())
+            .position(position.as_mq())
+            .ui(&mut root_ui())
+        {
+            self();
+        }
+
+        input_size * 1.2
     }
 }

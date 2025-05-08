@@ -1,4 +1,5 @@
 {
+  "save_name": "_Archimedes_Law",
   "name": "Archimedes Law",
   "description": "\"The volume of water displaced by a submerged object is proportional to the volume of that object.\"\nHow would you displace an amount of water to fill the hole in the bottom?\n\nNote: Current implementation of the physics engine displaces less fluid than it should.",
   "width": 500.0,

@@ -28,7 +28,7 @@ fn prettify_ident(ident: &Ident) -> String {
     string
 }
 
-#[proc_macro_derive(UIEditable, attributes(display_as, gap_after))]
+#[proc_macro_derive(UIEditable, attributes(display_as, gap_after, skip))]
 pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
     let input = parse_macro_input!(tokens as DeriveInput);
     let name = input.ident;
@@ -37,6 +37,7 @@ pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
             Visibility::Public(_) => {
                 let mut display_as = None;
                 let mut gap_after = None;
+                let mut skip = false;
                 for attr in field.attrs {
                     if attr.path().is_ident("display_as") {
                         if let Ok(meta) = attr.meta.require_list() {
@@ -48,10 +49,11 @@ pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
                             gap_after = Some(meta.tokens.clone());
                         }
                     }
+                    skip = skip || attr.path().is_ident("skip");
                 }
 
                 if let Some(ident) = field.ident {
-                    Some((ident, display_as, gap_after))
+                    Some((ident, display_as, gap_after, skip))
                 } else {
                     None
                 }
@@ -76,7 +78,11 @@ pub fn derive_ui_edit(tokens: TokenStream) -> TokenStream {
             Vector2::new(0.0, 0.0)
         };
     };
-    for (ident, display_as, gap_after) in fields {
+    for (ident, display_as, gap_after, skip) in fields {
+        if skip {
+            continue;
+        }
+
         let label = if let Some(display_as) = display_as {
             display_as.to_string().replace("\"", "")
         } else {

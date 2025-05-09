@@ -33,15 +33,13 @@ pub struct Game {
     game_config: GameConfig,
 
     pub quit_flag: bool,
-    is_fullscreen: bool,
     pub(crate) save_name: String,
 
     pub(crate) fluid_system: Sph,
     /// If the physics are currently being simulated or not
     is_simulating: bool,
 
-    rb_simulator: RbSimulator,
-    pub(crate) bodies: Vec<RigidBody>,
+    pub(crate) rb_simulator: RbSimulator,
 
     // GUI things
     gameview_offset: Vector2<f32>,
@@ -91,18 +89,19 @@ impl Game {
         let mut ingame_ui = InGameUI::default();
         ingame_ui.body_maker.set_max_size(f_width.min(f_height));
 
+        let mut rb_simulator = RbSimulator::new(v2!(0.0, 981.0));
+        rb_simulator.bodies = bodies;
+
         let mut game = Game {
             game_config: GameConfig::default(),
 
             quit_flag: false,
-            is_fullscreen: true,
             save_name: "_Default".to_string(),
 
             fluid_system: sph,
             is_simulating: true,
 
-            rb_simulator: RbSimulator::new(v2!(0.0, 981.0)),
-            bodies,
+            rb_simulator,
 
             gameview_offset: Vector2::zero(),
             gameview_width: f_width,
@@ -201,7 +200,7 @@ impl Game {
                 }
                 // Move dragged body
                 if let Some(DraggedBody { index, drag_offset }) = self.dragged_body {
-                    let state = self.bodies[index].state_mut();
+                    let state = self.rb_simulator.bodies[index].state_mut();
                     match state.behaviour {
                         BodyBehaviour::Dynamic => {
                             let pos_diff = position - state.position - drag_offset;
@@ -209,7 +208,7 @@ impl Game {
                         }
                         BodyBehaviour::Static => {
                             let new_pos = state.position + mouse_diff;
-                            self.bodies[index].set_position(new_pos);
+                            self.rb_simulator.bodies[index].set_position(new_pos);
                         }
                     }
                 }
@@ -222,7 +221,7 @@ impl Game {
                     // Set color alpha to 1.0 - it was lowered for preview
                     body.state_mut().color.a = 1.0;
 
-                    self.bodies.push(body);
+                    self.rb_simulator.bodies.push(body);
                 }
                 // Delete bodies with middle click
                 else if is_mouse_button_pressed(MouseButton::Middle) {
@@ -231,7 +230,7 @@ impl Game {
                     {
                         // Do not remove the first 4 bodies - those are walls
                         if index >= 4 {
-                            self.bodies.swap_remove(index);
+                            self.rb_simulator.bodies.swap_remove(index);
                         }
                     }
                 } else if self.mouse_in_gameview {
@@ -262,15 +261,15 @@ impl Game {
 
             for _ in 0..self.game_config.sub_steps {
                 let fluid_forces_on_bodies =
-                    self.fluid_system.step(&self.bodies, &self.game_config, dt);
+                    self.fluid_system
+                        .step(&self.rb_simulator.bodies, &self.game_config, dt);
                 for (index, force_accumulation) in fluid_forces_on_bodies {
-                    let state = self.bodies[index].state_mut();
+                    let state = self.rb_simulator.bodies[index].state_mut();
                     state.add_force_accumulation(force_accumulation);
                     state.apply_accumulated_forces(dt);
                 }
 
-                self.rb_simulator
-                    .step(&mut self.bodies, &self.game_config, dt);
+                self.rb_simulator.step(&self.game_config, dt);
             }
         }
 
@@ -279,7 +278,7 @@ impl Game {
 
         // Pass infos to InGameUI
         self.ingame_ui.info_panel.particle_count = self.fluid_system.particle_count();
-        self.ingame_ui.info_panel.body_count = self.bodies.len();
+        self.ingame_ui.info_panel.body_count = self.rb_simulator.bodies.len();
 
         // Find under mouse entity
         let mouse_pos = {
@@ -290,7 +289,7 @@ impl Game {
         let mut entity_info = EntityInfo::Nothing {
             position: mouse_pos,
         };
-        for (index, body) in self.bodies.iter().enumerate() {
+        for (index, body) in self.rb_simulator.bodies.iter().enumerate() {
             if body.contains_point(mouse_pos) {
                 entity_info = EntityInfo::Body {
                     index,
@@ -325,7 +324,7 @@ impl Game {
     pub fn draw(&self) {
         clear_background(Color::rgb(120, 120, 120).as_mq());
         self.renderer.draw();
-        for body in &self.bodies {
+        for body in &self.rb_simulator.bodies {
             body.draw();
         }
 
@@ -431,9 +430,6 @@ impl Game {
         // Swap things that should not change
         std::mem::swap(&mut self.ingame_ui, &mut new_game.ingame_ui);
         std::mem::swap(&mut self.preview_body, &mut new_game.preview_body);
-
-        new_game.is_fullscreen = self.is_fullscreen;
-        new_game.is_simulating = self.is_simulating;
 
         new_game
     }

@@ -51,6 +51,7 @@ impl SerializationForm for Game {
         let sph = self.fluid_system.to_serialized_form();
 
         let bodies = self
+            .rb_simulator
             .bodies
             .iter()
             .map(|body| body.to_serialized_form())
@@ -87,7 +88,7 @@ impl SerializationForm for Game {
 
         let mut game = Game::new(width as usize, height as usize);
         game.fluid_system = sph;
-        game.bodies = bodies;
+        game.rb_simulator.bodies = bodies;
         game.name = name;
         game.set_description(description);
         game.save_name = save_name;

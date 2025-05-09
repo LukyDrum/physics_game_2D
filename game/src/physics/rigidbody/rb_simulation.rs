@@ -96,6 +96,8 @@ impl SharedPropertySelection {
 }
 
 pub struct RbSimulator {
+    pub bodies: Vec<RigidBody>,
+
     pub gravity: Vector2<f32>,
     pub elasticity_selection: SharedPropertySelection,
     pub friction_selection: SharedPropertySelection,
@@ -110,6 +112,7 @@ impl RbSimulator {
 
     pub fn new(gravity: Vector2<f32>) -> Self {
         RbSimulator {
+            bodies: Vec::new(),
             gravity,
             elasticity_selection: SharedPropertySelection::Average,
             friction_selection: SharedPropertySelection::Average,
@@ -119,7 +122,7 @@ impl RbSimulator {
         }
     }
 
-    pub fn step(&mut self, bodies: &mut Vec<RigidBody>, config: &GameConfig, dt: f32) {
+    pub fn step(&mut self, config: &GameConfig, dt: f32) {
         // Set time step
         self.current_time_step = dt;
         // Set values from config
@@ -129,28 +132,28 @@ impl RbSimulator {
         self.iterations = config.rb_config.iterations.min(1);
 
         // Apply gravity force
-        self.apply_gravity(bodies, config.time_step);
+        self.apply_gravity(config.time_step);
 
-        let collisions = Self::check_collisions(bodies);
+        let collisions = self.check_collisions();
         // Iteratively resolve collisions
         for _ in 0..self.iterations {
-            self.resolve_collisions(bodies, &collisions);
+            self.resolve_collisions(&collisions);
         }
 
-        Self::move_bodies_by_velocity(bodies, config.time_step);
-        Self::update_inner_values(bodies);
+        self.move_bodies_by_velocity(config.time_step);
+        self.update_inner_values();
     }
 
     /// Update the inner stored values of each body, such as global vertices or lines.
-    fn update_inner_values(bodies: &mut Vec<RigidBody>) {
-        bodies
+    fn update_inner_values(&mut self) {
+        self.bodies
             .par_iter_mut()
             .for_each(|body| body.update_inner_values());
     }
 
     /// Applies gravity force to bodies with behaviour set to `BodyBehaviour::Dynamic`.
-    fn apply_gravity(&self, bodies: &mut Vec<RigidBody>, time_step: f32) {
-        bodies
+    fn apply_gravity(&mut self, time_step: f32) {
+        self.bodies
             .par_iter_mut()
             .filter(|body| body.state().behaviour == BodyBehaviour::Dynamic)
             .for_each(|body| {
@@ -161,17 +164,17 @@ impl RbSimulator {
             });
     }
 
-    fn move_bodies_by_velocity(bodies: &mut Vec<RigidBody>, time_step: f32) {
-        bodies
+    fn move_bodies_by_velocity(&mut self, time_step: f32) {
+        self.bodies
             .par_iter_mut()
             .for_each(|body| body.state_mut().move_by_velocity(time_step));
     }
 
     /// Checks for possible collisions and returns a `LinkedList` of `BodyBodyCollision` where each
     /// record represents a collison between 2 bodies.
-    fn check_collisions(bodies: &Vec<RigidBody>) -> LinkedList<BodyBodyCollision> {
+    fn check_collisions(&self) -> LinkedList<BodyBodyCollision> {
         let mut index_pairs = LinkedList::new();
-        for i in 1..bodies.len() {
+        for i in 1..self.bodies.len() {
             for j in 0..i {
                 index_pairs.push_back((i, j));
             }
@@ -181,12 +184,12 @@ impl RbSimulator {
             .into_iter()
             .filter_map(|(index_a, index_b)| {
                 // Skip over pairs where both bodies are `Static`
-                if bodies[index_a].state().behaviour == BodyBehaviour::Static
-                    && bodies[index_b].state().behaviour == BodyBehaviour::Static
+                if self.bodies[index_a].state().behaviour == BodyBehaviour::Static
+                    && self.bodies[index_b].state().behaviour == BodyBehaviour::Static
                 {
                     None
                 } else if let Some(collision_data) =
-                    RigidBody::check_collision(&bodies[index_a], &bodies[index_b])
+                    RigidBody::check_collision(&self.bodies[index_a], &self.bodies[index_b])
                 {
                     Some(BodyBodyCollision {
                         index_a,
@@ -201,11 +204,8 @@ impl RbSimulator {
     }
 
     /// Applies appropriate forces to bodies in order to resolve all collisions.
-    fn resolve_collisions(
-        &self,
-        bodies: &mut Vec<RigidBody>,
-        collisions: &LinkedList<BodyBodyCollision>,
-    ) {
+    fn resolve_collisions(&mut self, collisions: &LinkedList<BodyBodyCollision>) {
+        let bodies = &mut self.bodies;
         for coll in collisions {
             let BodyBodyCollision {
                 index_a,

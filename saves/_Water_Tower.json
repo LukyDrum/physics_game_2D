@@ -1,7 +1,7 @@
 {
   "save_name": "_Water_Tower",
   "name": "Water Tower",
-  "description": "A common use of the communicating vessels effect is in city water towers.You have your water tower prebuild and filled with water.By deleting the white seperator you will let the water flow freely.Try to build a pipe system that will ensure all the boxes on the  right getting filled.Hint: Use the \"Is static?\" flag to make bodies stay in place.",
+  "description": "A common use of the communicating vessels effect is in city water towers.\nYou have your water tower prebuild and filled with water.\nBy deleting the white seperator you will let the water flow freely.\nTry to build a pipe system that will ensure all the boxes on the right getting filled.\nHint: Use the \"Is static?\" flag to make bodies stay in place.",
   "width": 500.0,
   "height": 500.0,
   "rb": {

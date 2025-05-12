@@ -152,7 +152,7 @@ impl UIComponent for BodyMaker {
             "Elasticity",
             SLIDER_LENGTH,
             &mut self.elasticity,
-            0.0..1.0,
+            0.05..0.95,
         );
 
         let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
@@ -161,7 +161,7 @@ impl UIComponent for BodyMaker {
             "Static friction",
             SLIDER_LENGTH,
             &mut self.static_friction,
-            0.0..1.0,
+            0.05..0.95,
         );
 
         let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
@@ -170,7 +170,7 @@ impl UIComponent for BodyMaker {
             "Dynamic friction",
             SLIDER_LENGTH,
             &mut self.dynamic_friction,
-            0.0..1.0,
+            0.05..0.95,
         );
 
         let old_color = self.color_picker.color();

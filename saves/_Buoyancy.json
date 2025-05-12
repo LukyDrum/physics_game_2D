@@ -1,7 +1,7 @@
 {
   "save_name": "_Buoyancy",
   "name": "Buoyancy",
-  "description": "Bodies can float in fluids thanks to buoyancy.That is the principle that enables ships to float.Try experimenting with the mass and dimensions of bodies to find out what floats and what doesn't.How would this effect change if we swapped water for some denser fluids?Think about it, then clear the fluid, put in some denser one and try it out!",
+  "description": "Bodies can float in fluids thanks to buoyancy.\nThat is the principle that enables ships to float.\nTry experimenting with the mass and dimensions of bodies to find out what floats and what doesn't.\nHow would this effect change if we swapped water for some denser fluids?\nThink about it, then clear the fluid, put in some denser one and try it out!",
   "width": 500.0,
   "height": 500.0,
   "rb": {

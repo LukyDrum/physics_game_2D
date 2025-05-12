@@ -115,7 +115,7 @@ impl UIComponent for SavesLoads {
         let old_save_file_name = self.save_file_name.clone();
         InputText::new(42)
             .position(offset_input.as_mq())
-            .size(v2!(150.0, 25.0).as_mq())
+            .size(v2!(200.0, 25.0).as_mq())
             .ui(&mut root_ui(), &mut self.save_file_name);
         // Do not allow names starting with '_'
         self.save_file_name = self.save_file_name.trim_start_matches('_').to_owned();
@@ -145,7 +145,7 @@ impl UIComponent for SavesLoads {
                 };
 
                 if Button::new(display_name)
-                    .size(v2!(150.0, 25.0).as_mq())
+                    .size(v2!(200.0, 25.0).as_mq())
                     .position(offset.as_mq())
                     .ui(&mut root_ui())
                 {
@@ -160,7 +160,7 @@ impl UIComponent for SavesLoads {
             root_ui().push_skin(RED_BUTTON_SKIN.get().unwrap());
             offset = og_offset;
             for save in &*read {
-                let side_offset = offset + v2!(180.0, 0.0);
+                let side_offset = offset + v2!(240.0, 0.0);
 
                 // Do not draw delete button for pretected savefiles - containing '_'
                 if !save.starts_with('_') {

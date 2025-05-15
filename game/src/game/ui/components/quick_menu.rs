@@ -43,27 +43,26 @@ impl UIComponent for QuickMenu {
         let default_skin = root_ui().default_skin();
 
         let items = [
-                ("Restart", QuickAction::Restart, &red_skin),
-                ("Quit", QuickAction::Quit, &red_skin),
-                ("(Un)Pause", QuickAction::TogglePause, &default_skin),
+            ("Restart", QuickAction::Restart, &red_skin),
+            ("Quit", QuickAction::Quit, &red_skin),
+            ("(Un)Pause", QuickAction::TogglePause, &default_skin),
         ];
 
         for (row_index, item) in items.iter().enumerate() {
-                let position =
-                    offset + v2!(0.0, 50.0) * row_index as f32;
+            let position = offset + v2!(0.0, 50.0) * row_index as f32;
 
-                root_ui().push_skin(item.2);
-                if Button::new(item.0)
-                    .size(v2!(130.0, 30.0).as_mq())
-                    .position(position.as_mq())
-                    .ui(&mut root_ui())
-                    && self.action != item.1
-                {
-                    self.action = item.1;
-                    root_ui().pop_skin();
-                    return;
-                }
+            root_ui().push_skin(item.2);
+            if Button::new(item.0)
+                .size(v2!(130.0, 30.0).as_mq())
+                .position(position.as_mq())
+                .ui(&mut root_ui())
+                && self.action != item.1
+            {
+                self.action = item.1;
                 root_ui().pop_skin();
+                return;
+            }
+            root_ui().pop_skin();
         }
 
         self.action = QuickAction::Nothing;

@@ -134,6 +134,29 @@ where
     pub fn cross(&self, other: Vector2<T>) -> T {
         self.x * other.y - self.y * other.x
     }
+
+    pub fn clamp(&self, min: Vector2<T>, max: Vector2<T>) -> Vector2<T>
+    where
+        T: PartialOrd,
+    {
+        let x = if self.x < min.x {
+            min.x
+        } else if self.x > max.x {
+            max.x
+        } else {
+            self.x
+        };
+
+        let y = if self.y < min.y {
+            min.y
+        } else if self.y > max.y {
+            max.y
+        } else {
+            self.y
+        };
+
+        Vector2 { x, y }
+    }
 }
 
 impl<T> Add for Vector2<T>

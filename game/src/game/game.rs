@@ -201,13 +201,17 @@ impl Game {
                 // Move dragged body
                 if let Some(DraggedBody { index, drag_offset }) = self.dragged_body {
                     let state = self.rb_simulator.bodies[index].state_mut();
+                    let position = position.clamp(
+                        v2!(0.0, 0.0),
+                        v2!(self.gameview_width, self.gameview_height),
+                    );
                     match state.behaviour {
                         BodyBehaviour::Dynamic => {
                             let pos_diff = position - state.position - drag_offset;
                             state.velocity = pos_diff * 10.0;
                         }
                         BodyBehaviour::Static => {
-                            let new_pos = state.position + mouse_diff;
+                            let new_pos = position - drag_offset;
                             self.rb_simulator.bodies[index].set_position(new_pos);
                         }
                     }

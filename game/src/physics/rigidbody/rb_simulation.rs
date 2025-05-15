@@ -318,13 +318,17 @@ impl RbSimulator {
                     let state = bodies[index_a].state_mut();
                     // Apply normal impulse
                     state.velocity += normal * (impulse_normal / mass_a);
-                    state.angular_velocity +=
-                        radius_a.cross(normal * impulse_normal) * inv_inertia_a;
+                    if !state.lock_rotation {
+                        state.angular_velocity +=
+                            radius_a.cross(normal * impulse_normal) * inv_inertia_a;
+                    }
 
                     // Apply tangent impulse - friction
                     state.velocity -= tangent * (impulse_tangent / mass_a);
-                    state.angular_velocity -=
-                        radius_a.cross(tangent * impulse_tangent) * inv_inertia_a;
+                    if !state.lock_rotation {
+                        state.angular_velocity -=
+                            radius_a.cross(tangent * impulse_tangent) * inv_inertia_a;
+                    }
                 }
                 if b_is_dynamic {
                     let impulse_normal = impulse_normal * b_mul;
@@ -332,13 +336,17 @@ impl RbSimulator {
                     let state = bodies[index_b].state_mut();
                     // Apply normal impulse
                     state.velocity -= normal * (impulse_normal / mass_b);
-                    state.angular_velocity -=
-                        radius_b.cross(normal * impulse_normal) * inv_inertia_b;
+                    if !state.lock_rotation {
+                        state.angular_velocity -=
+                            radius_b.cross(normal * impulse_normal) * inv_inertia_b;
+                    }
 
                     // Apply tangent impulse - friction
                     state.velocity += tangent * (impulse_tangent / mass_b);
-                    state.angular_velocity +=
-                        radius_b.cross(tangent * impulse_tangent) * inv_inertia_b;
+                    if !state.lock_rotation {
+                        state.angular_velocity +=
+                            radius_b.cross(tangent * impulse_tangent) * inv_inertia_b;
+                    }
                 }
             }
         }

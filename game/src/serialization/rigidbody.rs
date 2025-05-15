@@ -24,6 +24,8 @@ pub enum BodySerializedForm {
 pub struct BodyStateSerializedForm {
     pub position: Vector2<f32>,
     pub orientation: f32,
+    #[serde(default)]
+    pub lock_rotation: bool,
 
     pub behaviour: BodyBehaviour,
     pub mass: f32,
@@ -40,6 +42,7 @@ impl From<BodyState> for BodyStateSerializedForm {
         let BodyState {
             position,
             orientation,
+            lock_rotation,
             behaviour,
             mass,
             moment_of_inertia,
@@ -53,6 +56,7 @@ impl From<BodyState> for BodyStateSerializedForm {
         BodyStateSerializedForm {
             position,
             orientation,
+            lock_rotation,
             behaviour,
             mass,
             moment_of_inertia,
@@ -69,6 +73,7 @@ impl From<BodyStateSerializedForm> for BodyState {
         let BodyStateSerializedForm {
             position,
             orientation,
+            lock_rotation,
             behaviour,
             mass,
             moment_of_inertia,
@@ -81,6 +86,7 @@ impl From<BodyStateSerializedForm> for BodyState {
         BodyState {
             position,
             orientation,
+            lock_rotation,
             behaviour,
             mass,
             moment_of_inertia,

@@ -34,6 +34,7 @@ pub struct BodyMaker {
     height: f32,
     pub mass: f32,
     pub orientation: f32,
+    pub lock_rotation: bool,
     pub behaviour: BodyBehaviour,
 
     pub elasticity: f32,
@@ -53,6 +54,7 @@ impl Default for BodyMaker {
             height: 30.0,
             mass: 5000.0,
             orientation: 0.0,
+            lock_rotation: false,
             behaviour: BodyBehaviour::Dynamic,
 
             elasticity: DEFAULT_ELASTICITY,
@@ -74,6 +76,7 @@ impl UIComponent for BodyMaker {
             height: old_height,
             mass: old_mass,
             orientation: old_orientation,
+            lock_rotation: old_lock_rotation,
             behaviour: old_behaviour,
             elasticity: old_elasticity,
             static_friction: old_static_friction,
@@ -118,6 +121,12 @@ impl UIComponent for BodyMaker {
             &mut self.orientation,
             MIN_ORIENTATION..MAX_ORIENTATION,
         );
+        let side_offset = offset + v2!(450.0, 0.0);
+        Checkbox::new(68)
+            .pos(side_offset.as_mq())
+            .label("Lock rotation?")
+            .size(v2!(SLIDER_HEIGHT, SLIDER_HEIGHT).as_mq())
+            .ui(&mut root_ui(), &mut self.lock_rotation);
 
         let offset = offset + v2!(0.0, SLIDER_HEIGHT + GAP);
         draw_slider(
@@ -181,6 +190,7 @@ impl UIComponent for BodyMaker {
             || self.height != old_height
             || self.mass != old_mass
             || self.orientation != old_orientation
+            || self.lock_rotation != old_lock_rotation
             || old_color != self.color_picker.color()
             || self.behaviour != old_behaviour
             || self.elasticity != old_elasticity

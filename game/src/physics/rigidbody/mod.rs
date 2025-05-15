@@ -70,6 +70,8 @@ pub struct BodyState {
     pub angular_velocity: f32,
     /// Rotation of the body measured in radians
     pub orientation: f32,
+    /// If true, then this object will not rotate under the offect of forces
+    pub lock_rotation: bool,
 
     // PROPERTIES
     pub behaviour: BodyBehaviour,
@@ -98,6 +100,7 @@ impl BodyState {
             velocity: Vector2::zero(),
             angular_velocity: 0.0,
             orientation: 0.0,
+            lock_rotation: false,
 
             behaviour,
             mass,
@@ -142,7 +145,10 @@ impl BodyState {
 
     pub fn add_force_accumulation(&mut self, force_accumulation: BodyForceAccumulation) {
         self.accumulated_force += force_accumulation.force;
-        self.accumulated_torque += force_accumulation.torque;
+
+        if !self.lock_rotation {
+            self.accumulated_torque += force_accumulation.torque;
+        }
     }
 
     pub fn apply_accumulated_forces(&mut self, time_step: f32) {
@@ -152,7 +158,7 @@ impl BodyState {
             self.accumulated_force = Vector2::zero();
         }
 
-        if !self.accumulated_torque.is_zero() {
+        if !self.accumulated_torque.is_zero() && !self.lock_rotation {
             let angular_acc = self.accumulated_torque / self.moment_of_inertia;
             self.angular_velocity = runge_kutta(self.angular_velocity, time_step, angular_acc);
             self.accumulated_torque = 0.0;
@@ -161,7 +167,10 @@ impl BodyState {
 
     pub fn move_by_velocity(&mut self, time_step: f32) {
         self.position = runge_kutta(self.position, time_step, self.velocity);
-        self.orientation = runge_kutta(self.orientation, time_step, self.angular_velocity);
+
+        if !self.lock_rotation {
+            self.orientation = runge_kutta(self.orientation, time_step, self.angular_velocity);
+        }
     }
 }
 

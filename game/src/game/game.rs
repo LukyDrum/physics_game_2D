@@ -140,6 +140,7 @@ impl Game {
         let body_maker = &self.ingame_ui.body_maker;
         let size = body_maker.size();
         let orientation = body_maker.orientation;
+        let lock_rotation = body_maker.lock_rotation;
         let mass = body_maker.mass;
         let mut color = body_maker.color();
         let behaviour = body_maker.behaviour;
@@ -150,6 +151,7 @@ impl Game {
         // Create body and set state values
         let mut body = Rectangle!(position; size.x, size.y; behaviour);
         body.state_mut().orientation = orientation * (PI / 180.0);
+        body.state_mut().lock_rotation = lock_rotation;
         body.state_mut().set_mass(mass);
         color.a = 0.5;
         body.state_mut().color = color;
@@ -163,7 +165,6 @@ impl Game {
     pub fn handle_input(&mut self) {
         let mouse_pos = mouse_position();
         let position = Vector2::new(mouse_pos.0, mouse_pos.1);
-        let mouse_diff = position - self.mouse_position_last_frame;
         self.mouse_in_gameview = self.is_in_gameview(position);
 
         // Release dragged body

@@ -133,7 +133,22 @@ impl Game {
     }
 
     pub(crate) fn set_description(&mut self, description: String) {
-        self.description = description.split("\n").map(|s| s.to_owned()).collect();
+        const MAX_WORDS: usize = 10;
+
+        self.description = description
+            .split("\n")
+            .map(|s| s.to_owned())
+            .flat_map(|line| {
+                let split = line.split(" ").collect::<Vec<_>>();
+                if split.len() > MAX_WORDS {
+                    let start = split[..MAX_WORDS].join(" ");
+                    let end = split[MAX_WORDS..].join(" ");
+                    vec![start, end]
+                } else {
+                    vec![line]
+                }
+            })
+            .collect();
     }
 
     fn body_from_body_maker(&self, position: Vector2<f32>) -> RigidBody {
@@ -419,6 +434,10 @@ impl Game {
             SaveLoadAction::Nothing,
         ) {
             SaveLoadAction::Save if !save_file_name.is_empty() => {
+                let mut ser = self.to_serialized_form();
+                ser.name = save_file_name.clone();
+                ser.description = "".to_string();
+
                 save_load::save(self.to_serialized_form(), save_file_name.as_str());
                 self.save_name = save_file_name.to_string();
             }

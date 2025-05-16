@@ -1,7 +1,7 @@
 {
   "save_name": "_Long_Shot_2",
   "name": "Long Shot 2",
-  "description": "This level is very similiar to Long Shot.\nHowever in this level you will experiment with how the speed of the escaping fluid is affected if a force is applied to it from above.\nEach of the green squares weights 5kg.\nYou can use those or create some yourself.",
+  "description": "This level is very similiar to Long Shot.\nHowever in this level you will experiment with how the speed of the escaping fluid is affected\nif a force is applied to it from above.\nEach of the green squares weights 5kg.\nYou can use those or create some yourself.",
   "width": 500.0,
   "height": 500.0,
   "rb": {

@@ -1,7 +1,7 @@
 {
   "save_name": "_Hydraulic_Press",
   "name": "Hydraulic Press",
-  "description": "Hydraulic press works due to \"Pascal's Law\".\nIn this level you have a pipe with 2 endings - smaller and bigger.\nBoth of the endings have a moveable lid placed on top of them.\nDue to Pascal's law applying small force on the smaller lid will result in a larger force on the bigger lid.\nThe force scales proportionaly to the ratio of the areas - roughly 2.\n5 in this case.\nTry dragging and putting down the prepared red (~10Kg) and green (~25Kg) objects onto the lids.\nHint: Start with the green one onto the bigger lid.\n",
+  "description": "Hydraulic press works due to \"Pascal's Law\".\nIn this level you have a pipe with 2 endings - smaller and bigger.\nBoth of the endings have a moveable lid placed on top of them.\nDue to Pascal's law applying small force on the smaller lid will result in a larger force on the bigger lid.\nThe force scales proportionaly to the ratio of the areas - roughly 2.5 in this case.\nTry dragging and putting down the prepared red (~10Kg) and green (~25Kg) objects onto the lids.\nHint: Start with the green one onto the bigger lid.\n",
   "width": 500.0,
   "height": 500.0,
   "rb": {
